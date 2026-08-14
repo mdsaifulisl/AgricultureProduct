@@ -1,0 +1,368 @@
+import React, { useState, useMemo, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
+import { 
+  Search, 
+  SlidersHorizontal, 
+  X, 
+  ChevronDown, 
+  ChevronLeft,
+  ChevronRight
+} from 'lucide-react';
+
+import type { Product } from "../../../components/common/ProductCard";
+import { ProductGrid } from "../../../components/common/ProductGrid";
+import ProductData from '../../../data/products.json';
+
+const ITEMS_PER_PAGE = 8;
+
+const MOCK_PRODUCTS: Product[] = ProductData as unknown as Product[];
+
+const CATEGORIES = [
+  { id: 'all', name: 'সকল ক্যাটাগরি' },
+  { id: 'vegetables', name: 'তাজা সবজি' },
+  { id: 'fruits', name: 'তাজা ফলমূল' },
+  { id: 'seeds', name: 'বীজ ও চারা' },
+  { id: 'fertilizers', name: 'জৈব সার' },
+  { id: 'equipment', name: 'কৃষি যন্ত্রপাতি' }, 
+  { id: 'grains', name: 'দানাশস্য' }
+];
+
+interface ShopPageProps {
+  onAddToCart?: (product: Product) => void;
+}
+
+export const ShopPage: React.FC<ShopPageProps> = ({ onAddToCart }) => {
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [searchQuery, setSearchQuery] = useState<string>('');
+  const [sortBy, setSortBy] = useState<string>('default');
+  const [maxPrice, setMaxPrice] = useState<number>(2000);
+  const [inStockOnly, setInStockOnly] = useState<boolean>(false);
+  const [isFilterDrawerOpen, setIsFilterDrawerOpen] = useState<boolean>(false);
+  const [currentPage, setCurrentPage] = useState<number>(1);
+
+  useEffect(() => {
+    const categoryParam = searchParams.get('category');
+    if (categoryParam) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setSelectedCategory(categoryParam);
+    } else {
+      setSelectedCategory('all');
+    }
+  }, [searchParams]);
+
+  const handleCategoryChange = (categoryId: string) => {
+    if (categoryId === 'all') {
+      searchParams.delete('category');
+    } else {
+      searchParams.set('category', categoryId);
+    }
+    setSearchParams(searchParams);
+  };
+
+  const filteredProducts = useMemo(() => {
+    return MOCK_PRODUCTS.filter((product) => {
+      const activeCategoryObj = CATEGORIES.find(cat => cat.id === selectedCategory);
+      
+      const matchesCategory = selectedCategory === 'all' || 
+        product.category.toLowerCase() === activeCategoryObj?.name.toLowerCase();
+
+      const matchesSearch = product.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                            product.category.toLowerCase().includes(searchQuery.toLowerCase());
+      const matchesPrice = product.price <= maxPrice;
+      const matchesStock = inStockOnly ? product.inStock : true;
+
+      return matchesCategory && matchesSearch && matchesPrice && matchesStock;
+    }).sort((a, b) => {
+      if (sortBy === 'price-low') return a.price - b.price;
+      if (sortBy === 'price-high') return b.price - a.price;
+      if (sortBy === 'rating') return (b.rating || 0) - (a.rating || 0);
+      return 0;
+    });
+  }, [selectedCategory, searchQuery, sortBy, maxPrice, inStockOnly]);
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setCurrentPage(1);
+  }, [selectedCategory, searchQuery, maxPrice, inStockOnly, sortBy]);
+
+  // 👉 পেজিনেশন নম্বর (currentPage) পরিবর্তন হলে স্ক্রোল করে পেজের একদম উপরে চলে যাবে
+  useEffect(() => {
+    window.scrollTo({
+      top: 0,
+      behavior: 'smooth'
+    });
+  }, [currentPage]);
+
+  const totalPages = Math.ceil(filteredProducts.length / ITEMS_PER_PAGE) || 1;
+
+  const paginatedProducts = useMemo(() => {
+    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+    return filteredProducts.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+  }, [filteredProducts, currentPage]);
+
+  const handleResetFilters = () => {
+    handleCategoryChange('all');
+    setMaxPrice(2000);
+    setInStockOnly(false);
+    setSearchQuery('');
+    setSortBy('default');
+  };
+
+  return (
+    <div className="bg-gray-50/60 min-h-screen py-6 sm:py-10">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        
+        {/* Page Title & Header */}
+        <div className="mb-6 sm:mb-8">
+          <h1 className="text-2xl sm:text-4xl font-black text-gray-900 tracking-tight">
+            আমাদের শপ ক্যাটালগ
+          </h1>
+          <p className="text-xs sm:text-sm text-gray-500 mt-1">
+            ক্ষেতের তাজা সবজি, ফলমূল, উন্নত বীজ এবং কৃষি সরঞ্জাম অনলাইনে অর্ডার করুন।
+          </p>
+        </div>
+
+        {/* Search and Top Toolbar */}
+        <div className="bg-white rounded-2xl border border-gray-100 p-3 sm:p-4 shadow-xs mb-6 flex flex-col sm:flex-row gap-3 items-center justify-between">
+          
+          <div className="relative w-full sm:w-80">
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="পণ্য বা ক্যাটাগরি দিয়ে খুঁজুন..."
+              className="w-full bg-gray-50 border border-gray-200 text-xs sm:text-sm rounded-xl pl-9 pr-8 py-2.5 focus:outline-none focus:border-primary-600 transition-colors"
+            />
+            <Search className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
+            {searchQuery && (
+              <button 
+                onClick={() => setSearchQuery('')}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            )}
+          </div>
+
+          <div className="flex items-center gap-2.5 w-full sm:w-auto justify-between sm:justify-end">
+            <button
+              onClick={() => setIsFilterDrawerOpen(true)}
+              className="lg:hidden flex items-center gap-1.5 bg-gray-100 hover:bg-gray-200 text-gray-800 text-xs font-bold px-3.5 py-2.5 rounded-xl transition-colors cursor-pointer"
+            >
+              <SlidersHorizontal className="w-4 h-4 text-primary-600" />
+              <span>ফিল্টার</span>
+            </button>
+
+            <div className="relative flex items-center">
+              <select
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value)}
+                className="appearance-none bg-gray-50 border border-gray-200 text-xs sm:text-sm font-semibold text-gray-700 py-2.5 pl-3.5 pr-8 rounded-xl focus:outline-none focus:border-primary-600 cursor-pointer"
+              >
+                <option value="default">ডিফল্ট সাজানো</option>
+                <option value="price-low">কম দাম থেকে শুরু</option>
+                <option value="price-high">বেশি দাম থেকে শুরু</option>
+                <option value="rating">সেরা রেটিং</option>
+              </select>
+              <ChevronDown className="w-4 h-4 text-gray-400 absolute right-2.5 pointer-events-none" />
+            </div>
+          </div>
+        </div>
+
+        {/* Main Section */}
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+          
+          {/* Desktop Filter Sidebar */}
+          <aside className="hidden lg:block lg:col-span-1 space-y-6 bg-white border border-gray-100 p-5 rounded-2xl shadow-xs h-fit">
+            <div>
+              <h3 className="text-sm font-bold text-gray-900 mb-3 pb-2 border-b border-gray-100">
+                ক্যাটাগরি
+              </h3>
+              <div className="space-y-1">
+                {CATEGORIES.map((cat) => (
+                  <button
+                    key={cat.id}
+                    onClick={() => handleCategoryChange(cat.id)}
+                    className={`w-full text-left text-xs sm:text-sm font-medium px-3 py-2 rounded-xl transition-colors cursor-pointer ${
+                      selectedCategory === cat.id
+                        ? 'bg-primary-50 text-primary-700 font-bold'
+                        : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                    }`}
+                  >
+                    {cat.name}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <h3 className="text-sm font-bold text-gray-900">সর্বোচ্চ দাম</h3>
+                <span className="text-xs font-bold text-primary-700">{maxPrice}৳</span>
+              </div>
+              <input
+                type="range"
+                min="30"
+                max="2000"
+                step="10"
+                value={maxPrice}
+                onChange={(e) => setMaxPrice(Number(e.target.value))}
+                className="w-full accent-primary-600 cursor-pointer"
+              />
+              <div className="flex justify-between text-[10px] text-gray-400 font-semibold mt-1">
+                <span>৩০৳</span>
+                <span>২,০০০৳</span>
+              </div>
+            </div>
+
+            <div className="pt-2 border-t border-gray-100">
+              <label className="flex items-center gap-2 cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={inStockOnly}
+                  onChange={(e) => setInStockOnly(e.target.checked)}
+                  className="rounded text-primary-600 focus:ring-primary-500 w-4 h-4"
+                />
+                <span className="text-xs font-medium text-gray-700">শুধু স্টকে থাকা পণ্য</span>
+              </label>
+            </div>
+
+            <button
+              onClick={handleResetFilters}
+              className="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-bold py-2.5 rounded-xl transition-colors cursor-pointer"
+            >
+              ফিল্টার রিসেট করুন
+            </button>
+          </aside>
+
+          {/* Product Grid Area */}
+          <main className="lg:col-span-3">
+            {paginatedProducts.length === 0 ? (
+              <div className="bg-white rounded-2xl border border-gray-100 p-12 text-center space-y-3">
+                <p className="text-base font-bold text-gray-800">কোনো পণ্য পাওয়া যায়নি!</p>
+                <p className="text-xs text-gray-500">
+                  আপনার সার্চ ফিল্টার বা ক্যাটাগরি পরিবর্তন করে আবার চেষ্টা করুন।
+                </p>
+              </div>
+            ) : (
+              <>
+                <ProductGrid 
+                  products={paginatedProducts} 
+                  onAddToCart={onAddToCart} 
+                />
+
+                {/* Pagination Controls */}
+                <div className="mt-8 flex items-center justify-center gap-2">
+                  <button
+                    disabled={currentPage === 1}
+                    onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                    className="p-2 rounded-xl border border-gray-200 bg-white text-gray-600 disabled:opacity-50 hover:bg-gray-50 transition-colors cursor-pointer"
+                  >
+                    <ChevronLeft className="w-4 h-4" />
+                  </button>
+                  <span className="text-xs font-bold text-gray-700 px-3">
+                    পৃষ্ঠা {currentPage} / {totalPages}
+                  </span>
+                  <button
+                    disabled={currentPage === totalPages}
+                    onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+                    className="p-2 rounded-xl border border-gray-200 bg-white text-gray-600 disabled:opacity-50 hover:bg-gray-50 transition-colors cursor-pointer"
+                  >
+                    <ChevronRight className="w-4 h-4" />
+                  </button>
+                </div>
+              </>
+            )}
+          </main>
+
+        </div>
+
+      </div>
+
+      {/* Mobile Filter Drawer Overlay */}
+      {isFilterDrawerOpen && (
+        <div className="fixed inset-0 z-50 lg:hidden flex">
+          <div 
+            className="fixed inset-0 bg-black/50 backdrop-blur-xs transition-opacity"
+            onClick={() => setIsFilterDrawerOpen(false)}
+          />
+          <div className="relative ml-auto w-full max-w-xs bg-white h-full p-5 shadow-2xl flex flex-col justify-between overflow-y-auto z-10">
+            <div>
+              <div className="flex items-center justify-between pb-4 border-b border-gray-100 mb-4">
+                <h2 className="text-base font-bold text-gray-900">ফিল্টার করুন</h2>
+                <button 
+                  onClick={() => setIsFilterDrawerOpen(false)}
+                  className="p-1.5 text-gray-500 hover:bg-gray-100 rounded-lg"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <div className="mb-6">
+                <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">ক্যাটাগরি</h3>
+                <div className="space-y-1">
+                  {CATEGORIES.map((cat) => (
+                    <button
+                      key={cat.id}
+                      onClick={() => {
+                        handleCategoryChange(cat.id);
+                        setIsFilterDrawerOpen(false);
+                      }}
+                      className={`w-full text-left text-xs font-medium px-3 py-2 rounded-xl transition-colors ${
+                        selectedCategory === cat.id
+                          ? 'bg-primary-50 text-primary-700 font-bold'
+                          : 'text-gray-600 hover:bg-gray-50'
+                      }`}
+                    >
+                      {cat.name}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="mb-6">
+                <div className="flex items-center justify-between mb-2">
+                  <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider">সর্বোচ্চ দাম</h3>
+                  <span className="text-xs font-bold text-primary-700">{maxPrice}৳</span>
+                </div>
+                <input
+                  type="range"
+                  min="30"
+                  max="2000"
+                  step="10"
+                  value={maxPrice}
+                  onChange={(e) => setMaxPrice(Number(e.target.value))}
+                  className="w-full accent-primary-600"
+                />
+              </div>
+
+              <div>
+                <label className="flex items-center gap-2 cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    checked={inStockOnly}
+                    onChange={(e) => setInStockOnly(e.target.checked)}
+                    className="rounded text-primary-600 w-4 h-4"
+                  />
+                  <span className="text-xs font-medium text-gray-700">শুধু স্টকে থাকা পণ্য</span>
+                </label>
+              </div>
+            </div>
+
+            <button
+              onClick={() => setIsFilterDrawerOpen(false)}
+              className="w-full bg-primary-600 text-white text-xs font-bold py-3 rounded-xl mt-6 cursor-pointer"
+            >
+              ফলাফল দেখুন
+            </button>
+          </div>
+        </div>
+      )}
+
+    </div>
+  );
+};
+
+export default ShopPage;

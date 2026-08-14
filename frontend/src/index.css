@@ -1,0 +1,108 @@
+@import "tailwindcss";
+
+/* ============================================
+   🌿 AgriBazar — Custom Theme (Tailwind v4)
+   ============================================ */
+
+@theme {
+  /* ---------- Primary Brand (Emerald) ---------- */
+  --color-primary-50: #ecfdf5;
+  --color-primary-100: #d1fae5;
+  --color-primary-200: #a7f3d0;
+  --color-primary-300: #6ee7b7;
+  --color-primary-400: #34d399;
+  --color-primary-500: #10b981;
+  --color-primary-600: #059669;
+  --color-primary-700: #047857;
+  --color-primary-800: #065f46;
+  --color-primary-900: #064e3b;
+  --color-primary-950: #022c22;
+
+  /* ---------- Secondary / Accent (Amber) ---------- */
+  --color-accent-50: #fffbeb;
+  --color-accent-100: #fef3c7;
+  --color-accent-200: #fde68a;
+  --color-accent-300: #fcd34d;
+  --color-accent-400: #fbbf24;
+  --color-accent-500: #f59e0b;
+  --color-accent-600: #d97706;
+  --color-accent-700: #b45309;
+  --color-accent-800: #92400e;
+  --color-accent-900: #78350f;
+
+  /* ---------- Warm (Orange) ---------- */
+  --color-warm-500: #f97316;
+  --color-warm-600: #ea580c;
+
+  /* ---------- Rose (Special Offers) ---------- */
+  --color-rose-500: #f43f5e;
+  --color-rose-600: #e11d48;
+
+  /* ---------- Semantic Status ---------- */
+  --color-success: #22c55e;
+  --color-danger: #dc2626;
+  --color-warning: #facc15;
+  --color-info: #3b82f6;
+
+  /* ---------- Neutral Grays ---------- */
+  --color-gray-50: #f9fafb;
+  --color-gray-100: #f3f4f6;
+  --color-gray-200: #e5e7eb;
+  --color-gray-400: #9ca3af;
+  --color-gray-500: #6b7280;
+  --color-gray-700: #374151;
+  --color-gray-800: #1f2937;
+  --color-gray-900: #111827;
+
+  /* ---------- Brand Aliases ---------- */
+  --color-brand: #059669;
+  --color-brand-hover: #047857;
+  --color-brand-light: #d1fae5;
+  --color-brand-dark: #022c22;
+  --color-brand-accent: #f59e0b;
+
+  /* ---------- Custom Animations ---------- */
+  --animate-fade-in: fadeIn 0.2s ease-out;
+  --animate-slide-down: slideDown 0.2s ease-out;
+  --animate-slide-in-right: slideInRight 0.3s ease-out;
+  --animate-bounce-once: bounceOnce 0.3s ease;
+
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  @keyframes slideDown {
+    from { opacity: 0; transform: translateY(-8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes slideInRight {
+    from { transform: translateX(100%); }
+    to { transform: translateX(0); }
+  }
+  @keyframes bounceOnce {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.2); }
+  }
+}
+
+/* Base Styles */
+body {
+  background-color: var(--color-gray-50);
+  color: var(--color-gray-800);
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: var(--color-gray-100);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--color-primary-500);
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-primary-600);
+}

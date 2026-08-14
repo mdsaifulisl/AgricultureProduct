@@ -1,0 +1,413 @@
+[
+  {
+    "id": "1",
+    "name": "তাজা প্রিমিয়াম লাল টমেটো",
+    "category": "তাজা সবজি",
+    "categorySlug": "vegetables",
+    "price": 45,
+    "originalPrice": 60,
+    "unit": "কেজি",
+    "rating": 4.8,
+    "reviewsCount": 124,
+    "images": [
+      "https://images.unsplash.com/photo-1592924357228-91a4daadcfea?auto=format&fit=crop&w=600&q=80",
+      "https://images.unsplash.com/photo-1518977676601-b53f82aba655?auto=format&fit=crop&w=600&q=80",
+      "https://images.unsplash.com/photo-1546470427-227c7369a609?auto=format&fit=crop&w=600&q=80"
+    ],
+    "description": "সম্পূর্ণ কেমিক্যাল ও ফরমালিন মুক্ত তাজা লাল টমেটো। সরাসরি নিজস্ব ফার্ম থেকে সংগৃহীত এবং হাইজিনিকভাবে প্যাককৃত।",
+    "shortDescription": "ফরমালিন মুক্ত একদম তাজা প্রিমিয়াম লাল টমেটো।",
+    "badge": "২৫% ছাড়",
+    "inStock": true,
+    "stockCount": 50,
+    "sku": "VEG-TOM-01",
+    "isFeatured": true,
+    "specifications": [
+      { "key": "প্রকার", "value": "হাইব্রিড দেশি" },
+      { "key": "উৎস", "value": "বগুড়া" },
+      { "key": "সংরক্ষণকাল", "value": "৫-৭ দিন" }
+    ],
+    "tags": ["সবজি", "টমেটো", "তাজা সবজি", "টমেটোর"]
+  },
+  {
+    "id": "2",
+    "name": "দেশি শসা (হাইব্রিড জাত)",
+    "category": "তাজা সবজি",
+    "categorySlug": "vegetables",
+    "price": 35,
+    "originalPrice": 45,
+    "unit": "কেজি",
+    "rating": 4.6,
+    "reviewsCount": 89,
+    "images": [
+      "https://images.unsplash.com/photo-1449300079323-02e209d9d3a6?auto=format&fit=crop&w=600&q=80",
+      "https://images.unsplash.com/photo-1604977042946-1eecc30f269e?auto=format&fit=crop&w=600&q=80"
+    ],
+    "description": "মুচমুচে এবং তাজা দেশি শসা। প্রতিদিনের সালাদ এবং সুষম খাদ্যের জন্য অত্যন্ত পুষ্টিকর।",
+    "shortDescription": "তাজা ও মুচমুচে দেশি হাইব্রিড শসা।",
+    "inStock": true,
+    "stockCount": 80,
+    "sku": "VEG-CUC-02",
+    "isFeatured": false,
+    "specifications": [
+      { "key": "জাত", "value": "হাইব্রিড দেশি" },
+      { "key": "উৎস", "value": "যশোর" },
+      { "key": "সংরক্ষণকাল", "value": "৩-৫ দিন" }
+    ],
+    "tags": ["সবজি", "শসা", "সালাদ", "দেশি শসা"]
+  },
+  {
+    "id": "3",
+    "name": "রাজশাহী মিষ্টি আলফান্সো আম",
+    "category": "তাজা ফলমূল",
+    "categorySlug": "fruits",
+    "price": 130,
+    "originalPrice": 150,
+    "unit": "কেজি",
+    "rating": 4.9,
+    "reviewsCount": 210,
+    "images": [
+      "https://images.unsplash.com/photo-1553279768-865429fa0078?auto=format&fit=crop&w=600&q=80",
+      "https://images.unsplash.com/photo-1601493700631-2b16ec4b4716?auto=format&fit=crop&w=600&q=80"
+    ],
+    "description": "গাছ পাকা প্রিমিয়াম কোয়ালিটির মিষ্টি আলফান্সো আম। কোনো ক্ষতিকারক কেমিক্যাল ছাড়াই প্রাকৃতিকভাবে পাকানো।",
+    "shortDescription": "রাজশাহীর কেমিক্যাল মুক্ত প্রিমিয়াম গাছ পাকা আম।",
+    "badge": "সেরা মান",
+    "inStock": true,
+    "stockCount": 120,
+    "sku": "FRU-MAN-03",
+    "isFeatured": true,
+    "specifications": [
+      { "key": "জাত", "value": "আলফান্সো" },
+      { "key": "উৎস", "value": "রাজশাহী" },
+      { "key": "মিষ্টতা", "value": "উচ্চ" }
+    ],
+    "tags": ["ফল", "আম", "রাজশাহী আম", "মিষ্টি আম"]
+  },
+  {
+    "id": "4",
+    "name": "উচ্চ ফলনশীল বেগুন বীজ",
+    "category": "বীজ ও চারা",
+    "categorySlug": "seeds-plants",
+    "price": 55,
+    "unit": "প্যাকেট",
+    "rating": 4.7,
+    "reviewsCount": 45,
+    "images": [
+      "https://images.unsplash.com/photo-1530836369250-ef72a3f5cda8?auto=format&fit=crop&w=600&q=80",
+      "https://images.unsplash.com/photo-1615485290382-441e4d049cb5?auto=format&fit=crop&w=600&q=80"
+    ],
+    "description": "উচ্চ অঙ্কুরোদ্গম ক্ষমতাসম্পন্ন প্রিমিয়াম জাতের বেগুনের বীজ। ছাদ বাগান ও বাণিজ্যিক চাষ উভয়ের জন্য উপযুক্ত।",
+    "shortDescription": "অধিক ফলনশীল এবং রোগ প্রতিরোধী বেগুন বীজ।",
+    "inStock": true,
+    "stockCount": 200,
+    "sku": "SEE-EGG-04",
+    "isFeatured": false,
+    "specifications": [
+      { "key": "প্যাকেট ওজন", "value": "১০ গ্রাম" },
+      { "key": "অঙ্কুরোদ্গম হার", "value": "৮৫%+" },
+      { "key": "ফসল কাটার সময়", "value": "৬০-৭০ দিন" }
+    ],
+    "tags": ["বীজ", "বেগুন বীজ", "কৃষি বীজ", "ছাদ বাগান"]
+  },
+  {
+    "id": "5",
+    "name": "জৈব কেঁচো সার (Vermicompost)",
+    "category": "জৈব সার",
+    "categorySlug": "organic-fertilizer",
+    "price": 30,
+    "originalPrice": 40,
+    "unit": "কেজি",
+    "rating": 4.8,
+    "reviewsCount": 96,
+    "images": [
+      "https://images.unsplash.com/photo-1628352081506-83c43123ed6d?auto=format&fit=crop&w=600&q=80",
+      "https://images.unsplash.com/photo-1585336261026-870a7f2cc900?auto=format&fit=crop&w=600&q=80"
+    ],
+    "description": "১০০% প্রাকৃতিকভাবে উৎপাদিত উর্বর কেঁচো সার। মাটির উর্বরতা বৃদ্ধি করে এবং গাছের দ্রুত বৃদ্ধিতে সাহায্য করে।",
+    "shortDescription": "গাছের জন্য প্রাকৃতিক এবং পুষ্টিকর কেঁচো সার।",
+    "badge": "১০০% অর্গানিক",
+    "inStock": true,
+    "stockCount": 300,
+    "sku": "FER-VER-05",
+    "isFeatured": true,
+    "specifications": [
+      { "key": "উপাদান", "value": "ভার্মিকম্পোস্ট" },
+      { "key": "ব্যবহার", "value": "সব ধরণের গাছ ও ফলমূল" },
+      { "key": "ওজন", "value": "১ কেজি প্যাক" }
+    ],
+    "tags": ["সার", "জৈব সার", "কেঁচো সার", "ভার্মিকম্পোস্ট"]
+  },
+  {
+    "id": "6",
+    "name": "কৃষি স্প্রেয়ার চার্জার চালিত ১০L",
+    "category": "কৃষি যন্ত্রপাতি",
+    "categorySlug": "agro-equipment",
+    "price": 1350,
+    "originalPrice": 1500,
+    "unit": "টি",
+    "rating": 4.5,
+    "reviewsCount": 32,
+    "images": [
+      "https://images.unsplash.com/photo-1589923188900-85dae523342b?auto=format&fit=crop&w=600&q=80",
+      "https://images.unsplash.com/photo-1617575521317-8f3252078695?auto=format&fit=crop&w=600&q=80"
+    ],
+    "description": "রিচার্জেবল ব্যাটারি চালিত ১০ লিটার ধারণক্ষমতার স্প্রেয়ার। কীটনাশক ও সার ছিটানোর কাজে অত্যন্ত কার্যকর।",
+    "shortDescription": "দীর্ঘস্থায়ী ব্যাটারি ব্যাকআপ সহ ১০ লিটার স্প্রেয়ার।",
+    "badge": "১০% ছাড়",
+    "inStock": true,
+    "stockCount": 15,
+    "sku": "EQP-SPR-06",
+    "isFeatured": false,
+    "specifications": [
+      { "key": "ধারণক্ষমতা", "value": "১০ লিটার" },
+      { "key": "ব্যাটারি", "value": "12V 8Ah" },
+      { "key": "ওয়ারেন্টি", "value": "৬ মাস" }
+    ],
+    "tags": ["যন্ত্রপাতি", "স্প্রেয়ার", "কৃষি যন্ত্রপাতি", "চার্জার স্প্রেয়ার"]
+  },
+  {
+    "id": "7",
+    "name": "সুগন্ধি কাটারিভোগ চাল",
+    "category": "দানাশস্য",
+    "categorySlug": "grains",
+    "price": 85,
+    "originalPrice": 95,
+    "unit": "কেজি",
+    "rating": 4.9,
+    "reviewsCount": 178,
+    "images": [
+      "https://images.unsplash.com/photo-1586201375761-83865001e31c?auto=format&fit=crop&w=600&q=80",
+      "https://images.unsplash.com/photo-1536304993881-ff6e9eefa2a6?auto=format&fit=crop&w=600&q=80"
+    ],
+    "description": "দিনাজপুরের বিখ্যাত প্রিমিয়াম কোয়ালিটির সুগন্ধি কাটারিভোগ চাল। পোলাও, বিরিয়ানি ও পায়েসের জন্য আদর্শ।",
+    "shortDescription": "দিনাজপুরের খাটি সুগন্ধি কাটারিভোগ চাল।",
+    "badge": "পপুলার",
+    "inStock": true,
+    "stockCount": 150,
+    "sku": "GRA-RIC-07",
+    "isFeatured": true,
+    "specifications": [
+      { "key": "জাত", "value": "কাটারিভোগ" },
+      { "key": "উৎস", "value": "দিনাজপুর" },
+      { "key": "প্যাকিং", "value": "হাইজিনিক প্যাক" }
+    ],
+    "tags": ["চাল", "সুগন্ধি চাল", "কাটারিভোগ", "দানাশস্য"]
+  },
+  {
+    "id": "8",
+    "name": "মিষ্টি স্ট্রবেরি চারা",
+    "category": "বীজ ও চারা",
+    "categorySlug": "seeds-plants",
+    "price": 40,
+    "originalPrice": 50,
+    "unit": "টি",
+    "rating": 4.6,
+    "reviewsCount": 53,
+    "images": [
+      "https://images.unsplash.com/photo-1464965911861-746a04b4bca6?auto=format&fit=crop&w=600&q=80",
+      "https://images.unsplash.com/photo-1518635017498-87f514b751ba?auto=format&fit=crop&w=600&q=80"
+    ],
+    "description": "টবে চাষোপযোগী উন্নত জাতের মিষ্টি স্ট্রবেরি চারা। দ্রুত ফলনশীল এবং টব বা ছাদ বাগানের জন্য আদর্শ।",
+    "shortDescription": "টবে বা ছাদে চাষের জন্য উপযুক্ত মিষ্টি স্ট্রবেরি চারা।",
+    "badge": "সীমিত স্টক",
+    "inStock": false,
+    "stockCount": 0,
+    "sku": "PLN-STR-08",
+    "isFeatured": false,
+    "specifications": [
+      { "key": "জাত", "value": "আমেরিকান সুইট" },
+      { "key": "বয়স", "value": "১ মাস" },
+      { "key": "উপযুক্ত পাত্র", "value": "৮-১০ ইঞ্চি টব" }
+    ],
+    "tags": ["চারা", "স্ট্রবেরি", "ফল চারা", "ছাদ বাগান"]
+  },
+  {
+    "id": "9",
+    "name": "খাঁটি সুন্দরবনের মধু",
+    "category": "প্রাকৃতিক খাবার",
+    "categorySlug": "natural-food",
+    "price": 650,
+    "originalPrice": 750,
+    "unit": "৫০ গ্রাম",
+    "rating": 4.9,
+    "reviewsCount": 340,
+    "images": [
+      "https://images.unsplash.com/photo-1587049352847-4a222e784d38?auto=format&fit=crop&w=600&q=80",
+      "https://images.unsplash.com/photo-1558642452-9d2a7deb7f62?auto=format&fit=crop&w=600&q=80"
+    ],
+    "description": "সুন্দরবনের প্রাকৃতিক মৌচাক থেকে সংগৃহীত ১০০% প্রসেসিং মুক্ত খাঁটি মধু। কোনো প্রকার কৃত্রিম চিনি বা কেমিক্যাল মেশানো নেই।",
+    "shortDescription": "সুন্দরবনের শতভাগ প্রাকৃতিক ও খাঁটি প্রাকৃতিক মধু।",
+    "badge": "বেস্ট সেলার",
+    "inStock": true,
+    "stockCount": 60,
+    "sku": "NAT-HON-09",
+    "isFeatured": true,
+    "specifications": [
+      { "key": "উৎস", "value": "সুন্দরবন" },
+      { "key": "প্রসেসিং", "value": "র ড্রাইড (Raw)" },
+      { "key": "ওজন", "value": "৫০- গ্রাম" }
+    ],
+    "tags": ["মধু", "সুন্দরবনের মধু", "প্রাকৃতিক মধু", "খাঁটি খাবার"]
+  },
+  {
+    "id": "10",
+    "name": "প্রিমিয়াম ড্রাগন ফল (লাল)",
+    "category": "তাজা ফলমূল",
+    "categorySlug": "fruits",
+    "price": 220,
+    "originalPrice": 250,
+    "unit": "কেজি",
+    "rating": 4.7,
+    "reviewsCount": 67,
+    "images": [
+      "https://images.unsplash.com/photo-1527325678964-549216468488?auto=format&fit=crop&w=600&q=80",
+      "https://images.unsplash.com/photo-1517456793572-1d8efd6dc135?auto=format&fit=crop&w=600&q=80"
+    ],
+    "description": "ভিটামিন সি সমৃদ্ধ ও অ্যান্টি-অক্সিডেন্ট পূর্ণ লাল ড্রাগন ফল। দেশীয় বাগান থেকে বাছাইকৃত তাজা ফল।",
+    "shortDescription": "রসালো ও মিষ্টি প্রিমিয়াম লাল ড্রাগন ফল।",
+    "inStock": true,
+    "stockCount": 45,
+    "sku": "FRU-DRA-10",
+    "isFeatured": false,
+    "specifications": [
+      { "key": "জাত", "value": "রেড ভেলভেট" },
+      { "key": "উৎস", "value": "ঝিনাইদহ" },
+      { "key": "সংরক্ষণকাল", "value": "৭-১০ দিন" }
+    ],
+    "tags": ["ফল", "ড্রাগন ফল", "লাল ড্রাগন", "তাজা ফল"]
+  },
+  {
+    "id": "11",
+    "name": "তাজা কাঁচা মরিচ",
+    "category": "তাজা সবজি",
+    "categorySlug": "vegetables",
+    "price": 80,
+    "originalPrice": 100,
+    "unit": "কেজি",
+    "rating": 4.7,
+    "reviewsCount": 112,
+    "images": [
+      "https://images.unsplash.com/photo-1588879460405-520e2bf214d0?auto=format&fit=crop&w=600&q=80",
+      "https://images.unsplash.com/photo-1628102491629-778571d893a3?auto=format&fit=crop&w=600&q=80"
+    ],
+    "description": "ঝাল ও সতেজ দেশি কাঁচা মরিচ। রান্নার স্বাদ বাড়াতে এবং সালাদে ব্যবহারের জন্য আদর্শ।",
+    "shortDescription": "সতেজ ও কেমিক্যাল মুক্ত ঝাল দেশি কাঁচা মরিচ।",
+    "badge": "২০% ছাড়",
+    "inStock": true,
+    "stockCount": 65,
+    "sku": "VEG-CHI-11",
+    "isFeatured": true,
+    "specifications": [
+      { "key": "প্রকার", "value": "দেশি ঝাল" },
+      { "key": "উৎস", "value": "পাবনা" },
+      { "key": "সংরক্ষণকাল", "value": "৭-১০ দিন" }
+    ],
+    "tags": ["সবজি", "কাঁচা মরিচ", "মরিচ", "তাজা সবজি"]
+  },
+  {
+    "id": "12",
+    "name": "হাইব্রিড টমেটো বীজ",
+    "category": "বীজ ও চারা",
+    "categorySlug": "seeds-plants",
+    "price": 60,
+    "originalPrice": 75,
+    "unit": "প্যাকেট",
+    "rating": 4.8,
+    "reviewsCount": 38,
+    "images": [
+      "https://images.unsplash.com/photo-1592924357228-91a4daadcfea?auto=format&fit=crop&w=600&q=80"
+    ],
+    "description": "প্রচুর ফলনশীল এবং রোগ প্রতিরোধী হাইব্রিড টমেটো বীজ। টব এবং জমিতে চাষের জন্য উপযোগী।",
+    "shortDescription": "উচ্চ ফলনশীল প্রিমিয়াম হাইব্রিড টমেটো বীজ।",
+    "inStock": true,
+    "stockCount": 150,
+    "sku": "SEE-TOM-12",
+    "isFeatured": false,
+    "specifications": [
+      { "key": "প্যাকেট ওজন", "value": "৫ গ্রাম" },
+      { "key": "অঙ্কুরোদ্গম হার", "value": "৯০%+" },
+      { "key": "ফসল কাটার সময়", "value": "৬৫-৭৫ দিন" }
+    ],
+    "tags": ["বীজ", "টমেটো বীজ", "ছাদ বাগান"]
+  },
+  {
+    "id": "13",
+    "name": "এনপিকে মিশ্র সার (NPK 19:19:19)",
+    "category": "জৈব সার",
+    "categorySlug": "organic-fertilizer",
+    "price": 120,
+    "originalPrice": 140,
+    "unit": "কেজি",
+    "rating": 4.6,
+    "reviewsCount": 54,
+    "images": [
+      "https://images.unsplash.com/photo-1628352081506-83c43123ed6d?auto=format&fit=crop&w=600&q=80"
+    ],
+    "description": "গাছের নাইট্রোজেন, ফসফরাস ও পটাশিয়ামের অভাব মেটাতে সাহায্যকারী পানিতে দ্রবণীয় সুষম সার।",
+    "shortDescription": "গাছের দ্রুত বৃদ্ধি ও ফুল-ফল বাড়ানোর জন্য সুষম সার।",
+    "badge": "জনপ্রিয়",
+    "inStock": true,
+    "stockCount": 90,
+    "sku": "FER-NPK-13",
+    "isFeatured": true,
+    "specifications": [
+      { "key": "উপাদান", "value": "NPK 19:19:19" },
+      { "key": "ব্যবহার", "value": "সব ধরনের গাছ" },
+      { "key": "ওজন", "value": "১ কেজি" }
+    ],
+    "tags": ["সার", "এনপিকে সার", "গাছের যত্ন"]
+  },
+  {
+    "id": "14",
+    "name": "হাতে চালিত ওয়াটার ক্যান ৫L",
+    "category": "কৃষি যন্ত্রপাতি",
+    "categorySlug": "agro-equipment",
+    "price": 280,
+    "originalPrice": 320,
+    "unit": "টি",
+    "rating": 4.4,
+    "reviewsCount": 29,
+    "images": [
+      "https://images.unsplash.com/photo-1589923188900-85dae523342b?auto=format&fit=crop&w=600&q=80"
+    ],
+    "description": "ছাদ বাগান ও টবের গাছে নিখুঁতভাবে পানি দেওয়ার জন্য প্লাস্টিকের ওয়াটার স্প্রিংকলার ক্যান।",
+    "shortDescription": "৫ লিটার ধারণক্ষমতার টেকসই ওয়াটার ক্যান।",
+    "inStock": true,
+    "stockCount": 40,
+    "sku": "EQP-CAN-14",
+    "isFeatured": false,
+    "specifications": [
+      { "key": "ধারণক্ষমতা", "value": "৫ লিটার" },
+      { "key": "উপাদান", "value": "ভারী প্লাস্টিক" }
+    ],
+    "tags": ["যন্ত্রপাতি", "ওয়াটার ক্যান", "ছাদ বাগান"]
+  },
+  {
+    "id": "15",
+    "name": "খাঁটি ঘানি ভাঙা সরিষার তেল",
+    "category": "প্রাকৃতিক খাবার",
+    "categorySlug": "natural-food",
+    "price": 260,
+    "originalPrice": 290,
+    "unit": "লিটার",
+    "rating": 4.9,
+    "reviewsCount": 185,
+    "images": [
+      "https://images.unsplash.com/photo-1474979266404-7eaacbcd87c5?auto=format&fit=crop&w=600&q=80"
+    ],
+    "description": "গাঢ় ঝাজাল ও প্রাকৃতির উপায়ে ঘানিতে ভাঙানো ১০০% খাঁটি মাঘি সরিষার তেল।",
+    "shortDescription": "১০০% খাঁটি ও ঝাঁঝালো ঘানি ভাঙা সরিষার তেল।",
+    "badge": "সেরা মান",
+    "inStock": true,
+    "stockCount": 100,
+    "sku": "NAT-OIL-15",
+    "isFeatured": true,
+    "specifications": [
+      { "key": "উৎস", "value": "পাবনা" },
+      { "key": "প্রসেসিং", "value": "কাঠের ঘানি" },
+      { "key": "পরিমাণ", "value": "১ লিটার" }
+    ],
+    "tags": ["তেল", "সরিষার তেল", "খাঁটি খাবার"]
+  }
+]
+
