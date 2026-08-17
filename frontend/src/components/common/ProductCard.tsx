@@ -33,7 +33,7 @@ interface ProductCardProps {
 }
 
 export const ProductCard: React.FC<ProductCardProps> = ({
-  product,
+  product, 
   onAddToCart
 }) => {
   const primaryImage = product.images?.[0] || product.image;
@@ -56,12 +56,13 @@ export const ProductCard: React.FC<ProductCardProps> = ({
           />
 
           {secondaryImage && (
+            <Link to={`/product/${product.id}`}>
             <img
               src={secondaryImage}
               alt={`${product.name} - alternate view`}
               className="absolute inset-0 w-full h-full object-cover opacity-0 group-hover:opacity-100 group-hover:scale-105 transition-all duration-500"
               loading="lazy"
-            />
+            /></Link>
           )}
 
           {product.badge && (

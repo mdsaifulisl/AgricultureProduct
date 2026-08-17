@@ -14,13 +14,16 @@ import { BlogPage } from '../pages/public/blog/BlogPage';
 import { BlogDetailsPage } from '../pages/public/blog/BlogDetailsPage';
 import { AboutPage } from '../pages/public/about/AboutPage';
 import { LoginPage } from '../pages/login/LoginPage';
+import { VideosPage } from '../pages/public/videos/VideosPage';
+import { CartPage } from '../pages/public/cart/CartPage';
+import CheckoutPage from '../pages/public/checkout/CheckoutPage';
 export const AppRoutes: React.FC = () => {
   const navigate = useNavigate();
   return (
     <Routes>
       {/* Main Layout এর আওতাধীন পেজসমূহ */}
       <Route element={<MainLayout />}>
-        <Route path="/" element={<Home />} />
+        <Route index path="/" element={<Home />} />
         {/* ভবিষ্যৎ পেজগুলো এখানে যোগ করতে পারবেন, যেমন: */}
         <Route path="/shop" element={<Shop />} />
         <Route path="/categories" element={<CategoriesPage />} />
@@ -30,6 +33,10 @@ export const AppRoutes: React.FC = () => {
         <Route path="/blog/post/:id" element={<BlogDetailsPage />} />
         <Route path="/about" element={<AboutPage />} />
         <Route path="/login" element={<LoginPage />} />
+        <Route path="/videos" element={<VideosPage />} />
+        <Route path="/cart" element={<CartPage />} />
+        <Route path="/checkout" element={<CheckoutPage />} />
+
 
 
 

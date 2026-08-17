@@ -42,11 +42,18 @@ export const ShopPage: React.FC<ShopPageProps> = ({ onAddToCart }) => {
   const [isFilterDrawerOpen, setIsFilterDrawerOpen] = useState<boolean>(false);
   const [currentPage, setCurrentPage] = useState<number>(1);
 
+  // URL Query Param থেকে Category ID বা বাংলা নাম ম্যাচ করা
   useEffect(() => {
     const categoryParam = searchParams.get('category');
     if (categoryParam) {
+      const matchedCategory = CATEGORIES.find(
+        (cat) =>
+          cat.id.toLowerCase() === categoryParam.toLowerCase() ||
+          cat.name.toLowerCase() === categoryParam.toLowerCase()
+      );
+      
       // eslint-disable-next-line react-hooks/set-state-in-effect
-      setSelectedCategory(categoryParam);
+      setSelectedCategory(matchedCategory ? matchedCategory.id : categoryParam);
     } else {
       setSelectedCategory('all');
     }
@@ -56,7 +63,9 @@ export const ShopPage: React.FC<ShopPageProps> = ({ onAddToCart }) => {
     if (categoryId === 'all') {
       searchParams.delete('category');
     } else {
-      searchParams.set('category', categoryId);
+      // লিঙ্ক শেয়ারিং এবং ফিল্টারিং সহজ রাখতে CATEGORY name বা ID সেট করা
+      const matchedCategory = CATEGORIES.find((cat) => cat.id === categoryId);
+      searchParams.set('category', matchedCategory ? matchedCategory.name : categoryId);
     }
     setSearchParams(searchParams);
   };
@@ -65,8 +74,11 @@ export const ShopPage: React.FC<ShopPageProps> = ({ onAddToCart }) => {
     return MOCK_PRODUCTS.filter((product) => {
       const activeCategoryObj = CATEGORIES.find(cat => cat.id === selectedCategory);
       
-      const matchesCategory = selectedCategory === 'all' || 
-        product.category.toLowerCase() === activeCategoryObj?.name.toLowerCase();
+      // আইডি, ডিসপ্লে নাম বা সরাসরি ডাইনামিক ক্যাটাগরি নেম (যদি বাংলা প্রপস আসে) দিয়ে চেক
+      const matchesCategory = 
+        selectedCategory === 'all' || 
+        product.category.toLowerCase() === selectedCategory.toLowerCase() ||
+        (activeCategoryObj && product.category.toLowerCase() === activeCategoryObj.name.toLowerCase());
 
       const matchesSearch = product.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
                             product.category.toLowerCase().includes(searchQuery.toLowerCase());
@@ -87,7 +99,6 @@ export const ShopPage: React.FC<ShopPageProps> = ({ onAddToCart }) => {
     setCurrentPage(1);
   }, [selectedCategory, searchQuery, maxPrice, inStockOnly, sortBy]);
 
-  // 👉 পেজিনেশন নম্বর (currentPage) পরিবর্তন হলে স্ক্রোল করে পেজের একদম উপরে চলে যাবে
   useEffect(() => {
     window.scrollTo({
       top: 0,

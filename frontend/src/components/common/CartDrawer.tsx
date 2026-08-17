@@ -2,14 +2,14 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { X, Trash2, Plus, Minus, ShoppingBag, ArrowRight } from 'lucide-react';
 
-export interface CartItem {
+export type CartItem = {
   id: string;
   name: string;
   price: number;
-  unit: string;
+  unit?: string;
   image: string;
   quantity: number;
-}
+};
 
 interface CartDrawerProps {
   isOpen: boolean;
@@ -163,3 +163,4 @@ interface CartDrawerProps {
     </div>
   );
 };
+

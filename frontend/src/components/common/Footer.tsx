@@ -5,10 +5,6 @@ import {
   Phone, 
   Mail, 
   MapPin, 
-  Truck, 
-  ShieldCheck, 
-  Headphones, 
-  CreditCard
 } from 'lucide-react';
 
 export const Footer: React.FC = () => {
@@ -17,47 +13,7 @@ export const Footer: React.FC = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         
         {/* সার্ভিস হাইলাইটস / ফিচার সেকশন */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 pb-10 border-b border-gray-800 text-center sm:text-left">
-          <div className="flex items-center space-x-4 justify-center sm:justify-start">
-            <div className="p-3 bg-primary-600/10 text-primary-500 rounded-xl">
-              <Truck className="w-6 h-6" />
-            </div>
-            <div>
-              <h4 className="font-semibold text-white">দ্রুত ডেলিভারি</h4>
-              <p className="text-xs text-gray-400">ঢাকা: ৳৬০ | ঢাকার বাইরে: ৳১২০</p>
-            </div>
-          </div>
-
-          <div className="flex items-center space-x-4 justify-center sm:justify-start">
-            <div className="p-3 bg-primary-600/10 text-primary-500 rounded-xl">
-              <CreditCard className="w-6 h-6" />
-            </div>
-            <div>
-              <h4 className="font-semibold text-white">ক্যাশ অন ডেলিভারি</h4>
-              <p className="text-xs text-gray-400">পণ্য হাতে পেয়ে মূল্য পরিশোধ</p>
-            </div>
-          </div>
-
-          <div className="flex items-center space-x-4 justify-center sm:justify-start">
-            <div className="p-3 bg-primary-600/10 text-primary-500 rounded-xl">
-              <ShieldCheck className="w-6 h-6" />
-            </div>
-            <div>
-              <h4 className="font-semibold text-white">১০০% আসল পণ্য</h4>
-              <p className="text-xs text-gray-400">সেরা গুণমান নিশ্চিত করা হয়</p>
-            </div>
-          </div>
-
-          <div className="flex items-center space-x-4 justify-center sm:justify-start">
-            <div className="p-3 bg-primary-600/10 text-primary-500 rounded-xl">
-              <Headphones className="w-6 h-6" />
-            </div>
-            <div>
-              <h4 className="font-semibold text-white">২৪/৭ কাস্টমার সাপোর্ট</h4>
-              <p className="text-xs text-gray-400">যেকোনো দরকারে কল করুন</p>
-            </div>
-          </div>
-        </div>
+        
 
         {/* প্রধান ফুটার কনটেন্ট */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8 py-10">
