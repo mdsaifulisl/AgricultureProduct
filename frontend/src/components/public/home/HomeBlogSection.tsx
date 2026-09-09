@@ -1,10 +1,11 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, BookOpen } from 'lucide-react';
-import { BlogGrid, type BlogPost } from '../blog/BlogGrid';
+import { BlogGrid } from '../blog/BlogGrid';
 import blogsData from '../../../data/blogs.json';
+import type { BlogPost } from '../../../types/index';
 
-const blogs = blogsData as BlogPost[];
+const blogs = blogsData as unknown as BlogPost[];
 
 export const HomeBlogSection: React.FC = () => {
   // হোম পেজের জন্য শুধুমাত্র প্রথম ৩টি ব্লগ ফিল্টার করে নেওয়া হচ্ছে

@@ -1,15 +1,15 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { Leaf, Search } from 'lucide-react';
-import { BlogGrid, type BlogPost } from '../../../components/public/blog/BlogGrid';
-import blogsData from '../../../data/blogs.json';
+import { BlogGrid } from '../../../components/public/blog/BlogGrid';
+import BlogsData from '../../../data/blogData.json';
+import { type BlogPost } from '../../../types/index';
 
-// JSON থেকে আনা ডাটা টাইপকাস্ট করে নিচ্ছি
-const MOCK_BLOGS = blogsData as BlogPost[];
+const MOCK_BLOGS = BlogsData as BlogPost[];
 
-const stripHtml = (html: string) => {
-  const tmp = document.createElement("DIV");
-  tmp.innerHTML = html;
-  return tmp.textContent || tmp.innerText || "";
+// RegEx ব্যবহার করে HTML ট্যাগ স্ট্রিপ করার সেফ হেলপার ফাংশন
+const stripHtml = (html?: string): string => {
+  if (!html) return '';
+  return html.replace(/<[^>]*>/g, '');
 };
 
 const BLOG_CATEGORIES = ['সকল পোস্ট', 'কৃষি টিপস', 'জৈব চাষাবাদ', 'গাছের যত্ন', 'আধুনিক প্রযুক্তি'];
@@ -23,13 +23,21 @@ export const BlogPage: React.FC = () => {
   }, []);
 
   const filteredBlogs = useMemo(() => {
+    const query = searchQuery.trim().toLowerCase();
+
     return MOCK_BLOGS.filter((blog) => {
       const matchesCategory = selectedCategory === 'সকল পোস্ট' || blog.category === selectedCategory;
-      const plainExcerpt = stripHtml(blog.excerpt).toLowerCase();
-      const matchesSearch = blog.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                            plainExcerpt.includes(searchQuery.toLowerCase());
 
-      return matchesCategory && matchesSearch;
+      if (!matchesCategory) return false;
+      if (!query) return true;
+
+      // excerpt বা content যেকোনো ফিল্ড সেফলি রিড করা
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const rawText = (blog as any).excerpt || blog.content || '';
+      const plainExcerpt = stripHtml(rawText).toLowerCase();
+      const titleMatches = blog.title?.toLowerCase().includes(query);
+
+      return titleMatches || plainExcerpt.includes(query);
     });
   }, [selectedCategory, searchQuery]);
 
@@ -58,8 +66,9 @@ export const BlogPage: React.FC = () => {
             {BLOG_CATEGORIES.map((category) => (
               <button
                 key={category}
+                type="button"
                 onClick={() => setSelectedCategory(category)}
-                className={`whitespace-nowrap px-4 py-2 rounded-xl text-sm font-semibold transition-colors ${
+                className={`whitespace-nowrap px-4 py-2 rounded-xl text-sm font-semibold transition-colors cursor-pointer ${
                   selectedCategory === category
                     ? 'bg-primary-600 text-white shadow-md'
                     : 'bg-gray-50 text-gray-600 hover:bg-gray-100 border border-gray-200'
@@ -77,7 +86,7 @@ export const BlogPage: React.FC = () => {
               placeholder="ব্লগ খুঁজুন..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none"
+              className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-primary-500 transition-colors"
             />
           </div>
         </div>
@@ -90,7 +99,3 @@ export const BlogPage: React.FC = () => {
 };
 
 export default BlogPage;
-
-
-
-

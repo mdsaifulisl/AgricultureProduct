@@ -57,7 +57,7 @@ const HERO_SLIDES: Slide[] = [
     imageAlt: 'কৃষি বীজ ও সার সামগ্রী',
     tag: 'কৃষি সামগ্রী'
   }
-];
+]; 
 
 const FEATURES = [
   {

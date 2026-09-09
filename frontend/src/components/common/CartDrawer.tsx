@@ -1,31 +1,65 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { X, Trash2, Plus, Minus, ShoppingBag, ArrowRight } from 'lucide-react';
+import { useCart } from "../../features/cartSlice/useCart";
+import { parseProductUnit, formatDisplayUnit } from '../../utils/unitConverter';
 
-export type CartItem = {
+export interface CartItem {
   id: string;
   name: string;
   price: number;
-  unit?: string;
   image: string;
+  unit?: string;
+  baseAmount?: number;
+  sku?: string;
   quantity: number;
-};
+  selectedSpec?: Record<string, string>;
+}
 
 interface CartDrawerProps {
   isOpen: boolean;
   onClose: () => void;
-  items: CartItem[];
-  onUpdateQuantity: (id: string, delta: number) => void;
-  onRemoveItem: (id: string) => void;
 }
- export const CartDrawer: React.FC<CartDrawerProps> = ({
+
+export const CartDrawer: React.FC<CartDrawerProps> = ({
   isOpen,
   onClose,
-  items,
-  onUpdateQuantity,
-  onRemoveItem,
 }) => {
-  const subtotal = items.reduce((acc, item) => acc + item.price * item.quantity, 0);
+  const { cartItems, updateQuantity, removeFromCart } = useCart();
+
+  // কোয়ান্টিটি বাড়ানো/কমানোর হ্যান্ডলার
+  const handleUpdateQuantity = (id: string, delta: number) => {
+    const item = cartItems.find((i) => i.id === id);
+    if (!item) return;
+
+    // parseProductUnit দিয়ে ব্যাকআপ baseAmount নেওয়া
+    const parsed = parseProductUnit(item.unit || '');
+    const baseStep = item.baseAmount || parsed?.baseAmount || 1;
+
+    const unitLower = item.unit?.toLowerCase() || '';
+    const isGram = unitLower.includes('gram') || unitLower.includes('গ্রাম') || unitLower.includes('mili') || unitLower.includes('মি.লি.');
+    const step = isGram ? baseStep : 1;
+
+    const newQuantity = item.quantity + (delta * step);
+
+    if (newQuantity <= 0) { 
+      removeFromCart(id);
+    } else {
+      updateQuantity(id, newQuantity);
+    }
+  };
+
+  // কার্ট থেকে রিমুভ করার হ্যান্ডলার
+  const handleRemoveItem = (id: string) => {
+    removeFromCart(id);
+  };
+
+  // সাবটোটাল হিসাব
+  const subtotal = cartItems.reduce((acc, item) => {
+    const base = item.baseAmount || 1;
+    const itemTotal = (item.price / base) * item.quantity;
+    return acc + itemTotal;
+  }, 0);
 
   if (!isOpen) return null;
 
@@ -37,7 +71,7 @@ interface CartDrawerProps {
         onClick={onClose}
       />
 
-      <div className="fixed inset-y-0 right-0 max-w-full flex pl-10">
+      <div className="fixed inset-y-0 right-0 max-w-full flex pl-3 md:pl-10">
         <div className="w-screen max-w-md bg-white shadow-2xl flex flex-col justify-between">
           
           {/* Header */}
@@ -46,7 +80,7 @@ interface CartDrawerProps {
               <ShoppingBag className="w-5 h-5 text-accent-400" />
               <h2 className="text-lg font-bold">আপনার শপিং কার্ট</h2>
               <span className="bg-primary-800 text-primary-200 text-xs px-2.5 py-0.5 rounded-full font-semibold">
-                {items.length} টি পণ্য
+                {cartItems.length} টি পণ্য
               </span>
             </div>
             <button 
@@ -59,12 +93,12 @@ interface CartDrawerProps {
 
           {/* Item List */}
           <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4">
-            {items.length === 0 ? (
+            {cartItems.length === 0 ? (
               <div className="h-full flex flex-col items-center justify-center text-center space-y-3">
                 <div className="w-16 h-16 bg-primary-50 rounded-full flex items-center justify-center text-primary-600">
                   <ShoppingBag className="w-8 h-8" />
                 </div>
-                <p className="text-base font-bold text-gray-800">কার্ট খালি রয়েছে</p>
+                <p className="text-base font-bold text-gray-800">কার্ট খালি রয়েছে</p>
                 <p className="text-xs text-gray-500 max-w-xs">
                   আপনার পছন্দমতো কৃষিপণ্য কার্টে যোগ করতে শপ পেজ ব্রাউজ করুন।
                 </p>
@@ -76,63 +110,76 @@ interface CartDrawerProps {
                 </button>
               </div>
             ) : (
-              items.map((item) => (
-                <div 
-                  key={item.id} 
-                  className="flex items-center gap-3.5 p-3 rounded-2xl border border-gray-100 bg-gray-50/50 hover:bg-white hover:border-primary-100 hover:shadow-xs transition-all"
-                >
-                  <img 
-                    src={item.image} 
-                    alt={item.name} 
-                    className="w-16 h-16 rounded-xl object-cover shrink-0 border border-gray-100 bg-white"
-                  />
+              cartItems.map((item) => {
+                const base = item.baseAmount || 1;
+                const itemTotalPrice = (item.price / base) * item.quantity;
 
-                  <div className="flex-1 min-w-0">
-                    <h3 className="text-xs sm:text-sm font-bold text-gray-900 truncate">{item.name}</h3>
-                    <div className="text-xs font-semibold text-primary-700 mt-0.5">
-                      {item.price}৳ <span className="text-[10px] text-gray-500 font-normal">/ {item.unit}</span>
+                // 💡 formatDisplayUnit ফাংশনটি কল করা হলো
+                const formatted = formatDisplayUnit(item.quantity, item.unit || '');
+
+                return (
+                  <div 
+                    key={item.id} 
+                    className="flex items-center gap-3.5 p-3 rounded-2xl border border-gray-100 bg-gray-50/50 hover:bg-white hover:border-primary-100 hover:shadow-xs transition-all"
+                  >
+                    <img 
+                      src={item.image} 
+                      alt={item.name} 
+                      className="w-16 h-16 rounded-xl object-cover shrink-0 border border-gray-100 bg-white"
+                    />
+
+                    <div className="flex-1 min-w-0">
+                      <h3 className="text-xs sm:text-sm font-bold text-gray-900 truncate">{item.name}</h3>
+                      <div className="text-xs font-semibold text-primary-700 mt-0.5">
+                        {item.price}৳ <span className="text-[10px] text-gray-500 font-normal">/ {item.unit}</span>
+                      </div>
+
+                      {/* Quantity Controls */}
+                      <div className="flex items-center gap-2 mt-2">
+                        <button
+                          onClick={() => handleUpdateQuantity(item.id, -1)}
+                          className="w-6 h-6 rounded-lg bg-white border border-gray-200 flex items-center justify-center text-gray-600 hover:bg-gray-100 transition-colors cursor-pointer shrink-0"
+                        >
+                          <Minus className="w-3 h-3" />
+                        </button>
+                        
+                        {/* 💡 ফরম্যাট করা পরিমাপ প্রদর্শন (যেমন: ১.৫ কেজি / ৫০০ গ্রাম) */}
+                        <span className="text-xs font-bold text-gray-800 text-center min-w-[55px] px-1 whitespace-nowrap">
+                          {formatted.quantity} {formatted.unit}
+                        </span>
+
+                        <button
+                          onClick={() => handleUpdateQuantity(item.id, 1)}
+                          className="w-6 h-6 rounded-lg bg-white border border-gray-200 flex items-center justify-center text-gray-600 hover:bg-gray-100 transition-colors cursor-pointer shrink-0"
+                        >
+                          <Plus className="w-3 h-3" />
+                        </button>
+                      </div>
                     </div>
 
-                    {/* Quantity Controls */}
-                    <div className="flex items-center gap-2 mt-2">
+                    <div className="flex flex-col items-end justify-between self-stretch">
                       <button
-                        onClick={() => onUpdateQuantity(item.id, -1)}
-                        className="w-6 h-6 rounded-lg bg-white border border-gray-200 flex items-center justify-center text-gray-600 hover:bg-gray-100 transition-colors cursor-pointer"
+                        onClick={() => handleRemoveItem(item.id)}
+                        className="text-gray-400 hover:text-red-500 p-1 transition-colors cursor-pointer"
                       >
-                        <Minus className="w-3 h-3" />
+                        <Trash2 className="w-4 h-4" />
                       </button>
-                      <span className="text-xs font-bold text-gray-800 w-5 text-center">{item.quantity}</span>
-                      <button
-                        onClick={() => onUpdateQuantity(item.id, 1)}
-                        className="w-6 h-6 rounded-lg bg-white border border-gray-200 flex items-center justify-center text-gray-600 hover:bg-gray-100 transition-colors cursor-pointer"
-                      >
-                        <Plus className="w-3 h-3" />
-                      </button>
+                      <span className="text-xs font-bold text-gray-900">
+                        {Math.round(itemTotalPrice)}৳
+                      </span>
                     </div>
                   </div>
-
-                  <div className="flex flex-col items-end justify-between self-stretch">
-                    <button
-                      onClick={() => onRemoveItem(item.id)}
-                      className="text-gray-400 hover:text-red-500 p-1 transition-colors cursor-pointer"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                    <span className="text-xs font-bold text-gray-900">
-                      {item.price * item.quantity}৳
-                    </span>
-                  </div>
-                </div>
-              ))
+                );
+              })
             )}
           </div>
 
           {/* Footer Subtotal & Checkout */}
-          {items.length > 0 && (
+          {cartItems.length > 0 && (
             <div className="p-4 sm:p-6 border-t border-gray-100 bg-gray-50/80 space-y-3">
               <div className="flex items-center justify-between text-sm">
                 <span className="text-gray-600 font-medium">সর্বমোট মূল্য</span>
-                <span className="text-lg font-black text-primary-700">{subtotal}৳</span>
+                <span className="text-lg font-black text-primary-700">{Math.round(subtotal)}৳</span>
               </div>
               <p className="text-[10px] text-gray-500">
                 ডেলিভারি চার্জ চেকআউট পেজে হিসাব করা হবে।
@@ -163,4 +210,3 @@ interface CartDrawerProps {
     </div>
   );
 };
-

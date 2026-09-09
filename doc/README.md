@@ -33,3 +33,36 @@ src/
 │   └── index.ts
 ├── App.tsx
 └── main.tsx
+
+
+
+
+
+server/
+├── prisma/
+│   └── schema.prisma          <-- Database Schema & Models
+├── src/
+│   ├── config/                <-- Database & App Configurations
+│   │   ├── env.ts
+│   │   └── prisma.ts
+│   ├── controllers/           <-- Request & Response Controllers
+│   │   └── user.controller.ts
+│   ├── interfaces/            <-- Custom TypeScript Types & Interfaces
+│   │   └── index.d.ts
+│   ├── middlewares/           <-- Global Error, Auth, Upload Middlewares
+│   │   ├── auth.middleware.ts
+│   │   ├── error.middleware.ts
+│   │   └── upload.middleware.ts
+│   ├── routes/                <-- API Route Declarations
+│   │   ├── index.ts
+│   │   └── user.route.ts
+│   ├── services/              <-- Database Queries via Prisma (Business Logic)
+│   │   └── user.service.ts
+│   ├── utils/                 <-- Utility Functions (jwt, response helpers)
+│   │   └── catchAsync.ts
+│   ├── app.ts                 <-- Express App, Cors, Middlewares & Routes Mount
+│   └── server.ts              <-- Server Listener & Database Connection
+├── .env
+├── package.json
+├── PRISMA.md
+└── tsconfig.json

@@ -1,22 +1,11 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { Tag, Sparkles, SlidersHorizontal, ChevronDown, ChevronLeft, ChevronRight, X, Percent } from 'lucide-react';
+import { Tag, Sparkles, SlidersHorizontal, ChevronDown, ChevronLeft, ChevronRight, X, Percent, Loader2, AlertCircle } from 'lucide-react';
 
-import type { Product } from "../../../components/common/ProductCard";
+import type { Product } from "../../../types/index";
 import { ProductGrid } from "../../../components/common/ProductGrid";
-import ProductData from '../../../data/products.json';
+import { useProduct } from "../../../features/product/useProduct";
 
 const ITEMS_PER_PAGE = 8;
-const MOCK_PRODUCTS: Product[] = ProductData as unknown as Product[];
-
-const OFFER_CATEGORIES = [
-  { id: 'all', name: 'সকল অফার' },
-  { id: 'vegetables', name: 'তাজা সবজি' },
-  { id: 'fruits', name: 'তাজা ফলমূল' },
-  { id: 'seeds-plants', name: 'বীজ ও চারা' },
-  { id: 'organic-fertilizer', name: 'জৈব সার' },
-  { id: 'agro-equipment', name: 'কৃষি যন্ত্রপাতি' }, 
-  { id: 'natural-food', name: 'প্রাকৃতিক খাবার' }
-];
 
 interface OffersPageProps {
   onAddToCart?: (product: Product) => void;
@@ -28,17 +17,44 @@ export const OffersPage: React.FC<OffersPageProps> = ({ onAddToCart }) => {
   const [isFilterDrawerOpen, setIsFilterDrawerOpen] = useState<boolean>(false);
   const [currentPage, setCurrentPage] = useState<number>(1);
 
-  // শুধুমাত্র যেসব পণ্যে ছাড় বা Badge আছে সেগুলোকে ফিল্টার করা
+  // Redux store থেকে প্রোডাক্ট ডাটা ও মেথড আনা
+  const { products, isLoading, isError, error, fetchAllProducts } = useProduct(true);
+
+  // ১. প্রোডাক্টের ভেতর থেকে ডাইনামিক ইউনিক ক্যাটাগরি লিস্ট তৈরি
+  const offerCategories = useMemo(() => {
+    const defaultCat = { id: 'all', name: 'সকল অফার' };
+    
+    if (!products || products.length === 0) {
+      return [defaultCat];
+    }
+
+    // সব প্রোডাক্ট থেকে ইউনিক ক্যাটাগরির নাম ফিল্টার করা
+    const uniqueCategoryNames = Array.from(
+      new Set(
+        products
+          .map((p) => p.category)
+          .filter((cat): cat is string => Boolean(cat))
+      )
+    );
+
+    const mappedCategories = uniqueCategoryNames.map((catName) => ({
+      id: catName,
+      name: catName,
+    }));
+
+    return [defaultCat, ...mappedCategories];
+  }, [products]);
+
+  // ২. শুধুমাত্র যেসব পণ্যে ছাড় বা Badge আছে সেগুলোকে ফিল্টার ও সর্ট করা
   const discountedProducts = useMemo(() => {
-    return MOCK_PRODUCTS.filter((product) => {
-      const hasDiscount = product.originalPrice && product.originalPrice > product.price;
+    return products.filter((product) => {
+      const hasDiscount = Boolean(product.originalPrice && product.originalPrice > product.price);
       const hasBadge = Boolean(product.badge);
       
-      const matchesCategory = selectedCategory === 'all' || product.categorySlug === selectedCategory;
+      const matchesCategory = selectedCategory === 'all' || product.category === selectedCategory;
 
       return (hasDiscount || hasBadge) && matchesCategory;
     }).sort((a, b) => {
-      // ডিসকাউন্ট পার্সেন্টেজ হিসাব করা
       const getDiscountPercent = (p: Product) => {
         if (!p.originalPrice || p.originalPrice <= p.price) return 0;
         return ((p.originalPrice - p.price) / p.originalPrice) * 100;
@@ -52,7 +68,7 @@ export const OffersPage: React.FC<OffersPageProps> = ({ onAddToCart }) => {
       if (sortBy === 'rating') return (b.rating || 0) - (a.rating || 0);
       return 0;
     });
-  }, [selectedCategory, sortBy]);
+  }, [products, selectedCategory, sortBy]);
 
   // ফিল্টার বদলালে ১ম পেজে ফেরত যাওয়া
   useEffect(() => {
@@ -60,7 +76,7 @@ export const OffersPage: React.FC<OffersPageProps> = ({ onAddToCart }) => {
     setCurrentPage(1);
   }, [selectedCategory, sortBy]);
 
-  // পেজিনেশন চেঞ্জ হলে স্মুথলি স্ক্রোল করে উপরে চলে যাওয়া
+  // পেজিনেশন চেঞ্জ হলে স্ক্রোল করে উপরে চলে যাওয়া
   useEffect(() => {
     window.scrollTo({
       top: 0,
@@ -74,6 +90,33 @@ export const OffersPage: React.FC<OffersPageProps> = ({ onAddToCart }) => {
     const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
     return discountedProducts.slice(startIndex, startIndex + ITEMS_PER_PAGE);
   }, [discountedProducts, currentPage]);
+
+  // লোডিং স্টেট
+  if (isLoading && products.length === 0) {
+    return (
+      <div className="min-h-[60vh] flex flex-col items-center justify-center py-12 text-emerald-600">
+        <Loader2 className="w-10 h-10 animate-spin mb-3" />
+        <p className="text-sm font-medium text-gray-600">অফার প্রোডাক্টসমূহ লোড হচ্ছে...</p>
+      </div>
+    );
+  }
+
+  // এরর স্টেট
+  if (isError && products.length === 0) {
+    return (
+      <div className="min-h-[60vh] flex flex-col items-center justify-center py-12 px-4 text-center">
+        <AlertCircle className="w-12 h-12 text-red-500 mb-3" />
+        <h2 className="text-xl font-bold text-gray-900 mb-1">ডাটা লোড করতে সমস্যা হয়েছে!</h2>
+        <p className="text-gray-600 text-sm mb-4">{error || 'সার্ভার থেকে অফার ডাটা ফেচ করা যায়নি।'}</p>
+        <button
+          onClick={fetchAllProducts}
+          className="bg-emerald-600 text-white font-bold px-5 py-2 rounded-xl text-sm"
+        >
+          আবার চেষ্টা করুন
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className="bg-gray-50/60 min-h-screen py-6 sm:py-10">
@@ -90,11 +133,10 @@ export const OffersPage: React.FC<OffersPageProps> = ({ onAddToCart }) => {
               সেরা দামে কিনুন <br />প্রাকৃতিক ও খাঁটি পণ্য!
             </h1>
             <p className="text-emerald-100 text-xs sm:text-base font-medium">
-              আপনার পছন্দের তাজা সবজি, ফলমূল, খাঁটি খাবার এবং কৃষি সরঞ্জামে পাচ্ছেন আকর্ষণীয় ছাড়। স্টক শেষ হওয়ার আগেই অর্ডার করুন!
+              আপনার পছন্দের তাজা সবজি, ফলমূল, খাঁটি খাবার এবং কৃষি সরঞ্জামে পাচ্ছেন আকর্ষণীয় ছাড়। স্টক শেষ হওয়ার আগেই অর্ডার করুন!
             </p>
           </div>
 
-          {/* Decorative Elements */}
           <div className="absolute -right-12 -bottom-12 w-64 h-64 bg-white/10 rounded-full blur-2xl pointer-events-none" />
           <div className="absolute right-8 top-1/2 -translate-y-1/2 hidden md:block opacity-25">
             <Percent className="w-64 h-64 stroke-[1.5]" />
@@ -106,7 +148,7 @@ export const OffersPage: React.FC<OffersPageProps> = ({ onAddToCart }) => {
           
           {/* Category Quick Chips */}
           <div className="flex items-center gap-2 overflow-x-auto w-full sm:w-auto pb-2 sm:pb-0 no-scrollbar">
-            {OFFER_CATEGORIES.map((cat) => (
+            {offerCategories.map((cat) => (
               <button
                 key={cat.id}
                 onClick={() => setSelectedCategory(cat.id)}
@@ -137,7 +179,7 @@ export const OffersPage: React.FC<OffersPageProps> = ({ onAddToCart }) => {
                 onChange={(e) => setSortBy(e.target.value)}
                 className="w-full appearance-none bg-gray-50 border border-gray-200 text-xs sm:text-sm font-semibold text-gray-700 py-2.5 pl-3.5 pr-8 rounded-xl focus:outline-none focus:border-emerald-600 cursor-pointer"
               >
-                <option value="discount-high">সর্বোচ্চ ছাড় আগে</option>
+                <option value="discount-high">সর্বোচ্চ ছাড় আগে</option>
                 <option value="price-low">কম দাম থেকে শুরু</option>
                 <option value="price-high">বেশি দাম থেকে শুরু</option>
                 <option value="rating">সেরা রেটিং</option>
@@ -154,7 +196,7 @@ export const OffersPage: React.FC<OffersPageProps> = ({ onAddToCart }) => {
               <div className="w-12 h-12 bg-emerald-50 rounded-full flex items-center justify-center mx-auto text-emerald-600">
                 <Tag className="w-6 h-6" />
               </div>
-              <p className="text-base font-bold text-gray-800">বর্তমানে কোনো অফার চলছ না!</p>
+              <p className="text-base font-bold text-gray-800">বর্তমানে কোনো অফার চলছে না!</p>
               <p className="text-xs text-gray-500">
                 অন্য ক্যাটাগরি সিলেক্ট করুন অথবা পরবর্তীতে আবার চেক করুন।
               </p>
@@ -214,7 +256,7 @@ export const OffersPage: React.FC<OffersPageProps> = ({ onAddToCart }) => {
               </div>
 
               <div className="space-y-1">
-                {OFFER_CATEGORIES.map((cat) => (
+                {offerCategories.map((cat) => (
                   <button
                     key={cat.id}
                     onClick={() => {

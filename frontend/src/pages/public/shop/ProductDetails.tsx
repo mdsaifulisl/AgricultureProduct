@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { 
   ShoppingBag, 
   Heart, 
@@ -11,59 +11,70 @@ import {
   ChevronRight, 
   Truck, 
   ShieldCheck, 
-  RotateCcw 
+  RotateCcw,
+  Loader2,
+  AlertCircle
 } from 'lucide-react';
+import { Helmet } from 'react-helmet-async';
+import { useProduct } from "../../../features/product/useProduct";
+import { useCart } from '../../../features/cartSlice/useCart';
+import { parseProductUnit } from '../../../utils/unitParser'; 
 
-import PRODUCTS_DATA from "../../../data/products.json";
-import { type Product } from "../../../components/common/ProductCard";
-
-export const ProductDetails: React.FC = () => {
+export const ProductDetails: React.FC = () => { 
   const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
 
-  // আইডি দিয়ে নির্দিষ্ট প্রোডাক্ট খোঁজা
-  const product = PRODUCTS_DATA.find((item) => item.id === id) as Product | undefined;
+  // Custom hook ব্যবহার করে Redux state ও action আনা
+  const { products, isLoading, isError, error, fetchAllProducts } = useProduct(true);
+  const { addToCart } = useCart();
 
-  const imagesList = product?.images && product.images.length > 0 
-    ? product.images 
-    : [product?.image || ''];
+  // Redux-এর products array থেকে আইডি দিয়ে প্রোডাক্ট খোঁজা
+  const product = products.find((item) => item.id === id);
+
+  const imagesList: string[] = product?.images
+    ? (Array.isArray(product.images) ? product.images : [product.images])
+    : [''];
 
   const [selectedImage, setSelectedImage] = useState<string>('');
 
-  // ইউনিট অনুযায়ী ডায়নামিক Step ও Min Quantity নির্ধারণ
-  const isPieceUnit = ['টি', 'প্যাকেট', 'জোড়া', 'বক্স', 'পিস'].includes(
-    product?.unit?.trim() || ''
-  );
+  // প্রোডাক্ট লোড হলে প্রথম ছবিটিকে fallback হিসেবে ব্যবহার করা
+  const currentImage = imagesList.includes(selectedImage)
+    ? selectedImage
+    : imagesList[0] || '';
 
-  const STEP_SIZE = isPieceUnit ? 1 : 0.5;
-  const MIN_QUANTITY = isPieceUnit ? 1 : 0.5;
+  // unitParser ব্যবহার করে ইউনিটের তথ্য এক্সট্র্যাক্ট করা
+  const { initialQuantity, baseAmount, unitLabel } = parseProductUnit(product?.unit);
 
-  const [quantity, setQuantity] = useState<number>(MIN_QUANTITY);
+  const STEP_SIZE = initialQuantity;
+  const MIN_QUANTITY = initialQuantity;
 
-  // প্রোডাক্ট লোড হলে ডিফল্ট ইমেজ ও ইনিশিয়াল কোয়ান্টিটি সেট করা
+  const [quantityState, setQuantityState] = useState({
+    productId: id,
+    value: MIN_QUANTITY,
+  });
+
+  // Page reload বা async data fetch হওয়ার পর quantity সঠিকভাবে sync করার জন্য useEffect
   useEffect(() => {
-    if (imagesList.length > 0) {
+    if (product) {
       // eslint-disable-next-line react-hooks/set-state-in-effect
-      setSelectedImage(imagesList[0]);
+      setQuantityState({
+        productId: id,
+        value: initialQuantity,
+      });
     }
-    setQuantity(MIN_QUANTITY);
-  }, [product]);
+  }, [product?.id, initialQuantity, id]);
 
-  if (!product) {
-    return (
-      <div className="min-h-[60vh] flex flex-col items-center justify-center py-12 px-4 text-center">
-        <h2 className="text-2xl font-bold text-gray-900 mb-2">প্রোডাক্টটি পাওয়া যায়নি!</h2>
-        <p className="text-gray-600 mb-6 text-sm">আপনি যে প্রোডাক্টটি খুঁজছেন তা মুছে ফেলা হয়েছে অথবা ইউআরএল ভুল।</p>
-        <Link
-          to="/"
-          className="bg-primary-600 hover:bg-primary-700 text-white font-bold px-6 py-2.5 rounded-xl transition-all text-sm"
-        >
-          হোম পেজে ফিরে যান
-        </Link>
-      </div>
-    );
-  }
+  const quantity = quantityState.productId === id
+    ? quantityState.value
+    : MIN_QUANTITY;
 
-  // + এবং - বাটনের জন্য হ্যান্ডলার
+  const setQuantity = (value: number | ((previous: number) => number)) => {
+    setQuantityState(() => ({
+      productId: id,
+      value: typeof value === 'function' ? value(quantity) : value,
+    }));
+  };
+
   const handleQuantityChange = (type: 'inc' | 'dec') => {
     if (type === 'dec') {
       setQuantity((prev) => {
@@ -75,7 +86,6 @@ export const ProductDetails: React.FC = () => {
     }
   };
 
-  // ম্যানুয়াল ইনপুটের জন্য হ্যান্ডলার
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = parseFloat(e.target.value);
     
@@ -84,23 +94,90 @@ export const ProductDetails: React.FC = () => {
       return;
     }
 
-    if (isPieceUnit) {
-      setQuantity(Math.floor(val));
-    } else {
-      setQuantity(Number(val.toFixed(2)));
-    }
+    setQuantity(Number(val.toFixed(2)));
   };
 
+  // ডাইনামিক প্রাইস হিসাব
+  const calculatedTotalPrice = Math.round((product?.price || 0) / (baseAmount || 1) * quantity);
+
   const handleAddToCart = () => {
-    console.log('Added to cart:', { 
-      product, 
-      quantity, 
-      totalPrice: Number((product.price * quantity).toFixed(2)) 
-    });
+    if (!product) return;
+    addToCart(
+      {
+        id: product.id,
+        name: product.name,
+        price: product.price,
+        image: currentImage,
+        sku: product.sku,
+        unit: unitLabel || product.unit,
+        baseAmount: baseAmount || 1,
+      },
+      quantity
+    );
   };
+
+  // লোডিং স্টেট হ্যান্ডলিং
+  if (isLoading && products.length === 0) {
+    return (
+      <div className="min-h-[60vh] flex flex-col items-center justify-center py-12 text-primary-600">
+        <Loader2 className="w-10 h-10 animate-spin mb-3" />
+        <p className="text-sm font-medium text-gray-600">প্রোডাক্ট লোড হচ্ছে...</p>
+      </div>
+    );
+  }
+
+  // এরর স্টেট হ্যান্ডলিং
+  if (isError) {
+    return (
+      <div className="min-h-[60vh] flex flex-col items-center justify-center py-12 px-4 text-center">
+        <AlertCircle className="w-12 h-12 text-red-500 mb-3" />
+        <h2 className="text-xl font-bold text-gray-900 mb-1">সমস্যা দেখা দিয়েছে!</h2>
+        <p className="text-gray-600 text-sm mb-4">{error || 'ডাটা ফেচ করতে সমস্যা হচ্ছে।'}</p>
+        <button
+          onClick={fetchAllProducts}
+          className="bg-primary-600 text-white font-bold px-5 py-2 rounded-xl text-sm cursor-pointer"
+        >
+          আবার চেষ্টা করুন
+        </button>
+      </div>
+    );
+  }
+
+  // প্রোডাক্ট না পাওয়া গেলে
+  if (!product) {
+    return (
+      <div className="min-h-[60vh] flex flex-col items-center justify-center py-12 px-4 text-center">
+        <Helmet>
+          <title>প্রোডাক্ট পাওয়া যায়নি</title>
+        </Helmet>
+        <h2 className="text-2xl font-bold text-gray-900 mb-2">প্রোডাক্টটি পাওয়া যায়নি!</h2>
+        <p className="text-gray-600 mb-6 text-sm">আপনি যে প্রোডাক্টটি খুঁজছেন তা মুছে ফেলা হয়েছে অথবা ইউআরএল ভুল।</p>
+        <button
+          onClick={() => navigate(-1)}
+          className="bg-primary-600 hover:bg-primary-700 text-white font-bold px-6 py-2.5 rounded-xl transition-all text-sm cursor-pointer"
+        >
+          ফিরে যান
+        </button>
+      </div>
+    );
+  }
+
+  const metaDescription = product.metaDescription 
+    || product.shortDescription 
+    || `${product.name} সেরা দামে কিনুন। ${product.description?.slice(0, 150) || ''}...`;
 
   return (
     <div className="bg-gray-50/50 py-8 lg:py-12">
+      <Helmet>
+        <title>{product.name}</title>
+        <meta name="description" content={metaDescription} />
+
+        <meta property="og:title" content={product.name} />
+        <meta property="og:description" content={metaDescription} />
+        <meta property="og:image" content={currentImage} />
+        <meta property="og:type" content="product" />
+      </Helmet>
+
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         
         {/* Breadcrumb Navigation */}
@@ -118,7 +195,7 @@ export const ProductDetails: React.FC = () => {
             <div className="flex flex-col gap-4">
               <div className="relative aspect-square rounded-2xl overflow-hidden bg-gray-100 border border-gray-100">
                 <img
-                  src={selectedImage || imagesList[0]}
+                  src={currentImage}
                   alt={product.name}
                   className="w-full h-full object-cover transition-all duration-300"
                 />
@@ -137,7 +214,7 @@ export const ProductDetails: React.FC = () => {
                       key={index}
                       onClick={() => setSelectedImage(img)}
                       className={`relative w-20 h-20 rounded-xl overflow-hidden border-2 transition-all flex-shrink-0 cursor-pointer ${
-                        (selectedImage || imagesList[0]) === img 
+                        currentImage === img 
                           ? 'border-primary-600 ring-2 ring-primary-100' 
                           : 'border-gray-200 hover:border-gray-300'
                       }`}
@@ -191,18 +268,24 @@ export const ProductDetails: React.FC = () => {
                 )}
 
                 {/* Price Display */}
-                <div className="flex items-baseline gap-3 p-4 bg-gray-50/80 rounded-2xl mb-6">
+                <div className="flex flex-wrap items-baseline gap-3 p-4 bg-gray-50/80 rounded-2xl mb-6">
                   <span className="text-2xl sm:text-3xl font-black text-gray-900">
-                    {(product.price * quantity).toFixed(0)}৳
+                    {product.price}৳
                   </span>
+                  
                   {product.originalPrice && (
                     <span className="text-base text-gray-400 line-through font-normal">
-                      {(product.originalPrice * quantity).toFixed(0)}৳
+                      {product.originalPrice}৳
                     </span>
                   )}
-                  <span className="text-xs sm:text-sm text-gray-600 font-medium">
-                    ({quantity} {product.unit})
+
+                  <span className="text-xs sm:text-sm text-gray-500 font-medium">
+                    / {product.unit}
                   </span>
+
+                  <div className="ml-auto bg-primary-50 text-primary-700 px-3 py-1 rounded-lg text-xs sm:text-sm font-bold">
+                    মোট: {calculatedTotalPrice}৳
+                  </div>
                 </div>
 
                 {/* Description */}
@@ -233,10 +316,10 @@ export const ProductDetails: React.FC = () => {
                           min={MIN_QUANTITY}
                           value={quantity}
                           onChange={handleInputChange}
-                          className="w-12 text-center font-bold text-sm text-gray-900 bg-transparent outline-none focus:ring-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                          className="w-14 text-center font-bold text-sm text-gray-900 bg-transparent outline-none focus:ring-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                         />
                         <span className="text-xs font-medium text-gray-500 pr-2">
-                          {product.unit}
+                          {unitLabel || product.unit}
                         </span>
                       </div>
 

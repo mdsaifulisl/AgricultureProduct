@@ -1,5 +1,4 @@
-/* eslint-disable react-hooks/purity */
-import React, { useState } from 'react';
+import React, { useState, useId } from 'react';
 import { Link } from 'react-router-dom';
 import { 
   ArrowLeft, 
@@ -13,53 +12,46 @@ import {
   FileText 
 } from 'lucide-react';
 
-export type CheckoutItem = {
-  id: string;
-  name: string;
-  price: number;
-  unit?: string;
-  image: string;
-  quantity: number;
-};
-
-// UI টেস্ট করার জন্য ডামি ডেটা
-const DEMO_CHECKOUT_ITEMS: CheckoutItem[] = [
-  {
-    id: '1',
-    name: 'অর্গানিক খাঁটি সরিষার তেল',
-    price: 320,
-    unit: 'লিটার',
-    image: 'https://images.unsplash.com/photo-1474979266404-7eaacbcd87c5?auto=format&fit=crop&q=80&w=300',
-    quantity: 2,
-  },
-  {
-    id: '2',
-    name: 'সুন্দরবনের প্রাকৃতিক মধু',
-    price: 850,
-    unit: 'কেজি',
-    image: 'https://images.unsplash.com/photo-1587049352847-4a222e784d38?auto=format&fit=crop&q=80&w=300',
-    quantity: 1,
-  },
-];
+import { useCart } from '../../../features/cartSlice/useCart';
+import { useAppDispatch } from '../../../app/hooks';
+import { showToast } from '../../../features/toast/toastSlice';
 
 type LocationZone = 'dhaka' | 'outside';
 
+interface OrderSummary {
+  trackingId: string;
+  totalAmount: number;
+}
+
 export const CheckoutPage: React.FC = () => {
-  const [items] = useState<CheckoutItem[]>(DEMO_CHECKOUT_ITEMS);
+  const dispatch = useAppDispatch();
+  const { cartItems, clearCart } = useCart();
+
   const [shippingZone, setShippingZone] = useState<LocationZone>('dhaka');
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [orderSummary, setOrderSummary] = useState<OrderSummary | null>(null);
+
+  const trackingId = useId().replace(/:/g, '').slice(0, 6).toUpperCase();
 
   // Form States
   const [formData, setFormData] = useState({
     fullName: '',
     phone: '',
     address: '',
-    note: '',
+    note: '', 
   });
 
   const deliveryFee = shippingZone === 'dhaka' ? 60 : 120;
-  const subtotal = items.reduce((acc, item) => acc + item.price * item.quantity, 0);
-  const grandTotal = subtotal + deliveryFee;
+
+  // Base Amount সহ সাবটোটাল হিসাব
+  const subtotal = cartItems.reduce((acc, item) => {
+    const base = item.baseAmount || 1;
+    const itemTotal = (item.price / base) * item.quantity;
+    return acc + itemTotal;
+  }, 0);
+
+  // subtotal এর সাথে deliveryFee যোগ
+  const grandTotal = Math.round(subtotal) + deliveryFee;
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -68,17 +60,31 @@ export const CheckoutPage: React.FC = () => {
 
   const handleSubmitOrder = (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (cartItems.length === 0) {
+      dispatch(showToast('আপনার কার্ট খালি রয়েছে!', 'error'));
+      return;
+    }
+
+    // কার্ট খালি করার আগেই সামারি সেভ করে রাখা হচ্ছে
+    setOrderSummary({
+      trackingId,
+      totalAmount: grandTotal,
+    });
+
     setIsSubmitted(true);
+    clearCart();
+    dispatch(showToast('অর্ডার সফলভাবে জমা হয়েছে!', 'success'));
   };
 
-  if (isSubmitted) {
+  if (isSubmitted && orderSummary) {
     return (
       <div className="min-h-[70vh] flex flex-col items-center justify-center p-4 text-center">
         <div className="w-20 h-20 bg-green-50 rounded-full flex items-center justify-center text-green-600 mb-4 animate-bounce">
           <CheckCircle2 className="w-12 h-12" />
         </div>
         <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900 mb-2">
-          আপনার অর্ডারটি সফলভাবে গৃহীত হয়েছে!
+          আপনার অর্ডারটি সফলভাবে গৃহীত হয়েছে!
         </h1>
         <p className="text-sm text-gray-600 max-w-md mb-6">
           ধন্যবাদ <span className="font-bold text-gray-900">{formData.fullName}</span>। আমাদের প্রতিনিধি খুব শীঘ্রই আপনার সাথে যোগাযোগ করবেন।
@@ -86,13 +92,12 @@ export const CheckoutPage: React.FC = () => {
         <div className="bg-gray-50 border border-gray-100 rounded-2xl p-6 max-w-sm w-full text-left mb-6 space-y-2 text-sm">
           <p className="flex justify-between text-gray-600">
             <span>অর্ডার ট্র্যাকিং আইডি:</span>
-            // eslint-disable-next-line react-hooks/purity
-            <span className="font-bold text-gray-900">#ORD-{Math.floor(100000 + Math.random() * 900000)}</span>
+            <span className="font-bold text-gray-900">#ORD-{orderSummary.trackingId}</span>
           </p>
           <p className="flex justify-between text-gray-600">
             <span>মোট টাকা:</span>
-            <span className="font-bold text-primary-700">{grandTotal}৳</span>
-          </p> 
+            <span className="font-bold text-primary-700">{orderSummary.totalAmount}৳</span>
+          </p>
           <p className="flex justify-between text-gray-600">
             <span>পেমেন্ট মেথড:</span>
             <span className="font-medium text-gray-800">ক্যাশ অন ডেলিভারি</span>
@@ -109,9 +114,29 @@ export const CheckoutPage: React.FC = () => {
     );
   }
 
+  if (cartItems.length === 0) {
+    return (
+      <div className="min-h-[70vh] flex flex-col items-center justify-center p-4 text-center">
+        <div className="w-20 h-20 bg-primary-50 rounded-full flex items-center justify-center text-primary-600 mb-4">
+          <ShoppingBag className="w-10 h-10" />
+        </div>
+        <h1 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2">চেকআউটের জন্য কার্টে কোনো পণ্য নেই</h1>
+        <p className="text-sm text-gray-500 max-w-sm mb-6">
+          অর্ডার সম্পন্ন করার জন্য আগে কার্টে পণ্য যোগ করুন।
+        </p>
+        <Link
+          to="/shop"
+          className="inline-flex items-center gap-2 bg-primary-600 text-white text-sm font-bold px-6 py-3 rounded-xl hover:bg-primary-700 transition-colors"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          <span>কেনাকাটা করুন</span>
+        </Link>
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
-      {/* Header */}
       <div className="mb-8">
         <Link
           to="/cart"
@@ -127,7 +152,6 @@ export const CheckoutPage: React.FC = () => {
       </div>
 
       <form onSubmit={handleSubmitOrder} className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-        {/* Shipping & Customer Details */}
         <div className="lg:col-span-7 space-y-6">
           <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-xs space-y-5">
             <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2 pb-3 border-b border-gray-100">
@@ -135,7 +159,6 @@ export const CheckoutPage: React.FC = () => {
               <span>ডেলিভারি তথ্য</span>
             </h2>
 
-            {/* Name Input */}
             <div>
               <label className="block text-xs font-bold text-gray-700 mb-1.5">
                 আপনার নাম <span className="text-red-500">*</span>
@@ -154,7 +177,6 @@ export const CheckoutPage: React.FC = () => {
               </div>
             </div>
 
-            {/* Phone Input */}
             <div>
               <label className="block text-xs font-bold text-gray-700 mb-1.5">
                 মোবাইল নম্বর <span className="text-red-500">*</span>
@@ -173,7 +195,6 @@ export const CheckoutPage: React.FC = () => {
               </div>
             </div>
 
-            {/* Delivery Area Selection */}
             <div>
               <label className="block text-xs font-bold text-gray-700 mb-2">
                 ডেলিভারি এরিয়া সিলেক্ট করুন <span className="text-red-500">*</span>
@@ -223,7 +244,6 @@ export const CheckoutPage: React.FC = () => {
               </div>
             </div>
 
-            {/* Full Address Input */}
             <div>
               <label className="block text-xs font-bold text-gray-700 mb-1.5">
                 সম্পূর্ণ ঠিকানা <span className="text-red-500">*</span>
@@ -242,7 +262,6 @@ export const CheckoutPage: React.FC = () => {
               </div>
             </div>
 
-            {/* Note / Special Request */}
             <div>
               <label className="block text-xs font-bold text-gray-700 mb-1.5">
                 অর্ডার নোট (ঐচ্ছিক)
@@ -261,7 +280,6 @@ export const CheckoutPage: React.FC = () => {
             </div>
           </div>
 
-          {/* Payment Method Notice */}
           <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-xs space-y-3">
             <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2">
               <ShieldCheck className="w-5 h-5 text-primary-600" />
@@ -274,7 +292,7 @@ export const CheckoutPage: React.FC = () => {
                 </div>
                 <div>
                   <p className="text-sm font-bold text-gray-800">ক্যাশ অন ডেলিভারি (COD)</p>
-                  <p className="text-xs text-gray-500">পণ্য হাতে পেয়ে টাকা পরিশোধ করুন</p>
+                  <p className="text-xs text-gray-500">পণ্য হাতে পেয়ে টাকা পরিশোধ করুন</p>
                 </div>
               </div>
               <Truck className="w-6 h-6 text-gray-400" />
@@ -282,41 +300,43 @@ export const CheckoutPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Order Summary Sidebar */}
         <div className="lg:col-span-5">
           <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-xs space-y-5 sticky top-6">
             <h2 className="text-lg font-bold text-gray-900 pb-3 border-b border-gray-100 flex items-center justify-between">
               <span>অর্ডার বিবরণী</span>
-              <span className="text-xs font-semibold text-gray-500">({items.length} টি পণ্য)</span>
+              <span className="text-xs font-semibold text-gray-500">({cartItems.length} টি পণ্য)</span>
             </h2>
 
-            {/* Selected Items List */}
             <div className="space-y-3 max-h-60 overflow-y-auto pr-1">
-              {items.map((item) => (
-                <div key={item.id} className="flex items-center gap-3">
-                  <img
-                    src={item.image}
-                    alt={item.name}
-                    className="w-12 h-12 rounded-lg object-cover border border-gray-100 shrink-0"
-                  />
-                  <div className="flex-1 min-w-0">
-                    <h4 className="text-xs font-bold text-gray-800 truncate">{item.name}</h4>
-                    <p className="text-xs text-gray-500">
-                      {item.price}৳ × {item.quantity}
-                    </p>
+              {cartItems.map((item) => {
+                const base = item.baseAmount || 1;
+                const itemTotalPrice = (item.price / base) * item.quantity;
+
+                return (
+                  <div key={item.id} className="flex items-center gap-3">
+                    <img
+                      src={item.image}
+                      alt={item.name}
+                      className="w-12 h-12 rounded-lg object-cover border border-gray-100 shrink-0"
+                    />
+                    <div className="flex-1 min-w-0">
+                      <h4 className="text-xs font-bold text-gray-800 truncate">{item.name}</h4>
+                      <p className="text-xs text-gray-500">
+                        {item.price}৳ × {item.quantity} {item.unit || ''}
+                      </p>
+                    </div>
+                    <span className="text-xs font-bold text-gray-900 shrink-0">
+                      {Math.round(itemTotalPrice)}৳
+                    </span>
                   </div>
-                  <span className="text-xs font-bold text-gray-900 shrink-0">
-                    {item.price * item.quantity}৳
-                  </span>
-                </div>
-              ))}
+                );
+              })}
             </div>
 
-            {/* Calculations */}
             <div className="pt-4 border-t border-gray-100 space-y-2 text-sm">
               <div className="flex justify-between text-gray-600">
                 <span>উপ-মোট (Subtotal)</span>
-                <span className="font-bold text-gray-900">{subtotal}৳</span>
+                <span className="font-bold text-gray-900">{Math.round(subtotal)}৳</span>
               </div>
               <div className="flex justify-between text-gray-600">
                 <span>ডেলিভারি চার্জ</span>

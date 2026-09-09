@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState, useRef, useEffect, useMemo } from "react";
 import { Link, NavLink, useNavigate, useLocation } from "react-router-dom";
 import {
@@ -19,6 +20,7 @@ import {
   BookOpen,
   Video,
 } from "lucide-react";
+import { useProduct } from "../../features/product/useProduct";
 
 interface NavbarProps {
   cartCount?: number;
@@ -28,51 +30,15 @@ interface NavbarProps {
 }
 
 const MOCK_PRODUCTS = [
-  {
-    id: "1",
-    name: "তাজা লাল টমেটো",
-    category: "তাজা সবজি",
-    price: "৪০৳ / কেজি",
-    image: "🍅",
-  },
-  {
-    id: "2",
-    name: "দেশি সবুজ শসা",
-    category: "তাজা সবজি",
-    price: "৩০৳ / কেজি",
-    image: "🥒",
-  },
-  {
-    id: "3",
-    name: "মিষ্টি আলফান্সো আম",
-    category: "ফলমূল",
-    price: "১২০৳ / কেজি",
-    image: "🥭",
-  },
-  {
-    id: "4",
-    name: "উচ্চ ফলনশীল বেগুন বীজ",
-    category: "বীজ ও চারা",
-    price: "৫০৳ / প্যাকেট",
-    image: "🌱",
-  },
-  {
-    id: "5",
-    name: "জৈব কেঁচো সার (Vermicompost)",
-    category: "জৈব সার ও কীটনাশক",
-    price: "২৫৳ / কেজি",
-    image: "🧪",
-  },
-  {
-    id: "6",
-    name: "স্প্রে মেশিন ১০ লিটার",
-    category: "কৃষি যন্ত্রপাতি",
-    price: "১২০০৳",
-    image: "🚜",
-  },
+  { id: "1", name: "তাজা লাল টমেটো", category: "তাজা সবজি", price: "৪০৳ / কেজি", image: "🍅" },
+  { id: "2", name: "দেশি সবুজ শসা", category: "তাজা সবজি", price: "৩০৳ / কেজি", image: "🥒" },
+  { id: "3", name: "মিষ্টি আলফান্সো আম", category: "ফলমূল", price: "১২০৳ / কেজি", image: "🥭" },
+  { id: "4", name: "উচ্চ ফলনশীল বেগুন বীজ", category: "বীজ ও চারা", price: "৫০৳ / প্যাকেট", image: "🌱" },
+  { id: "5", name: "জৈব কেঁচো সার (Vermicompost)", category: "জৈব সার ও কীটনাশক", price: "২৫৳ / কেজি", image: "🧪" },
+  { id: "6", name: "স্প্রে মেশিন ১০ লিটার", category: "কৃষি যন্ত্রপাতি", price: "১২০০৳", image: "🚜" },
 ];
 
-const CATEGORIES = [
+const STATIC_CATEGORIES = [
   { name: "তাজা সবজি", desc: "রাসায়নিক মুক্ত তাজা সবজি", icon: "🥬" },
   { name: "ফলমূল", desc: "দেশি ও আমদানিকৃত তাজা ফল", icon: "🍎" },
   { name: "বীজ ও চারা", desc: "উচ্চ ফলনশীল বীজ ও উন্নত চারা", icon: "🌱" },
@@ -87,17 +53,36 @@ export const Navbar: React.FC<NavbarProps> = ({
   onOpenCart,
   onSearch,
 }) => {
+  const { products } = useProduct(true);
   const location = useLocation();
+  const navigate = useNavigate();
+
   const [searchQuery, setSearchQuery] = useState("");
   const [isSearching, setIsSearching] = useState(false);
-
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isCategoryDropdownOpen, setIsCategoryDropdownOpen] = useState(false);
   const [isMobileCategoryOpen, setIsMobileCategoryOpen] = useState(false);
 
   const categoryRef = useRef<HTMLDivElement>(null);
   const searchRef = useRef<HTMLDivElement>(null);
-  const navigate = useNavigate();
+
+  // Dynamic Categories calculated from products hook
+  const dynamicCategories = useMemo(() => {
+    if (!products || products.length === 0) return STATIC_CATEGORIES;
+
+    const uniqueCategoryNames = Array.from(
+      new Set(products.map((item: any) => item.category).filter(Boolean))
+    );
+
+    return uniqueCategoryNames.map((catName) => {
+      const existing = STATIC_CATEGORIES.find((c) => c.name === catName);
+      return {
+        name: catName,
+        desc: existing ? existing.desc : "উৎকৃষ্ট মানের কৃষিপণ্য",
+        icon: existing ? existing.icon : "🌱",
+      };
+    });
+  }, [products]);
 
   const searchResults = useMemo(() => {
     const query = searchQuery.trim().toLowerCase();
@@ -105,7 +90,7 @@ export const Navbar: React.FC<NavbarProps> = ({
     return MOCK_PRODUCTS.filter(
       (item) =>
         item.name.toLowerCase().includes(query) ||
-        item.category.toLowerCase().includes(query),
+        item.category.toLowerCase().includes(query)
     );
   }, [searchQuery]);
 
@@ -160,8 +145,7 @@ export const Navbar: React.FC<NavbarProps> = ({
 
           <div className="hidden lg:flex items-center gap-6 text-primary-200/90 text-xs shrink-0 font-medium">
             <span className="flex items-center gap-1.5 hover:text-white transition-colors cursor-pointer">
-              <Truck className="w-3.5 h-3.5 text-primary-400" /> অর্ডার
-              ট্র্যাকিং
+              <Truck className="w-3.5 h-3.5 text-primary-400" /> অর্ডার ট্র্যাকিং
             </span>
             <span className="flex items-center gap-1.5 hover:text-white transition-colors">
               <Phone className="w-3.5 h-3.5 text-primary-400" /> হটলাইন:{" "}
@@ -171,10 +155,9 @@ export const Navbar: React.FC<NavbarProps> = ({
         </div>
       </div>
 
-      {/* 2. MAIN HEADER (Logo, Search & Actions) */}
+      {/* 2. MAIN HEADER */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-20 gap-3 lg:gap-8">
-          {/* Logo */}
           <Link to="/" className="flex items-center gap-2.5 group shrink-0">
             <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary-500 to-primary-700 flex items-center justify-center text-white shadow-md shadow-primary-200 group-hover:scale-105 transition-transform">
               <Sprout className="w-6 h-6" />
@@ -189,11 +172,8 @@ export const Navbar: React.FC<NavbarProps> = ({
             </div>
           </Link>
 
-          {/* Search Bar with Live Results (Desktop) */}
-          <div
-            className="hidden md:flex items-center flex-1 max-w-2xl relative"
-            ref={searchRef}
-          >
+          {/* Search Bar */}
+          <div className="hidden md:flex items-center flex-1 max-w-2xl relative" ref={searchRef}>
             <form
               onSubmit={handleSearchSubmit}
               className="flex w-full items-center bg-gray-50/80 border border-primary-200 rounded-full focus-within:bg-white focus-within:border-primary-600 focus-within:ring-4 focus-within:ring-primary-500/10 transition-all overflow-hidden shadow-inner pl-4 pr-1.5 py-1.5"
@@ -209,7 +189,6 @@ export const Navbar: React.FC<NavbarProps> = ({
                 onFocus={() => searchQuery.trim() && setIsSearching(true)}
                 className="w-full text-sm bg-transparent border-none focus:outline-none text-gray-800 placeholder-gray-400 font-normal"
               />
-
               <button
                 type="submit"
                 className="bg-primary-600 hover:bg-primary-700 active:scale-95 text-white p-2.5 px-6 rounded-full flex items-center justify-center transition-all font-medium shrink-0 cursor-pointer"
@@ -219,7 +198,6 @@ export const Navbar: React.FC<NavbarProps> = ({
               </button>
             </form>
 
-            {/* Live Search Results Dropdown */}
             {isSearching && searchQuery.trim().length > 0 && (
               <div className="absolute left-0 right-0 top-full mt-2 bg-white border border-gray-100 rounded-2xl shadow-xl py-3 z-50 animate-fade-in overflow-hidden">
                 <div className="px-4 pb-2 mb-1 border-b border-gray-100 text-[11px] font-bold text-gray-400 uppercase tracking-wider flex justify-between items-center">
@@ -239,12 +217,8 @@ export const Navbar: React.FC<NavbarProps> = ({
                         <div className="flex items-center gap-3">
                           <span className="text-2xl">{item.image}</span>
                           <div>
-                            <div className="text-xs font-bold text-gray-800">
-                              {item.name}
-                            </div>
-                            <div className="text-[10px] text-primary-600">
-                              {item.category}
-                            </div>
+                            <div className="text-xs font-bold text-gray-800">{item.name}</div>
+                            <div className="text-[10px] text-primary-600">{item.category}</div>
                           </div>
                         </div>
                         <div className="text-xs font-semibold text-gray-700 bg-gray-100 px-2.5 py-1 rounded-full">
@@ -278,9 +252,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             </button>
 
             <button
-              onClick={() => {
-                navigate("/login");
-              }}
+              onClick={() => navigate("/login")}
               className="hidden sm:flex items-center gap-2 bg-primary-600 hover:bg-primary-700 active:scale-95 text-white text-sm font-semibold px-5 py-2.5 rounded-full shadow-xs shadow-primary-200 transition-all cursor-pointer"
             >
               <UserIcon className="w-4 h-4" />
@@ -292,16 +264,12 @@ export const Navbar: React.FC<NavbarProps> = ({
               className="md:hidden p-2 text-gray-700 hover:bg-gray-100 rounded-xl transition-colors cursor-pointer"
               aria-label="Toggle Menu"
             >
-              {isMobileMenuOpen ? (
-                <X className="w-6 h-6" />
-              ) : (
-                <Menu className="w-6 h-6" />
-              )}
+              {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
             </button>
           </div>
         </div>
 
-        {/* Mobile Search Bar */}
+        {/* Mobile Search */}
         <div className="md:hidden pb-3 relative">
           <form
             onSubmit={handleSearchSubmit}
@@ -317,35 +285,10 @@ export const Navbar: React.FC<NavbarProps> = ({
               }}
               className="w-full text-xs bg-transparent px-3 focus:outline-none"
             />
-            <button
-              type="submit"
-              className="bg-primary-600 text-white p-2 rounded-lg shrink-0 cursor-pointer"
-            >
+            <button type="submit" className="bg-primary-600 text-white p-2 rounded-lg shrink-0 cursor-pointer">
               <Search className="w-3.5 h-3.5" />
             </button>
           </form>
-
-          {isSearching &&
-            searchQuery.trim().length > 0 &&
-            searchResults.length > 0 && (
-              <div className="absolute left-0 right-0 top-full mt-1 bg-white border border-gray-100 rounded-xl shadow-xl py-2 z-50 animate-fade-in">
-                {searchResults.map((item) => (
-                  <button
-                    key={item.id}
-                    type="button"
-                    onClick={() => handleSelectProduct(item.name)}
-                    className="w-full flex items-center justify-between px-3 py-2 border-b border-gray-50 text-xs text-left cursor-pointer hover:bg-primary-50"
-                  >
-                    <span className="font-medium text-gray-800">
-                      {item.image} {item.name}
-                    </span>
-                    <span className="text-[10px] text-primary-600 font-bold">
-                      {item.price}
-                    </span>
-                  </button>
-                ))}
-              </div>
-            )}
         </div>
       </div>
 
@@ -353,17 +296,18 @@ export const Navbar: React.FC<NavbarProps> = ({
       <nav className="hidden md:block bg-gray-50/80 border-t border-primary-100/60">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between text-sm font-semibold text-gray-700">
           <div className="flex items-center gap-8">
+            {/* Dynamic Category Dropdown */}
             <div className="relative py-2" ref={categoryRef}>
               <button
-                onClick={() =>
-                  setIsCategoryDropdownOpen(!isCategoryDropdownOpen)
-                }
+                onClick={() => setIsCategoryDropdownOpen(!isCategoryDropdownOpen)}
                 className="flex items-center gap-2.5 bg-primary-600 text-white px-5 py-2.5 rounded-xl hover:bg-primary-700 transition-all shadow-xs shadow-primary-200 cursor-pointer"
               >
                 <Menu className="w-4 h-4" />
                 <span>সকল ক্যাটাগরি</span>
                 <ChevronDown
-                  className={`w-4 h-4 transition-transform duration-200 ${isCategoryDropdownOpen ? "rotate-180" : ""}`}
+                  className={`w-4 h-4 transition-transform duration-200 ${
+                    isCategoryDropdownOpen ? "rotate-180" : ""
+                  }`}
                 />
               </button>
 
@@ -372,7 +316,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                   <div className="px-3 pb-2 mb-2 border-b border-gray-100 text-[11px] font-bold text-gray-400 uppercase tracking-wider">
                     পণ্য ক্যাটাগরি
                   </div>
-                  {CATEGORIES.map((cat) => (
+                  {dynamicCategories.map((cat) => (
                     <Link
                       key={cat.name}
                       to={`/shop?category=${encodeURIComponent(cat.name)}`}
@@ -400,7 +344,9 @@ export const Navbar: React.FC<NavbarProps> = ({
               <NavLink
                 to="/"
                 className={({ isActive }) =>
-                  `flex items-center gap-1.5 py-3 transition-colors ${isActive ? "text-primary-700 font-bold border-b-2 border-primary-600" : "hover:text-primary-600"}`
+                  `flex items-center gap-1.5 py-3 transition-colors ${
+                    isActive ? "text-primary-700 font-bold border-b-2 border-primary-600" : "hover:text-primary-600"
+                  }`
                 }
               >
                 <Home className="w-4 h-4" />
@@ -410,7 +356,9 @@ export const Navbar: React.FC<NavbarProps> = ({
               <NavLink
                 to="/shop"
                 className={({ isActive }) =>
-                  `flex items-center gap-1.5 py-3 transition-colors ${isActive ? "text-primary-700 font-bold border-b-2 border-primary-600" : "hover:text-primary-600"}`
+                  `flex items-center gap-1.5 py-3 transition-colors ${
+                    isActive ? "text-primary-700 font-bold border-b-2 border-primary-600" : "hover:text-primary-600"
+                  }`
                 }
               >
                 <Store className="w-4 h-4" />
@@ -420,7 +368,9 @@ export const Navbar: React.FC<NavbarProps> = ({
               <NavLink
                 to="/offers"
                 className={({ isActive }) =>
-                  `flex items-center gap-1.5 py-3 transition-colors ${isActive ? "text-primary-700 font-bold border-b-2 border-primary-600" : "hover:text-primary-600"}`
+                  `flex items-center gap-1.5 py-3 transition-colors ${
+                    isActive ? "text-primary-700 font-bold border-b-2 border-primary-600" : "hover:text-primary-600"
+                  }`
                 }
               >
                 <Percent className="w-4 h-4 text-accent-500" />
@@ -430,7 +380,9 @@ export const Navbar: React.FC<NavbarProps> = ({
               <NavLink
                 to="/videos"
                 className={({ isActive }) =>
-                  `flex items-center gap-1.5 py-3 transition-colors ${isActive ? "text-primary-700 font-bold border-b-2 border-primary-600" : "hover:text-primary-600"}`
+                  `flex items-center gap-1.5 py-3 transition-colors ${
+                    isActive ? "text-primary-700 font-bold border-b-2 border-primary-600" : "hover:text-primary-600"
+                  }`
                 }
               >
                 <Video className="w-4 h-4 text-primary-600" />
@@ -440,7 +392,9 @@ export const Navbar: React.FC<NavbarProps> = ({
               <NavLink
                 to="/blog"
                 className={({ isActive }) =>
-                  `flex items-center gap-1.5 py-3 transition-colors ${isActive ? "text-primary-700 font-bold border-b-2 border-primary-600" : "hover:text-primary-600"}`
+                  `flex items-center gap-1.5 py-3 transition-colors ${
+                    isActive ? "text-primary-700 font-bold border-b-2 border-primary-600" : "hover:text-primary-600"
+                  }`
                 }
               >
                 <BookOpen className="w-4 h-4" />
@@ -450,7 +404,9 @@ export const Navbar: React.FC<NavbarProps> = ({
               <NavLink
                 to="/about"
                 className={({ isActive }) =>
-                  `flex items-center gap-1.5 py-3 transition-colors ${isActive ? "text-primary-700 font-bold border-b-2 border-primary-600" : "hover:text-primary-600"}`
+                  `flex items-center gap-1.5 py-3 transition-colors ${
+                    isActive ? "text-primary-700 font-bold border-b-2 border-primary-600" : "hover:text-primary-600"
+                  }`
                 }
               >
                 <Info className="w-4 h-4" />
@@ -493,7 +449,7 @@ export const Navbar: React.FC<NavbarProps> = ({
 
               {isMobileCategoryOpen && (
                 <div className="pl-6 space-y-1 py-1 bg-gray-50 rounded-lg my-1">
-                  {CATEGORIES.map((cat) => (
+                  {dynamicCategories.map((cat) => (
                     <Link
                       key={cat.name}
                       to={`/shop?category=${encodeURIComponent(cat.name)}`}
@@ -585,8 +541,7 @@ export const Navbar: React.FC<NavbarProps> = ({
         </div>
       )}
 
-      {/* 5. FLOATING SIDE CART BUTTON (Cart > 0 হলে স্ক্রিনের ডানদিকে মাঝখানে দেখাবে) */}
-
+      {/* 5. FLOATING SIDE CART BUTTON */}
       {cartCount > 0 && location.pathname !== "/cart" && (
         <button
           onClick={onOpenCart}

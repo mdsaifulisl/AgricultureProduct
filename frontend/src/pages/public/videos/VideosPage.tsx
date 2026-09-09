@@ -1,18 +1,18 @@
 import React, { useState, useMemo } from "react";
 import { Play, Search, Clock, Eye, Video, Sparkles, X } from "lucide-react";
-
+import { type VideoItem } from '../../../types/index';
 // --- TYPES ---
-export interface VideoItem {
-  id: string;
-  title: string;
-  description: string;
-  youtubeId: string;
-  category: string;
-  duration: string;
-  views: string;
-  createdAt: string | Date;
-  featured?: boolean;
-}
+// export interface VideoItem {
+//   id: string;
+//   title: string;
+//   description: string;
+//   youtubeId: string;
+//   category: string;
+//   duration: string;
+//   views: string;
+//   createdAt: string | Date;
+//   featured?: boolean;
+// }
 
 // --- HELPER FUNCTIONS ---
 
@@ -89,19 +89,20 @@ const CATEGORIES = [
 // --- MOCK DATABASE DATA ---
 const MOCK_VIDEOS: VideoItem[] = [
   {
-    id: "1",
-    title: "টবে সহজ পদ্ধতিতে টমেটো চাষ ও পরিচর্যা গাইড-২৫৫৪",
-    description:
-      "বাসার ছাদে বা বারান্দায় কীভাবে সহজে অর্গানিক উপায়ে লাল টমেটো ফলন বৃদ্ধি করবেন তার সম্পূর্ণ গাইডলাইন।",
-    youtubeId: "https://youtu.be/7wtfhZwyrcc?si=DaxUknUGG7znoIRP",
-    category: "কৃষি টিউটোরিয়াল",
-    duration: "০৩:৩৭",
-    views: "১.২ কে",
-    createdAt: "2026-08-14T10:00:00.000Z",
-    featured: true,
+      id: "1",
+      title: "টবে সহজ পদ্ধতিতে টমেটো চাষ ও পরিচর্যা গাইড-২৫৫৪",
+      description: "বাসার ছাদে বা বারান্দায় কীভাবে সহজে অর্গানিক উপায়ে লাল টমেটো ফলন বৃদ্ধি করবেন তার সম্পূর্ণ গাইডলাইন।",
+      youtubeId: "https://youtu.be/7wtfhZwyrcc?si=DaxUknUGG7znoIRP",
+      category: "কৃষি টিউটোরিয়াল",
+      duration: "০৩:৩৭",
+      views: "১.২ কে",
+      createdAt: "2026-08-14T10:00:00.000Z",
+      featured: true,
+      status: "active",
   },
   {
     id: "2",
+    status: "active",
     title: "জৈব কেঁচো সার (Vermicompost) ব্যবহারের সঠিক নিয়ম",
     description:
       "মাটির উর্বরতা বৃদ্ধি ও গাছের দ্রুত বৃদ্ধির জন্য কীভাবে ভার্মিকম্পোস্ট প্রয়োগ করবেন জানুন।",
@@ -113,6 +114,7 @@ const MOCK_VIDEOS: VideoItem[] = [
   },
   {
     id: "3",
+    status: "active",
     title: "১০ লিটার ম্যানুয়াল স্প্রে মেশিনের আনবক্সিং ও রিভিউ",
     description:
       "আমাদের শপে থাকা উচ্চ ক্ষমতার স্প্রে পাম্পের কার্যক্ষমতা ও নজেল সেটিং দেখুন।",
@@ -124,6 +126,7 @@ const MOCK_VIDEOS: VideoItem[] = [
   },
   {
     id: "4",
+    status: "active",
     title: "হাইব্রিড শসা চাষে দ্বিগুণ লাভের আধুনিক কৌশল",
     description:
       "পরামর্শ ও মাটির প্রস্তুতি থেকে শুরু করে বাজারজাতকরণ পর্যন্ত পুরো প্রক্রিয়া।",
@@ -135,6 +138,7 @@ const MOCK_VIDEOS: VideoItem[] = [
   },
   {
     id: "5",
+    status: "active",
     title: "ড্রিপ ইরিগেশন বা ড্রিপ সেচ ব্যবস্থা কীভাবে স্থাপন করবেন?",
     description:
       "কম পানিতে বেশি ফলন পেতে আধুনিক ড্রিপ ইরিগেশন প্রযুক্তির ব্যবহার।",
@@ -146,9 +150,10 @@ const MOCK_VIDEOS: VideoItem[] = [
   },
   {
     id: "6",
+    status: "active",
     title: "গাছের পোকা দমনে ঘরোয়া নিম তেলের স্প্রে তৈরি",
     description:
-      "কোনো রাসায়নিক ছাড়াই পোকা-মাকড় দূর করার সহজ ও পরিবেশবান্ধব সমাধান।",
+      "কোনো রাসায়নিক ছাড়াই পোকা-মাকড় দূর করার সহজ ও পরিবেশবান্ধব সমাধান।",
     youtubeId: "7wtfhZwyrcc",
     category: "সার ও কীটনাশক",
     duration: "০৬:১০",

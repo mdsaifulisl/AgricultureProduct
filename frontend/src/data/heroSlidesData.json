@@ -1,0 +1,30 @@
+[
+  {
+    "id": 1,
+    "badge": "১০০% প্রাকৃতিকভাবে উৎপাদিত",
+    "title": "ক্ষেতের তাজা সবজি ও ফলমূল সরাসরি",
+    "highlightText": "আপনার দরজায়",
+    "description": "কোনো প্রকার মধ্যস্বত্বভোগী ছাড়াই সরাসরি প্রান্তিক কৃষকের মাঠ থেকে সংগ্রহ করা খাঁটি ও তাজা উপাদান এখন সহজে পৌঁছে যাচ্ছে আপনার ঘরে।",
+    "primaryBtnText": "পণ্যসমূহ দেখুন",
+    "primaryBtnLink": "/shop",
+    "secondaryBtnText": "আজকের অফার",
+    "secondaryBtnLink": "/offers",
+    "image": "https://images.unsplash.com/photo-1610348725531-843dff563e2c?auto=format&fit=crop&w=1000&q=80",
+    "imageAlt": "তাজা প্রাকৃতিকভাবে উৎপাদিত সবজি ও ফলমূল",
+    "tag": "দৈনিক তাজা বাজার"
+  },
+  {
+    "id": 2,
+    "badge": "উন্নত ফলনের ভরসা",
+    "title": "উচ্চ ফলনশীল বীজ ও আধুনিক",
+    "highlightText": "কৃষি যন্ত্রপাতি",
+    "description": "গুণগত মানসম্পন্ন সার, হাইব্রিড বীজ এবং আধুনিক স্প্রেয়ার ও অন্যান্য যন্ত্রপাতি দিয়ে আপনার কৃষিকাজকে করুন আরও সহজ ও লাভজনক।",
+    "primaryBtnText": "বীজ ও সার কিনুন",
+    "primaryBtnLink": "/shop?category=seeds",
+    "secondaryBtnText": "যন্ত্রপাতি দেখুন",
+    "secondaryBtnLink": "/shop?category=equipment",
+    "image": "https://th.bing.com/th/id/OIP.GPdFZFdceYnzQ31QB_ZbSAHaEJ?w=310&h=180&c=7&r=0&o=7&pid=1.7&rm=3",
+    "imageAlt": "কৃষি বীজ ও সার সামগ্রী",
+    "tag": "কৃষি সামগ্রী"
+  }
+]
