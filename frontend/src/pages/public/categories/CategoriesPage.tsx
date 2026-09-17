@@ -1,27 +1,43 @@
-import React, { useState, useMemo } from 'react';
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import React, { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
   Sparkles, 
   Search, 
   Grid, 
-  SlidersHorizontal 
+  SlidersHorizontal,
+  Loader2
 } from 'lucide-react';
 
 import { CategoryGrid } from '../../../components/public/Category/CategoryGrid';
 import { CategoryEmptyState } from '../../../components/public/Category/CategoryEmptyState';
-import CATEGORIES_DATA from '../../../data/categoriesData.json'; 
+import { useCategory } from '../../../features/category/useCategory';
 
 export const CategoriesPage: React.FC = () => {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
+  
+  const { 
+    categories = [], 
+    loading, 
+    getCategories 
+  } = useCategory();
+
+  // পেজ লোড হলে ক্যাটাগরি ডেটা ফেচ করার জন্য
+  useEffect(() => {
+    if (getCategories) {
+      getCategories();
+    }
+  }, []);
 
   const filteredCategories = useMemo(() => {
-    return CATEGORIES_DATA.filter((cat) =>
-      cat.bnName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      cat.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      cat.description.toLowerCase().includes(searchQuery.toLowerCase())
+    if (!Array.isArray(categories)) return [];
+    
+    return categories.filter((cat: any) =>
+      cat.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      cat.description?.toLowerCase().includes(searchQuery.toLowerCase())
     );
-  }, [searchQuery]);
+  }, [categories, searchQuery]);
 
   const handleCategoryClick = (slug: string) => {
     navigate(`/shop?category=${slug}`);
@@ -61,7 +77,7 @@ export const CategoriesPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Categories Section Control Header */}
+        {/* Control Header */}
         <div className="flex items-center justify-between mb-6 pb-4 border-b border-gray-200">
           <div className="flex items-center gap-2">
             <Grid className="w-5 h-5 text-emerald-700" />
@@ -76,8 +92,13 @@ export const CategoriesPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Empty State and Categories Grid */}
-        {filteredCategories.length === 0 ? (
+        {/* Loading & Data Rendering */}
+        {loading ? (
+          <div className="flex flex-col items-center justify-center py-20 text-emerald-600">
+            <Loader2 className="w-10 h-10 animate-spin mb-3" />
+            <p className="text-sm font-medium text-gray-600">ক্যাটাগরি লোড হচ্ছে...</p>
+          </div>
+        ) : filteredCategories.length === 0 ? (
           <CategoryEmptyState 
             searchQuery={searchQuery} 
             onReset={() => setSearchQuery('')} 

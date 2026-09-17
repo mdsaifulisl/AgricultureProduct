@@ -15,7 +15,7 @@ export const useProduct = (autoFetch: boolean = false) => {
   const { products, selectedProduct, isLoading, isError, error } = useAppSelector(
     (state) => state.product
   );
-
+ 
   useEffect(() => {
     if (autoFetch && products.length === 0 && !isLoading && !isError) {
       dispatch(getProducts());
@@ -55,3 +55,4 @@ export const useProduct = (autoFetch: boolean = false) => {
     clearError,
   };
 };
+

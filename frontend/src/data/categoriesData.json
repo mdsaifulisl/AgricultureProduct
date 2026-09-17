@@ -2,70 +2,40 @@
   {
     "id": "1",
     "name": "Fresh Vegetables",
-    "bnName": "তাজা সবজি",
-    "itemCount": 145,
     "image": "https://images.unsplash.com/photo-1540420773420-3366772f4999?auto=format&fit=crop&w=600&q=80",
-    "icon": "🥬",
     "description": "রাসায়নিক মুক্ত ও সরাসরি মাঠ থেকে সংগৃহীত তাজা সবজি",
-    "slug": "vegetables",
-    "badge": "সেরা বিক্রেতা",
-    "bgGradient": "from-emerald-500/10 via-emerald-500/5 to-transparent"
+    "badge": "সেরা বিক্রেতা"
   },
   {
     "id": "2",
     "name": "Fresh Fruits",
-    "bnName": "তাজা ফলমূল",
-    "itemCount": 98,
     "image": "https://images.unsplash.com/photo-1619566636858-adf3ef46400b?auto=format&fit=crop&w=600&q=80",
-    "icon": "🍎",
     "description": "দেশি ও আমদানিকৃত ১০০% মিষ্ট ও প্রাকৃতিক ফলমূল",
-    "slug": "fruits",
-    "badge": "জনপ্রিয়",
-    "bgGradient": "from-amber-500/10 via-amber-500/5 to-transparent"
+    "badge": "জনপ্রিয়"
   },
   {
     "id": "3",
     "name": "Seeds & Plants",
-    "bnName": "বীজ ও চারা",
-    "itemCount": 210,
     "image": "https://images.unsplash.com/photo-1530836369250-ef72a3f5cda8?auto=format&fit=crop&w=600&q=80",
-    "icon": "🌱",
-    "description": "উচ্চ ফলনশীল হাইব্রিড বীজ ও স্বাস্থ্যকর চারা গাছ",
-    "slug": "seeds-plants",
-    "bgGradient": "from-green-500/10 via-green-500/5 to-transparent"
+    "description": "উচ্চ ফলনশীল হাইব্রিড বীজ ও স্বাস্থ্যকর চারা গাছ"
   },
   {
     "id": "4",
     "name": "Organic Fertilizers",
-    "bnName": "জৈব সার ও কীটনাশক",
-    "itemCount": 76,
     "image": "https://images.unsplash.com/photo-1628352081506-83c43123ed6d?auto=format&fit=crop&w=600&q=80",
-    "icon": "🧪",
-    "description": "মাটির উর্বরতা বৃদ্ধিতে পরিবেশবান্ধব কেঁচো সার ও উপাদান",
-    "slug": "fertilizers",
-    "bgGradient": "from-lime-500/10 via-lime-500/5 to-transparent"
+    "description": "মাটির উর্বরতা বৃদ্ধিতে পরিবেশবান্ধব কেঁচো সার ও উপাদান"
   },
   {
     "id": "5",
     "name": "Agri Equipment",
-    "bnName": "কৃষি যন্ত্রপাতি",
-    "itemCount": 54,
     "image": "https://images.unsplash.com/photo-1589923188900-85dae523342b?auto=format&fit=crop&w=600&q=80",
-    "icon": "🚜",
     "description": "আধুনিক স্প্রে মেশিন, সেচ পাম্প ও আধুনিক কৃষি সরঞ্জাম",
-    "slug": "equipment",
-    "badge": "নতুন স্টক",
-    "bgGradient": "from-blue-500/10 via-blue-500/5 to-transparent"
+    "badge": "নতুন স্টক"
   },
   {
     "id": "6",
     "name": "Grains & Rice",
-    "bnName": "ধান, চাল ও দানাশস্য",
-    "itemCount": 120,
     "image": "https://images.unsplash.com/photo-1586201375761-83865001e31c?auto=format&fit=crop&w=600&q=80",
-    "icon": "🌾",
-    "description": "খাঁটি নাজিরশাইল, কাটারিভোগ ও প্রিমিয়াম মানের চাল",
-    "slug": "grains-rice",
-    "bgGradient": "from-orange-500/10 via-orange-500/5 to-transparent"
+    "description": "খাঁটি নাজিরশাইল, কাটারিভোগ ও প্রিমিয়াম মানের চাল"
   }
 ]

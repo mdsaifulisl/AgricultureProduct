@@ -25,7 +25,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
   isOpen,
   onClose,
 }) => {
-  const { cartItems, updateQuantity, removeFromCart } = useCart();
+  const { cartItems, updateQuantity, removeFromCart, totalAmount } = useCart();
 
   // কোয়ান্টিটি বাড়ানো/কমানোর হ্যান্ডলার
   const handleUpdateQuantity = (id: string, delta: number) => {
@@ -55,11 +55,11 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
   };
 
   // সাবটোটাল হিসাব
-  const subtotal = cartItems.reduce((acc, item) => {
-    const base = item.baseAmount || 1;
-    const itemTotal = (item.price / base) * item.quantity;
-    return acc + itemTotal;
-  }, 0);
+  // const subtotal = cartItems.reduce((acc, item) => {
+  //   const base = item.baseAmount || 1;
+  //   const itemTotal = (item.price / base) * item.quantity;
+  //   return acc + itemTotal;
+  // }, 0);
 
   if (!isOpen) return null;
 
@@ -179,7 +179,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
             <div className="p-4 sm:p-6 border-t border-gray-100 bg-gray-50/80 space-y-3">
               <div className="flex items-center justify-between text-sm">
                 <span className="text-gray-600 font-medium">সর্বমোট মূল্য</span>
-                <span className="text-lg font-black text-primary-700">{Math.round(subtotal)}৳</span>
+                <span className="text-lg font-black text-primary-700">{Math.round(totalAmount)}৳</span>
               </div>
               <p className="text-[10px] text-gray-500">
                 ডেলিভারি চার্জ চেকআউট পেজে হিসাব করা হবে।
@@ -210,3 +210,5 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
     </div>
   );
 };
+
+// তাহলে আমি যে এইভাবে করেছি 

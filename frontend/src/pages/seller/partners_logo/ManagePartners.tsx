@@ -12,6 +12,8 @@ import {
 } from 'lucide-react';
 import partnersData from '../../../data/partners.json';
 import { compressAndConvertToBase64 } from '../../../utils/imageUtils';
+import { confirm } from '../../../features/confirm/confirmSlice';
+import { useAppDispatch } from '../../../app/hooks';
 
 export interface Partner {
   id: string;
@@ -21,6 +23,7 @@ export interface Partner {
 }
 
 export const ManagePartners: React.FC = () => {
+  const dispatch = useAppDispatch();
   const [partners, setPartners] = useState<Partner[]>(partnersData as Partner[]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingPartner, setEditingPartner] = useState<Partner | null>(null);
@@ -96,11 +99,21 @@ export const ManagePartners: React.FC = () => {
   };
 
   // Delete Partner
-  const handleDelete = (id: string) => {
-    if (window.confirm('আপনি কি নিশ্চিত যে এই ব্র্যান্ডটি মুছে ফেলতে চান?')) {
-      setPartners((prev) => prev.filter((item) => item.id !== id));
-    }
-  };
+ const handleDelete = async (id: string) => {
+  const isConfirmed = await dispatch(
+    confirm({
+      title: 'ব্র্যান্ড মুছে ফেলার নিশ্চিতকরণ',
+      message: 'আপনি কি নিশ্চিত যে এই ব্র্যান্ডটি মুছে ফেলতে চান? এই অ্যাকশনটি ফিরিয়ে আনা যাবে না।',
+      confirmText: 'হ্যাঁ, ডিলিট করুন',
+      cancelText: 'বাতিল',
+      type: 'danger',
+    })
+  );
+
+  if (isConfirmed) {
+    setPartners((prev) => prev.filter((item) => item.id !== id));
+  }
+};
 
   return (
     <div className="max-w-6xl mx-auto space-y-6 pb-12">

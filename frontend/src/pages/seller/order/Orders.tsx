@@ -1,4 +1,6 @@
-import React, { useState, useMemo } from 'react';
+/* eslint-disable react-hooks/purity */
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import React, { useState, useMemo, useEffect } from 'react';
 import { 
   Search, 
   Eye, 
@@ -8,174 +10,201 @@ import {
   XCircle, 
   Clock, 
   X,
-  Edit3
+  Edit3,
+  Loader2,
+  Trash2
 } from 'lucide-react';
-
-export interface OrderItem {
-  id: string;
-  name: string;
-  price: number;
-  quantity: number;
-  image: string;
-}
-
-export interface Order {
-  id: string;
-  customerName: string;
-  phone: string;
-  address: string;
-  items: OrderItem[];
-  totalAmount: number;
-  paymentMethod: 'COD' | 'bKash' | 'Nagad' | 'Card';
-  paymentStatus: 'Paid' | 'Unpaid';
-  orderStatus: 'Pending' | 'Processing' | 'Shipped' | 'Delivered' | 'Cancelled';
-  createdAt: string;
-}
-
-const initialOrders: Order[] = [
-  {
-    id: 'ORD-1092',
-    customerName: 'আরিফুল ইসলাম',
-    phone: '01712345678',
-    address: 'মিরপুর ১২, ঢাকা',
-    items: [
-      { id: '1', name: 'তাজা প্রিমিয়াম লাল টমেটো', price: 60, quantity: 2, image: 'https://images.unsplash.com/photo-1592924357228-91a4daadcfea?w=150' },
-      { id: '2', name: 'দেশি শসা', price: 40, quantity: 1, image: 'https://images.unsplash.com/photo-1449300079323-02e209d9d3a6?w=150' }
-    ],
-    totalAmount: 220,
-    paymentMethod: 'COD',
-    paymentStatus: 'Unpaid',
-    orderStatus: 'Pending',
-    createdAt: '2026-08-17T10:30:00'
-  },
-  {
-    id: 'ORD-1091',
-    customerName: 'সুমাইয়া আক্তার',
-    phone: '01887654321',
-    address: 'ধানমন্ডি ২৭, ঢাকা',
-    items: [
-      { id: '3', name: 'জৈব কম্পোস্ট সার', price: 350, quantity: 2, image: 'https://images.unsplash.com/photo-1628352081506-83c43123ed6d?w=150' }
-    ],
-    totalAmount: 760,
-    paymentMethod: 'bKash',
-    paymentStatus: 'Paid',
-    orderStatus: 'Processing',
-    createdAt: '2026-08-16T14:15:00'
-  },
-  {
-    id: 'ORD-1090',
-    customerName: 'মেহেদী হাসান',
-    phone: '01911223344',
-    address: 'জিইসি মোড়, চট্টগ্রাম',
-    items: [
-      { id: '4', name: 'প্রিমিয়াম আম রূপালি', price: 120, quantity: 5, image: 'https://images.unsplash.com/photo-1553279768-865429fa0078?w=150' }
-    ],
-    totalAmount: 720,
-    paymentMethod: 'COD',
-    paymentStatus: 'Unpaid',
-    orderStatus: 'Shipped',
-    createdAt: '2026-08-15T09:00:00'
-  },
-  {
-    id: 'ORD-1089',
-    customerName: 'নাসরিন সুলতানা',
-    phone: '01555667788',
-    address: 'উপশহর, সিলেট',
-    items: [
-      { id: '1', name: 'তাজা প্রিমিয়াম লাল টমেটো', price: 60, quantity: 3, image: 'https://images.unsplash.com/photo-1592924357228-91a4daadcfea?w=150' }
-    ],
-    totalAmount: 300,
-    paymentMethod: 'Nagad',
-    paymentStatus: 'Paid',
-    orderStatus: 'Delivered',
-    createdAt: '2026-08-14T11:45:00'
-  }
-];
+import type { Order } from '../../../features/order/orderTypes';
+import { useOrder } from "../../../features/order/useOrder";
+import { useAppDispatch } from '../../../app/hooks';
+import { formatDisplayUnit } from '../../../utils/unitConverter';
+import { confirm } from '../../../features/confirm/confirmSlice';
 
 export const SellerOrders: React.FC = () => {
-  const [orders, setOrders] = useState<Order[]>(initialOrders);
+  const dispatch = useAppDispatch();
+  const { 
+    orders = [], 
+    loading: isLoading, 
+    updateStatus, 
+    getAllOrders,
+    markAsSeen,
+    removeOrder
+  } = useOrder();
+  
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedStatus, setSelectedStatus] = useState<string>('All');
+  const [selectedStatus, setSelectedStatus] = useState<string>('ALL');
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+  const [updatingOrderId, setUpdatingOrderId] = useState<string | null>(null);
+  const [deletingOrderId, setDeletingOrderId] = useState<string | null>(null);
 
-  // Status Change Handler Function
-  const handleStatusChange = (orderId: string, newStatus: Order['orderStatus']) => {
-    setOrders((prev) =>
-      prev.map((order) => {
-        if (order.id === orderId) {
-          const updatedPaymentStatus = newStatus === 'Delivered' ? 'Paid' : order.paymentStatus;
-          return { ...order, orderStatus: newStatus, paymentStatus: updatedPaymentStatus };
+  useEffect(() => {
+    let isMounted = true;
+
+    const fetchOrders = async () => {
+      try {
+        if (getAllOrders) {
+          await getAllOrders();
         }
-        return order;
-      })
-    );
+      } catch (error) {
+        if (isMounted) console.error("অর্ডার লোড করতে ব্যর্থ হয়েছে:", error);
+      }
+    };
 
-    if (selectedOrder && selectedOrder.id === orderId) {
-      setSelectedOrder((prev) =>
-        prev
-          ? {
-              ...prev,
-              orderStatus: newStatus,
-              paymentStatus: newStatus === 'Delivered' ? 'Paid' : prev.paymentStatus
-            }
-          : null
-      );
+    fetchOrders();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  const handleStatusChange = async (orderId: string, newStatus: Order['status']) => {
+    try {
+      setUpdatingOrderId(orderId);
+      if (updateStatus) {
+        await updateStatus(orderId, newStatus);
+      }
+
+      if (selectedOrder && (selectedOrder.id === orderId || (selectedOrder as any)._id === orderId)) {
+        setSelectedOrder((prev) => prev ? { ...prev, status: newStatus } : null);
+      }
+    } catch (error) {
+      console.error("Failed to update status:", error);
+    } finally {
+      setUpdatingOrderId(null);
     }
   };
 
-  // Filtered Orders Logic (Order ID, Name, and Phone)
-  const filteredOrders = useMemo(() => {
-    const cleanSearchQuery = searchTerm.trim().toLowerCase().replace(/^#/, '');
+const handleOpenDetails = async (order: Order) => {
+  const orderId = String(order.id || (order as any)._id || '');
 
-    return orders.filter((order) => {
-      const cleanOrderId = order.id.toLowerCase().replace(/^#/, '');
+  // ডায়নামিক নাম থাকলে ব্যবহার করতে পারেন, অন্যথায় ডিফল্ট 'Ashik'
+  const adminName = 'Ashik'; 
+  
+  const existingSeenName = (order as any).seenName;
+  const isAlreadySeen = Boolean(
+    existingSeenName && 
+    existingSeenName.trim() !== '' && 
+    existingSeenName.toLowerCase() !== 'unseen'
+  );
+
+  if (!isAlreadySeen) {
+    const updatedOrder = {
+      ...order,
+      seenName: adminName,
+      seenAt: new Date().toISOString(),
+    };
+
+    // ১. মডালের জন্য লোকাল স্টেট আপডেট
+    setSelectedOrder(updatedOrder);
+
+    // ২. ব্যাকএন্ডে API কল
+    if (markAsSeen) {
+      try {
+        await markAsSeen(orderId, adminName);
+      } catch (error) {
+        console.error("Failed to mark order as seen:", error);
+      }
+    }
+  } else {
+    // আগে থেকে دیکھا হয়ে থাকলে সরাসরি সেট করা
+    setSelectedOrder(order);
+  }
+};
+
+  const handleDeleteOrder = async (orderId: string) => {
+  const isConfirmed = await dispatch(
+    confirm({
+      title: 'অর্ডার মুছে ফেলার নিশ্চিতকরণ',
+      message: 'আপনি কি নিশ্চিত যে এই অর্ডারটি মুছে ফেলতে চান? এই অ্যাকশনটি ফিরিয়ে আনা যাবে না।',
+      confirmText: 'হ্যাঁ, ডিলিট করুন',
+      cancelText: 'বাতিল',
+      type: 'danger',
+    })
+  );
+
+  // ইউজার বাতিল করলে ডিলিট এক্সেকিউট হবে না
+  if (!isConfirmed) return;
+
+  try {
+    setDeletingOrderId(orderId);
+    if (removeOrder) {
+      await removeOrder(orderId);
+    }
+    if (selectedOrder && (selectedOrder.id === orderId || (selectedOrder as any)._id === orderId)) {
+      setSelectedOrder(null);
+    }
+  } catch (error) {
+    console.error("Failed to delete order:", error);
+  } finally {
+    setDeletingOrderId(null);
+  }
+};
+
+  const filteredOrders = useMemo(() => {
+    const cleanQuery = searchTerm.trim().toLowerCase().replace(/^#/, '');
+
+    return (orders || []).filter((order: Order) => {
+      const orderId = String(order.id || (order as any)._id || '');
+      const trackingId = String(order.trackingId || '');
+      const fullName = String(order.fullName || '');
+      const phone = String(order.phone || '');
       
       const matchesSearch =
-        cleanOrderId.includes(cleanSearchQuery) ||
-        order.customerName.toLowerCase().includes(cleanSearchQuery) ||
-        order.phone.includes(cleanSearchQuery);
+        orderId.toLowerCase().includes(cleanQuery) ||
+        trackingId.toLowerCase().includes(cleanQuery) ||
+        fullName.toLowerCase().includes(cleanQuery) ||
+        phone.includes(cleanQuery);
 
-      const matchesStatus = selectedStatus === 'All' || order.orderStatus === selectedStatus;
+      const matchesStatus = selectedStatus === 'ALL' || order.status === selectedStatus;
 
       return matchesSearch && matchesStatus;
     });
   }, [orders, searchTerm, selectedStatus]);
 
-  // Badge Status Helper
-  const getStatusBadge = (status: Order['orderStatus']) => {
+  const getStatusBadge = (status: Order['status']) => {
     switch (status) {
-      case 'Pending':
+      case 'PENDING':
         return (
           <span className="inline-flex items-center gap-1 bg-amber-50 text-amber-700 border border-amber-200 px-2.5 py-1 rounded-full text-xs font-semibold">
-            <Clock className="w-3.5 h-3.5" /> পেন্ডিং (Pending)
+            <Clock className="w-3.5 h-3.5" /> পেন্ডিং
           </span>
         );
-      case 'Processing':
+      case 'PROCESSING':
         return (
           <span className="inline-flex items-center gap-1 bg-blue-50 text-blue-700 border border-blue-200 px-2.5 py-1 rounded-full text-xs font-semibold">
-            <PackageCheck className="w-3.5 h-3.5" /> প্রসেসিং (Processing)
+            <PackageCheck className="w-3.5 h-3.5" /> প্রসেসিং
           </span>
         );
-      case 'Shipped':
+      case 'SHIPPED':
         return (
           <span className="inline-flex items-center gap-1 bg-indigo-50 text-indigo-700 border border-indigo-200 px-2.5 py-1 rounded-full text-xs font-semibold">
-            <Truck className="w-3.5 h-3.5" /> শিপড (Shipped)
+            <Truck className="w-3.5 h-3.5" /> শিপড
           </span>
         );
-      case 'Delivered':
+      case 'DELIVERED':
         return (
           <span className="inline-flex items-center gap-1 bg-emerald-50 text-emerald-700 border border-emerald-200 px-2.5 py-1 rounded-full text-xs font-semibold">
-            <CheckCircle2 className="w-3.5 h-3.5" /> ডেলিভার্ড (Delivered)
+            <CheckCircle2 className="w-3.5 h-3.5" /> ডেলিভার্ড
           </span>
         );
-      case 'Cancelled':
+      case 'CANCELLED':
         return (
           <span className="inline-flex items-center gap-1 bg-red-50 text-red-700 border border-red-200 px-2.5 py-1 rounded-full text-xs font-semibold">
-            <XCircle className="w-3.5 h-3.5" /> বাতিল (Cancelled)
+            <XCircle className="w-3.5 h-3.5" /> বাতিল
           </span>
         );
+      default:
+        return null;
     }
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Loader2 className="w-8 h-8 animate-spin text-primary-600" />
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-7xl mx-auto space-y-6 pb-12">
@@ -189,15 +218,14 @@ export const SellerOrders: React.FC = () => {
 
       {/* Filter and Search Bar */}
       <div className="bg-white p-4 rounded-2xl border border-gray-100 shadow-xs flex flex-col sm:flex-row items-center justify-between gap-4">
-        {/* Search Input supporting Order ID, Name, Phone */}
         <div className="relative w-full sm:w-80">
           <Search className="w-4 h-4 text-gray-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
           <input
             type="text"
-            placeholder="অর্ডার আইডি (যেমন: ORD-1092), নাম বা ফোন নম্বর..."
+            placeholder="আইডি, ট্র্যাকিং নম্বর, নাম বা ফোন নম্বর..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 rounded-xl border border-gray-200 focus:border-primary-500 outline-none text-xs sm:text-sm"
+            className="w-full pl-10 pr-8 py-2 rounded-xl border border-gray-200 focus:border-primary-500 outline-none text-xs sm:text-sm"
           />
           {searchTerm && (
             <button
@@ -211,7 +239,7 @@ export const SellerOrders: React.FC = () => {
 
         {/* Filter Tabs */}
         <div className="flex items-center gap-1.5 overflow-x-auto w-full sm:w-auto pb-1 sm:pb-0">
-          {['All', 'Pending', 'Processing', 'Shipped', 'Delivered', 'Cancelled'].map((status) => (
+          {['ALL', 'PENDING', 'PROCESSING', 'SHIPPED', 'DELIVERED', 'CANCELLED'].map((status) => (
             <button
               key={status}
               onClick={() => setSelectedStatus(status)}
@@ -221,7 +249,7 @@ export const SellerOrders: React.FC = () => {
                   : 'bg-gray-50 text-gray-600 hover:bg-gray-100'
               }`}
             >
-              {status === 'All' ? 'সব অর্ডার' : status}
+              {status === 'ALL' ? 'সব অর্ডার' : status}
             </button>
           ))}
         </div>
@@ -233,79 +261,106 @@ export const SellerOrders: React.FC = () => {
           <table className="w-full text-left text-xs sm:text-sm text-gray-600">
             <thead className="bg-gray-50/80 text-gray-700 font-bold border-b border-gray-100">
               <tr>
-                <th className="px-5 py-3.5">অর্ডার আইডি</th>
+                <th className="px-5 py-3.5">অর্ডার / ট্র্যাকিং নম্বর</th>
                 <th className="px-5 py-3.5">গ্রাহক</th>
+                <th className="px-5 py-3.5">সিন করেছেন</th>
+
                 <th className="px-5 py-3.5">তারিখ</th>
-                <th className="px-5 py-3.5">পেমেন্ট</th>
+                <th className="px-5 py-3.5">পেমেন্ট মেথড</th>
                 <th className="px-5 py-3.5">মোট মূল্য</th>
                 <th className="px-5 py-3.5">স্ট্যাটাস</th>
                 <th className="px-5 py-3.5 text-center">স্ট্যাটাস পরিবর্তন</th>
-                <th className="px-5 py-3.5 text-center">বিস্তারিত</th>
+                <th className="px-5 py-3.5 text-center">অ্যাকশন</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
               {filteredOrders.length > 0 ? (
-                filteredOrders.map((order) => (
-                  <tr key={order.id} className="hover:bg-gray-50/50 transition-colors">
-                    <td className="px-5 py-4 font-mono font-bold text-gray-900">
-                      #{order.id}
-                    </td>
-                    <td className="px-5 py-4">
-                      <div className="font-bold text-gray-800">{order.customerName}</div>
-                      <div className="text-[11px] text-gray-400">{order.phone}</div>
-                    </td>
-                    <td className="px-5 py-4 text-gray-500 whitespace-nowrap">
-                      {new Date(order.createdAt).toLocaleDateString('bn-BD', {
-                        day: 'numeric',
-                        month: 'short',
-                        year: 'numeric'
-                      })}
-                    </td>
-                    <td className="px-5 py-4">
-                      <span className="font-semibold text-gray-700">{order.paymentMethod}</span>
-                      <span
-                        className={`block text-[10px] font-bold ${
-                          order.paymentStatus === 'Paid' ? 'text-emerald-600' : 'text-amber-600'
-                        }`}
-                      >
-                        {order.paymentStatus === 'Paid' ? 'পরিশোধিত' : 'অপরিশোধিত'}
-                      </span>
-                    </td>
-                    <td className="px-5 py-4 font-bold text-gray-900">৳{order.totalAmount}</td>
-                    <td className="px-5 py-4">{getStatusBadge(order.orderStatus)}</td>
-                    
-                    {/* Status Dropdown */}
-                    <td className="px-5 py-4 text-center">
-                      <select
-                        value={order.orderStatus}
-                        onChange={(e) =>
-                          handleStatusChange(order.id, e.target.value as Order['orderStatus'])
-                        }
-                        className="bg-gray-50 border border-gray-200 text-xs font-semibold rounded-xl px-2.5 py-1.5 outline-none focus:border-primary-500 cursor-pointer shadow-xs"
-                      >
-                        <option value="Pending">Pending</option>
-                        <option value="Processing">Processing</option>
-                        <option value="Shipped">Shipped</option>
-                        <option value="Delivered">Delivered</option>
-                        <option value="Cancelled">Cancelled</option>
-                      </select>
-                    </td>
+                filteredOrders.map((order: Order) => {
+                  const currentId = String(order.id || (order as any)._id || '');
+                  const isUpdating = updatingOrderId === currentId;
+                  const isDeleting = deletingOrderId === currentId;
 
-                    <td className="px-5 py-4 text-center">
-                      <button
-                        onClick={() => setSelectedOrder(order)}
-                        className="p-2 text-gray-500 hover:text-primary-600 hover:bg-primary-50 rounded-xl transition-colors cursor-pointer"
-                        title="বিস্তারিত দেখুন"
-                      >
-                        <Eye className="w-4 h-4" />
-                      </button>
-                    </td>
-                  </tr>
-                ))
+                  return (
+                    <tr key={currentId || Math.random()} className="hover:bg-gray-50/50 transition-colors">
+                      <td className="px-5 py-4 font-mono font-bold text-gray-900">
+                        #{order.trackingId || currentId.slice(-6)}
+                      </td>
+                      <td className="px-5 py-4">
+                        <div className="font-bold text-gray-800">{order.fullName || '—'}</div>
+                        <div className="text-[11px] text-gray-400">{order.phone || '—'}</div>
+                      </td>
+                      <td className="px-5 py-4 font-semibold text-gray-700">
+                        {order.seenName && order.seenName !== 'unSeen' ? (
+                          <span className="bg-green-50 text-green-700 border border-green-200 px-2.5 py-1 rounded-full text-[11px] font-semibold">
+                            {order.seenName}
+                          </span>
+                        ) : (
+                          <span className="bg-gray-50 text-gray-500 border border-gray-200 px-2.5 py-1 rounded-full text-[11px] font-semibold">
+                            unSeen
+                          </span>
+                        )}
+                      </td>
+                        
+                      <td className="px-5 py-4 text-gray-500 whitespace-nowrap">
+                        {order.createdAt ? new Date(order.createdAt).toLocaleDateString('bn-BD', {
+                          day: 'numeric',
+                          month: 'short',
+                          year: 'numeric'
+                        }) : '—'}
+                      </td>
+                      <td className="px-5 py-4 font-semibold text-gray-700">
+                        {order.paymentMethod || 'COD'}
+                      </td>
+                      <td className="px-5 py-4 font-bold text-gray-900">৳{Math.round(order.totalAmount || 0)}</td>
+                      <td className="px-5 py-4">{getStatusBadge(order.status)}</td>
+                      
+                      <td className="px-5 py-4 text-center">
+                        <select
+                          disabled={isUpdating || isDeleting}
+                          value={order.status}
+                          onChange={(e) =>
+                            handleStatusChange(currentId, e.target.value as Order['status'])
+                          }
+                          className="bg-gray-50 border border-gray-200 text-xs font-semibold rounded-xl px-2.5 py-1.5 outline-none focus:border-primary-500 cursor-pointer shadow-xs disabled:opacity-50"
+                        >
+                          <option value="PENDING">PENDING</option>
+                          <option value="PROCESSING">PROCESSING</option>
+                          <option value="SHIPPED">SHIPPED</option>
+                          <option value="DELIVERED">DELIVERED</option>
+                          <option value="CANCELLED">CANCELLED</option>
+                        </select>
+                      </td>
+
+                      <td className="px-5 py-4 text-center">
+                        <div className="flex items-center justify-center gap-1">
+                          <button
+                            onClick={() => handleOpenDetails(order)}
+                            className="p-2 text-gray-500 hover:text-primary-600 hover:bg-primary-50 rounded-xl transition-colors cursor-pointer"
+                            title="বিস্তারিত দেখুন"
+                          >
+                            <Eye className="w-4 h-4" />
+                          </button>
+                          <button
+                            disabled={isDeleting}
+                            onClick={() => handleDeleteOrder(currentId)}
+                            className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-colors cursor-pointer disabled:opacity-50"
+                            title="অর্ডার মুছুন"
+                          >
+                            {isDeleting ? (
+                              <Loader2 className="w-4 h-4 animate-spin text-red-600" />
+                            ) : (
+                              <Trash2 className="w-4 h-4" />
+                            )}
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })
               ) : (
                 <tr>
                   <td colSpan={8} className="text-center py-12 text-gray-400">
-                    কোনো সঠিক অর্ডার পাওয়া যায়নি!
+                    কোনো সঠিক অর্ডার পাওয়া যায়নি!
                   </td>
                 </tr>
               )}
@@ -314,16 +369,17 @@ export const SellerOrders: React.FC = () => {
         </div>
       </div>
 
-      {/* Order Detail & Quick Edit Modal */}
+      {/* Order Detail Modal */}
       {selectedOrder && (
         <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4">
           <div className="bg-white w-full max-w-2xl rounded-2xl shadow-xl overflow-hidden border border-gray-100 flex flex-col max-h-[90vh]">
-            {/* Modal Header */}
             <div className="p-5 border-b border-gray-100 flex items-center justify-between bg-gray-50">
               <div>
-                <h3 className="font-bold text-base text-gray-900">অর্ডার বিবরণী - #{selectedOrder.id}</h3>
+                <h3 className="font-bold text-base text-gray-900">
+                  অর্ডার বিবরণী - #{selectedOrder.trackingId || selectedOrder.id || (selectedOrder as any)._id}
+                </h3>
                 <p className="text-xs text-gray-500 mt-0.5">
-                  তারিখ: {new Date(selectedOrder.createdAt).toLocaleString('bn-BD')}
+                  তারিখ: {selectedOrder.createdAt ? new Date(selectedOrder.createdAt).toLocaleString('bn-BD') : '—'}
                 </p>
               </div>
               <button
@@ -334,74 +390,98 @@ export const SellerOrders: React.FC = () => {
               </button>
             </div>
 
-            {/* Modal Content */}
             <div className="p-6 overflow-y-auto space-y-6">
-              {/* Order Status Update Control inside Modal */}
               <div className="bg-primary-50/60 border border-primary-100 p-4 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div className="flex items-center gap-2">
                   <Edit3 className="w-4 h-4 text-primary-600" />
                   <span className="text-xs font-bold text-gray-800">অর্ডার স্ট্যাটাস আপডেট করুন:</span>
                 </div>
-                <div className="flex items-center gap-2">
-                  <select
-                    value={selectedOrder.orderStatus}
-                    onChange={(e) =>
-                      handleStatusChange(selectedOrder.id, e.target.value as Order['orderStatus'])
-                    }
-                    className="bg-white border border-primary-200 text-xs font-bold rounded-xl px-3 py-1.5 outline-none focus:ring-2 focus:ring-primary-300 cursor-pointer"
-                  >
-                    <option value="Pending">Pending</option>
-                    <option value="Processing">Processing</option>
-                    <option value="Shipped">Shipped</option>
-                    <option value="Delivered">Delivered</option>
-                    <option value="Cancelled">Cancelled</option>
-                  </select>
-                </div>
+                <select
+                  disabled={updatingOrderId === (selectedOrder.id || (selectedOrder as any)._id)}
+                  value={selectedOrder.status}
+                  onChange={(e) =>
+                    handleStatusChange(selectedOrder.id || (selectedOrder as any)._id, e.target.value as Order['status'])
+                  }
+                  className="bg-white border border-primary-200 text-xs font-bold rounded-xl px-3 py-1.5 outline-none focus:ring-2 focus:ring-primary-300 cursor-pointer disabled:opacity-50"
+                >
+                  <option value="PENDING">PENDING</option>
+                  <option value="PROCESSING">PROCESSING</option>
+                  <option value="SHIPPED">SHIPPED</option>
+                  <option value="DELIVERED">DELIVERED</option>
+                  <option value="CANCELLED">CANCELLED</option>
+                </select>
               </div>
 
               {/* Customer Info */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-gray-50 p-4 rounded-xl text-xs">
                 <div>
                   <span className="text-gray-400 block font-medium">গ্রাহকের নাম:</span>
-                  <span className="font-bold text-gray-800 text-sm">{selectedOrder.customerName}</span>
+                  <span className="font-bold text-gray-800 text-sm">{selectedOrder.fullName || '—'}</span>
                 </div>
                 <div>
                   <span className="text-gray-400 block font-medium">ফোন নম্বর:</span>
-                  <span className="font-bold text-gray-800 text-sm">{selectedOrder.phone}</span>
+                  <span className="font-bold text-gray-800 text-sm">{selectedOrder.phone || '—'}</span>
                 </div>
                 <div className="sm:col-span-2">
                   <span className="text-gray-400 block font-medium">ডেলিভারি ঠিকানা:</span>
-                  <span className="font-semibold text-gray-800">{selectedOrder.address}</span>
+                  <span className="font-semibold text-gray-800">{selectedOrder.address || '—'}</span>
                 </div>
+                {selectedOrder.note && (
+                  <div className="sm:col-span-2">
+                    <span className="text-gray-400 block font-medium">নোট:</span>
+                    <span className="font-semibold text-gray-800">{selectedOrder.note}</span>
+                  </div>
+                )}
               </div>
 
               {/* Items List */}
               <div>
                 <h4 className="text-xs font-bold text-gray-700 mb-3">পণ্যের তালিকা:</h4>
                 <div className="space-y-2">
-                  {selectedOrder.items.map((item) => (
-                    <div
-                      key={item.id}
-                      className="flex items-center justify-between p-3 border border-gray-100 rounded-xl"
-                    >
-                      <div className="flex items-center gap-3">
-                        <img
-                          src={item.image}
-                          alt={item.name}
-                          className="w-10 h-10 object-cover rounded-lg"
-                        />
-                        <div>
-                          <div className="font-bold text-xs text-gray-800">{item.name}</div>
-                          <div className="text-[11px] text-gray-400">
-                            ৳{item.price} x {item.quantity}
+                  {selectedOrder.items && selectedOrder.items.length > 0 ? (
+                    selectedOrder.items.map((item: any) => {
+                      const base = item.baseAmount || 1;
+                      const itemTotalPrice = (item.price / base) * item.quantity;
+                      const formatted = formatDisplayUnit(item.quantity, item.unit || '');
+
+                      return (
+                        <div
+                          key={item.id || item._id || Math.random()}
+                          className="flex items-center justify-between p-3 border border-gray-100 rounded-xl"
+                        >
+                          <div className="flex items-center gap-3">
+                            <img
+                              src={item.image}
+                              alt={item.name}
+                              className="w-10 h-10 object-cover rounded-lg bg-gray-50 border border-gray-100"
+                            />
+                            <div>
+                              <div className="font-bold text-xs text-gray-800">{item.name}</div>
+                              <div className="flex items-center gap-2 text-[11px] text-gray-500 mt-0.5">
+                                {item.sku && (
+                                  <span className="bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded font-mono text-[10px]">
+                                    {item.sku}
+                                  </span>
+                                )}
+                                <span>
+                                  ৳{item.price} / {item.unit || 'পিস'}
+                                </span>
+                                <span className="text-gray-400">|</span>
+                                <span className="font-semibold text-gray-700">
+                                  পরিমাণ: {formatted.quantity} {formatted.unit}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                          <div className="font-bold text-xs text-gray-900">
+                            ৳{Math.round(itemTotalPrice)}
                           </div>
                         </div>
-                      </div>
-                      <div className="font-bold text-xs text-gray-900">
-                        ৳{item.price * item.quantity}
-                      </div>
-                    </div>
-                  ))}
+                      );
+                    })
+                  ) : (
+                    <p className="text-xs text-gray-400 italic">কোনো পণ্য পাওয়া যায়নি</p>
+                  )}
                 </div>
               </div>
 
@@ -409,19 +489,26 @@ export const SellerOrders: React.FC = () => {
               <div className="border-t border-gray-100 pt-4 space-y-1.5 text-xs">
                 <div className="flex justify-between text-gray-500">
                   <span>পেমেন্ট মেথড:</span>
-                  <span className="font-bold text-gray-800">
-                    {selectedOrder.paymentMethod} ({selectedOrder.paymentStatus})
-                  </span>
+                  <span className="font-bold text-gray-800">{selectedOrder.paymentMethod || 'COD'}</span>
+                </div>
+                <div className="flex justify-between text-gray-500">
+                  <span>ডেলিভারি ফি:</span>
+                  <span className="font-bold text-gray-800">৳{selectedOrder.deliveryFee || 0}</span>
                 </div>
                 <div className="flex justify-between text-gray-900 text-sm font-bold pt-2 border-t border-gray-100">
                   <span>সর্বমোট মূল্য:</span>
-                  <span className="text-primary-600">৳{selectedOrder.totalAmount}</span>
+                  <span className="text-primary-600">৳{Math.round(selectedOrder.totalAmount || 0)}</span>
                 </div>
               </div>
             </div>
 
-            {/* Modal Footer */}
-            <div className="p-4 border-t border-gray-100 bg-gray-50 flex justify-end">
+            <div className="p-4 border-t border-gray-100 bg-gray-50 flex justify-between items-center">
+              <button
+                onClick={() => handleDeleteOrder(String(selectedOrder.id || (selectedOrder as any)._id))}
+                className="px-3 py-1.5 text-red-600 hover:bg-red-50 font-bold text-xs rounded-xl transition-colors cursor-pointer flex items-center gap-1.5"
+              >
+                <Trash2 className="w-3.5 h-3.5" /> মুছে ফেলুন
+              </button>
               <button
                 onClick={() => setSelectedOrder(null)}
                 className="px-4 py-2 bg-gray-800 hover:bg-gray-900 text-white text-xs font-bold rounded-xl transition-colors cursor-pointer"

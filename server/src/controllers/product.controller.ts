@@ -62,7 +62,7 @@ export const getProductsHandler = async (
     } else {
       formattedData = result;
     }
-
+ 
     return res.status(200).json({
       success: true,
       data: formattedData,

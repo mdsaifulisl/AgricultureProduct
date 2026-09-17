@@ -38,7 +38,7 @@ const MOCK_PRODUCTS = [
   { id: "6", name: "স্প্রে মেশিন ১০ লিটার", category: "কৃষি যন্ত্রপাতি", price: "১২০০৳", image: "🚜" },
 ];
 
-const STATIC_CATEGORIES = [
+const STATIC_CATEGORIES = [ 
   { name: "তাজা সবজি", desc: "রাসায়নিক মুক্ত তাজা সবজি", icon: "🥬" },
   { name: "ফলমূল", desc: "দেশি ও আমদানিকৃত তাজা ফল", icon: "🍎" },
   { name: "বীজ ও চারা", desc: "উচ্চ ফলনশীল বীজ ও উন্নত চারা", icon: "🌱" },
@@ -53,7 +53,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   onOpenCart,
   onSearch,
 }) => {
-  const { products } = useProduct(true);
+  const { products } = useProduct();
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -323,15 +323,15 @@ export const Navbar: React.FC<NavbarProps> = ({
                       className="flex items-start gap-3 px-4 py-2.5 hover:bg-primary-50/60 transition-colors group"
                       onClick={() => setIsCategoryDropdownOpen(false)}
                     >
-                      <span className="text-xl group-hover:scale-110 transition-transform">
+                      {/* <span className="text-xl group-hover:scale-110 transition-transform">
                         {cat.icon}
-                      </span>
+                      </span> */}
                       <div>
                         <div className="text-xs font-bold text-gray-800 group-hover:text-primary-700">
                           {cat.name}
                         </div>
                         <div className="text-[10px] text-gray-400 font-normal">
-                          {cat.desc}
+                          {cat.desc.length > 40 ? cat.desc.slice(0, 40) + "..." : cat.desc}
                         </div>
                       </div>
                     </Link>
@@ -456,7 +456,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                       className="block py-2 text-xs font-medium text-gray-600 hover:text-primary-700"
                       onClick={() => setIsMobileMenuOpen(false)}
                     >
-                      {cat.icon} {cat.name}
+                      {cat.name}
                     </Link>
                   ))}
                 </div>

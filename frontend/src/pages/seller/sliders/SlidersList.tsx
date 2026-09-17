@@ -15,8 +15,11 @@ import {
 import heroSlidesData from '../../../data/heroSlidesData.json';
 import { type Slide } from '../../../types/index';
 import { compressAndConvertToBase64 } from '../../../utils/imageUtils';
+import { confirm } from '../../../features/confirm/confirmSlice';
+import { useAppDispatch } from '../../../app/hooks';
 
 export const SlidersList: React.FC = () => {
+  const dispatch = useAppDispatch();
   const [slides, setSlides] = useState<Slide[]>(heroSlidesData as Slide[]);
   const [searchTerm, setSearchTerm] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -92,11 +95,21 @@ export const SlidersList: React.FC = () => {
   };
 
   // Delete Slide
-  const handleDelete = (id: string | number) => {
-    if (window.confirm('আপনি কি নিশ্চিত যে এই স্লাইডারটি মুছে ফেলতে চান?')) {
-      setSlides(slides.filter((slide) => slide.id !== id));
-    }
-  };
+const handleDelete = async (id: string | number) => {
+  const isConfirmed = await dispatch(
+    confirm({
+      title: "স্লাইডার মুছে ফেলার নিশ্চিতকরণ",
+      message: "আপনি কি নিশ্চিত যে এই স্লাইডারটি মুছে ফেলতে চান? এই অ্যাকশনটি ফিরিয়ে আনা যাবে না।",
+      confirmText: "হ্যাঁ, ডিলিট করুন",
+      cancelText: "বাতিল",
+      type: "danger",
+    })
+  );
+
+  if (!isConfirmed) return;
+
+  setSlides((prev) => prev.filter((slide) => slide.id !== id));
+};
 
   // Toggle Active/Inactive Status
   const handleToggleStatus = (id: string | number) => {

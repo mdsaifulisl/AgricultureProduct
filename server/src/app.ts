@@ -3,7 +3,10 @@ import cors from 'cors';
 import helmet from 'helmet';
 import path from 'path';
 
+// Routes
 import ProductRoutes from './routes/product.route.js';
+import OrderRoutes from './routes/order.routes.js';
+import CategoryRoutes from './routes/category.route.js';  
 
 const app: Application = express();
 
@@ -40,10 +43,20 @@ app.get('/', (_req: Request, res: Response) => {
   res.status(200).json({
     success: true,
     message: 'Welcome to the API Service',
-  });
+  }); 
 });
 
 // API Routes
 app.use('/api/v1/product', ProductRoutes);
+app.use('/api/v1/orders', OrderRoutes);
+app.use('/api/v1/categories', CategoryRoutes);
+
+// 404 Not Found Middleware
+app.use((req: Request, res: Response) => {
+  res.status(404).json({
+    success: false,
+    message: 'Not Found',
+  });
+});
 
 export default app;

@@ -25,7 +25,7 @@ export const ProductDetails: React.FC = () => {
   const navigate = useNavigate();
 
   // Custom hook ব্যবহার করে Redux state ও action আনা
-  const { products, isLoading, isError, error, fetchAllProducts } = useProduct(true);
+  const { products, isLoading, isError, error, fetchAllProducts } = useProduct();
   const { addToCart } = useCart();
 
   // Redux-এর products array থেকে আইডি দিয়ে প্রোডাক্ট খোঁজা

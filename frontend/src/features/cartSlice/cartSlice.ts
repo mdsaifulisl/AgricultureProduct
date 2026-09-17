@@ -104,3 +104,6 @@ const cartSlice = createSlice({
 
 export const { addToCart, updateQuantity, removeFromCart, clearCart } = cartSlice.actions;
 export default cartSlice.reducer;
+
+
+// এই স্লাইস টার ভিতরে initialState টা ব্যহহার পধ্যতি কি? 

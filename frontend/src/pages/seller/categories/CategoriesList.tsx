@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import React, { useState, useEffect, useMemo } from 'react';
 import { 
   Plus, 
   Search, 
@@ -6,50 +7,83 @@ import {
   Trash2, 
   X, 
   Layers,
-  Eye,
-  EyeOff,
-  Upload
+  Upload,
+  Loader2
 } from 'lucide-react';
 
-import catagoriesData from '../../../data/categoriesData.json';
-import { type Category } from '../../../types/category';
 import { compressAndConvertToBase64 } from '../../../utils/imageUtils';
+import { confirm } from '../../../features/confirm/confirmSlice';
+import { useAppDispatch } from '../../../app/hooks';
+import { useProduct } from "../../../features/product/useProduct";
+import { useCategory } from "../../../features/category/useCategory";
+import type { Category } from "../../../features/category/categoryTypes";
 
+import { showToast } from '../../../features/toast/toastSlice';
 export const CategoriesList: React.FC = () => {
-  const [categories, setCategories] = useState<Category[]>(catagoriesData as Category[]);
+  const dispatch = useAppDispatch();
+  
+  // useCategory Hook integration
+  const {
+    categories,
+    loading,
+    getCategories,
+    addCategory,
+    editCategory,
+    removeCategory
+  } = useCategory();
+
   const [searchTerm, setSearchTerm] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
   const [isCompressing, setIsCompressing] = useState(false);
 
+  const { products } = useProduct(true);
+
+  // পেজ লোড হলে ক্যাটাগরি ফ্রেচ করা
+  useEffect(() => {
+    getCategories();
+  }, [getCategories]);
+
+  // Products থেকে Autocomplete এর জন্য ক্যাটাগরি সাজেশন বের করা
+  const categorySuggestions = useMemo(() => {
+    if (!products || !Array.isArray(products)) return [];
+
+    const names = new Set<string>();
+    products.forEach((product: any) => {
+      if (product?.category) {
+        if (typeof product.category === 'string') {
+          names.add(product.category);
+        } else if (typeof product.category === 'object' && product.category.name) {
+          names.add(product.category.name);
+        }
+      }
+    });
+
+    return Array.from(names);
+  }, [products]);
+
   // Form State
   const [formData, setFormData] = useState({
-    bnName: '',
     name: '',
-    icon: '📦',
-    image: '', // Base64 or backend URL
+    image: '',
     description: '',
     badge: ''
   });
 
-  // Open modal for Create/Edit
+  // Create / Edit মোডাল ওপেন করা
   const handleOpenModal = (category?: Category) => {
     if (category) {
       setEditingCategory(category);
       setFormData({
-        bnName: category.bnName,
-        name: category.name,
-        icon: category.icon,
-        image: category.image, // URL from backend
-        description: category.description,
+        name: category.name || '',
+        image: category.image || '',
+        description: category.description || '',
         badge: category.badge || ''
       });
     } else {
       setEditingCategory(null);
       setFormData({
-        bnName: '',
         name: '',
-        icon: '📦',
         image: '',
         description: '',
         badge: ''
@@ -58,7 +92,7 @@ export const CategoriesList: React.FC = () => {
     setIsModalOpen(true);
   };
 
-  // Image File Upload and Compression
+  // ইমেজ ফাইল আপলোড ও কম্প্রেস করা
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -69,74 +103,79 @@ export const CategoriesList: React.FC = () => {
       setFormData((prev) => ({ ...prev, image: base64Image }));
     } catch (error) {
       console.error('Image processing failed:', error);
-      alert('ছবি প্রসেস করতে সমস্যা হয়েছে। আবার চেষ্টা করুন।');
+      alert('ছবি প্রসেস করতে সমস্যা হয়েছে। আবার চেষ্টা করুন।');
     } finally {
       setIsCompressing(false);
     }
   };
 
-  // Delete Category
-  const handleDelete = (id: string) => {
-    if (window.confirm('আপনি কি নিশ্চিত যে এই ক্যাটাগরি মুছে ফেলতে চান?')) {
-      setCategories(categories.filter((cat) => cat.id !== id));
+  // ক্যাটাগরি ডিলিট করা
+  const handleDelete = async (id: string) => {
+    const isConfirmed = await dispatch(
+      confirm({
+        title: "ক্যাটাগরি মুছে ফেলার নিশ্চিতকরণ",
+        message: "আপনি কি নিশ্চিত যে এই ক্যাটাগরিটি মুছে ফেলতে চান?",
+        confirmText: "হ্যাঁ, ডিলিট করুন",
+        cancelText: "বাতিল",
+        type: "danger",
+      })
+    );
+
+    if (!isConfirmed) return;
+
+    try {
+      await removeCategory(id).unwrap();
+    } catch (err: any) {
+      alert(err || 'ক্যাটাগরি ডিলিট করা সম্ভব হয়নি');
     }
   };
 
-  // Toggle Active/Inactive Status
-  const handleToggleStatus = (id: string) => {
-    setCategories(
-      categories.map((cat) => {
-        if (cat.id === id) {
-          return {
-            ...cat,
-            status: cat.status === 'inactive' ? 'active' : 'inactive'
-          };
-        }
-        return cat;
-      })
-    );
-  };
-
-  // Handle Form Submit
-  const handleSubmit = (e: React.FormEvent) => {
+  // ফর্ম সাবমিশন (Create / Edit Redux dispatch)
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.image) {
       alert('অনুগ্রহ করে ক্যাটাগরির ছবি আপলোড করুন');
       return;
     }
 
-    if (editingCategory) {
-      setCategories(
-        categories.map((cat) =>
-          cat.id === editingCategory.id
-            ? { ...cat, ...formData, slug: formData.name.toLowerCase().replace(/\s+/g, '-') }
-            : cat
-        )
-      );
-    } else {
-      const newCat: Category = {
-          id: Date.now().toString(),
+    try {
+      if (editingCategory) {
+        const categoryPayload = {
           ...formData,
-          itemCount: 0,
-          slug: formData.name.toLowerCase().replace(/\s+/g, '-'),
-          status: 'active',
-          bgGradient: ''
-      };
-      setCategories([newCat, ...categories]);
+          id: editingCategory.id,
+        };
+
+        await editCategory(editingCategory.id, categoryPayload).unwrap();
+        dispatch(showToast('ক্যাটাগরি সফলভাবে আপডেট করা হয়েছে!', 'info'));
+      } else {
+        await addCategory(formData).unwrap();
+        dispatch(showToast('নতুন ক্যাটাগরি সংরক্ষণ করা হয়েছে!', 'success'));
+      }
+
+      setTimeout(() => {
+        setIsModalOpen(false);
+      } , 500);
+       
+
+    } catch (err: any) {
+      // alert(err || 'অপারেশনটি সম্পন্ন করতে ব্যর্থ হয়েছে');
+      dispatch(showToast(err || 'অপারেশনটি সম্পন্ন করতে ব্যর্থ হয়েছে', 'error'));
     }
-    setIsModalOpen(false);
   };
 
-  // Search Filter
-  const filteredCategories = categories.filter(
-    (cat) =>
-      cat.bnName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      cat.name.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  // নাম এবং বিবরণ দিয়ে ফিল্টার করা
+  const filteredCategories = useMemo(() => {
+    if (!Array.isArray(categories)) return [];
+    return categories.filter(
+      (cat) =>
+        cat.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        cat.description?.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  }, [categories, searchTerm]);
 
   return (
     <div className="p-4 sm:p-6 lg:p-8 bg-gray-50/50 min-h-screen">
-      <div className="max-w-7xl mx-auto space-y-6">
+      <div className="max-w-6xl mx-auto space-y-6">
         
         {/* Header Section */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
@@ -147,7 +186,7 @@ export const CategoriesList: React.FC = () => {
             </div>
             <h1 className="text-2xl font-black text-gray-900">সকল ক্যাটাগরি</h1>
             <p className="text-gray-500 text-sm mt-0.5">
-              আপনার শপের ক্যাটাগরি তৈরি, পরিবর্তন ও কন্ট্রোল করুন
+              আপনার শপের ক্যাটাগরি তালিকা পরিচালনা ও সম্পাদনা করুন
             </p>
           </div>
 
@@ -166,7 +205,7 @@ export const CategoriesList: React.FC = () => {
             <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
             <input
               type="text"
-              placeholder="ক্যাটাগরি সার্চ করুন..."
+              placeholder="ক্যাটাগরি খুঁজুন..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-primary-500 focus:bg-white transition-all"
@@ -185,44 +224,44 @@ export const CategoriesList: React.FC = () => {
                 <tr className="bg-gray-50/80 border-b border-gray-100 text-xs font-bold text-gray-500 uppercase">
                   <th className="py-4 px-6">ক্যাটাগরি</th>
                   <th className="py-4 px-6">বিবরণ</th>
-                  <th className="py-4 px-6">পণ্য সংখ্যা</th>
                   <th className="py-4 px-6">ব্যাজ</th>
-                  <th className="py-4 px-6">স্ট্যাটাস</th>
                   <th className="py-4 px-6 text-right">অ্যাকশন</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100 text-sm">
-                {filteredCategories.length > 0 ? (
+                {loading ? (
+                  <tr>
+                    <td colSpan={4} className="py-12 text-center text-gray-500">
+                      <div className="flex items-center justify-center gap-2">
+                        <Loader2 className="w-5 h-5 animate-spin text-primary-600" />
+                        <span>ডাটা লোড হচ্ছে...</span>
+                      </div>
+                    </td>
+                  </tr>
+                ) : filteredCategories.length > 0 ? (
                   filteredCategories.map((category) => (
                     <tr key={category.id} className="hover:bg-gray-50/50 transition-colors">
-                      {/* Image & Title */}
+                      
+                      {/* Image & Category Name */}
                       <td className="py-4 px-6">
-                        <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-3.5">
                           <div className="relative w-12 h-12 rounded-xl overflow-hidden bg-gray-100 shrink-0 border border-gray-200">
                             <img 
                               src={category.image} 
-                              alt={category.bnName} 
+                              alt={category.name} 
                               className="w-full h-full object-cover" 
                             />
-                            <span className="absolute bottom-0 right-0 bg-white/90 text-xs px-1 rounded-tl">
-                              {category.icon}
-                            </span>
                           </div>
-                          <div>
-                            <h2 className="font-bold text-gray-900">{category.bnName}</h2>
-                            <p className="text-xs text-gray-400 font-mono">{category.name}</p>
-                          </div>
+                          <h2 className="font-bold text-gray-900">{category.name}</h2>
                         </div>
                       </td>
 
-                      <td className="py-4 px-6 text-gray-600 max-w-xs truncate">
-                        {category.description}
+                      {/* Description */}
+                      <td className="py-4 px-6 text-gray-600 max-w-sm truncate">
+                        {category.description || '-'}
                       </td>
 
-                      <td className="py-4 px-6 font-bold text-gray-700">
-                        {category.itemCount} টি
-                      </td>
-
+                      {/* Badge */}
                       <td className="py-4 px-6">
                         {category.badge ? (
                           <span className="inline-block bg-primary-50 text-primary-700 font-bold text-xs px-2.5 py-1 rounded-md">
@@ -233,29 +272,7 @@ export const CategoriesList: React.FC = () => {
                         )}
                       </td>
 
-                      <td className="py-4 px-6">
-                        <button
-                          onClick={() => handleToggleStatus(category.id)}
-                          className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold transition-colors cursor-pointer ${
-                            category.status !== 'inactive'
-                              ? 'bg-emerald-50 text-emerald-600'
-                              : 'bg-gray-100 text-gray-500'
-                          }`}
-                        >
-                          {category.status !== 'inactive' ? (
-                            <>
-                              <Eye className="w-3.5 h-3.5" />
-                              <span>সক্রিয়</span>
-                            </>
-                          ) : (
-                            <>
-                              <EyeOff className="w-3.5 h-3.5" />
-                              <span>নিষ্ক্রিয়</span>
-                            </>
-                          )}
-                        </button>
-                      </td>
-
+                      {/* Actions */}
                       <td className="py-4 px-6 text-right">
                         <div className="flex items-center justify-end gap-2">
                           <button
@@ -278,7 +295,7 @@ export const CategoriesList: React.FC = () => {
                   ))
                 ) : (
                   <tr>
-                    <td colSpan={6} className="py-12 text-center text-gray-500">
+                    <td colSpan={4} className="py-12 text-center text-gray-500">
                       কোনো ক্যাটাগরি পাওয়া যায়নি।
                     </td>
                   </tr>
@@ -291,7 +308,8 @@ export const CategoriesList: React.FC = () => {
         {/* Add/Edit Modal */}
         {isModalOpen && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs">
-            <div className="bg-white w-full max-w-lg rounded-2xl shadow-xl overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+            <div className="bg-white w-full max-w-md rounded-2xl shadow-xl overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+              
               {/* Modal Header */}
               <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
                 <h3 className="text-lg font-bold text-gray-900">
@@ -307,65 +325,45 @@ export const CategoriesList: React.FC = () => {
 
               {/* Modal Body / Form */}
               <form onSubmit={handleSubmit} className="p-6 space-y-4">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-xs font-bold text-gray-700 mb-1">
-                      বাংলা নাম <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                      type="text"
-                      required
-                      placeholder="যেমন: তাজা সবজি"
-                      value={formData.bnName}
-                      onChange={(e) => setFormData({ ...formData, bnName: e.target.value })}
-                      className="w-full px-3.5 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-primary-500"
-                    />
-                  </div>
+                
+                {/* Datalist for Product Categories Autocomplete */}
+                <datalist id="product-categories-suggestion">
+                  {categorySuggestions.map((catName, idx) => (
+                    <option key={idx} value={catName} />
+                  ))}
+                </datalist>
 
-                  <div>
-                    <label className="block text-xs font-bold text-gray-700 mb-1">
-                      ইংরেজি নাম <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                      type="text"
-                      required
-                      placeholder="e.g. Fresh Vegetables"
-                      value={formData.name}
-                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                      className="w-full px-3.5 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-primary-500"
-                    />
-                  </div>
+                {/* Name */}
+                <div>
+                  <label className="block text-xs font-bold text-gray-700 mb-1">
+                    ক্যাটাগরি নাম <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    list="product-categories-suggestion"
+                    placeholder="যেমন: Fresh Vegetables"
+                    value={formData.name}
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    className="w-full px-3.5 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-primary-500"
+                  />
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                  <div className="sm:col-span-1">
-                    <label className="block text-xs font-bold text-gray-700 mb-1">
-                      আইকন/ইমোজি
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="🥬"
-                      value={formData.icon}
-                      onChange={(e) => setFormData({ ...formData, icon: e.target.value })}
-                      className="w-full px-3.5 py-2 border border-gray-200 rounded-xl text-sm text-center focus:outline-none focus:border-primary-500"
-                    />
-                  </div>
-
-                  <div className="sm:col-span-2">
-                    <label className="block text-xs font-bold text-gray-700 mb-1">
-                      ব্যাজ (ঐচ্ছিক)
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="যেমন: সেরা বিক্রেতা"
-                      value={formData.badge}
-                      onChange={(e) => setFormData({ ...formData, badge: e.target.value })}
-                      className="w-full px-3.5 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-primary-500"
-                    />
-                  </div>
+                {/* Badge */}
+                <div>
+                  <label className="block text-xs font-bold text-gray-700 mb-1">
+                    ব্যাজ (ঐচ্ছিক)
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="যেমন: সেরা বিক্রেতা"
+                    value={formData.badge}
+                    onChange={(e) => setFormData({ ...formData, badge: e.target.value })}
+                    className="w-full px-3.5 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-primary-500"
+                  />
                 </div>
 
-                {/* File Upload Dropzone */}
+                {/* Image Upload */}
                 <div>
                   <label className="block text-xs font-bold text-gray-700 mb-1">
                     ক্যাটাগরি ছবি <span className="text-red-500">*</span>
@@ -401,8 +399,9 @@ export const CategoriesList: React.FC = () => {
                     <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-gray-200 hover:border-primary-500 rounded-xl cursor-pointer bg-gray-50/50 hover:bg-primary-50/20 transition-all">
                       <div className="flex flex-col items-center justify-center pt-5 pb-6">
                         {isCompressing ? (
-                          <div className="text-xs font-bold text-primary-600 animate-pulse">
-                            ছবি সাইজ ছোট করা হচ্ছে...
+                          <div className="text-xs font-bold text-primary-600 animate-pulse flex items-center gap-1.5">
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                            <span>ছবি সাইজ ছোট করা হচ্ছে...</span>
                           </div>
                         ) : (
                           <>
@@ -411,7 +410,7 @@ export const CategoriesList: React.FC = () => {
                               ছবি নির্বাচন করতে ক্লিক করুন
                             </p>
                             <p className="text-[10px] text-gray-400 mt-1">
-                              PNG, JPG বা WEBP (স্বয়ংক্রিয়ভাবে কম্প্রেস হবে)
+                              PNG, JPG বা WEBP (স্বয়ংক্রিয়ভাবে কম্প্রেস হবে)
                             </p>
                           </>
                         )}
@@ -427,6 +426,7 @@ export const CategoriesList: React.FC = () => {
                   )}
                 </div>
 
+                {/* Description */}
                 <div>
                   <label className="block text-xs font-bold text-gray-700 mb-1">
                     বিবরণ
@@ -451,10 +451,11 @@ export const CategoriesList: React.FC = () => {
                   </button>
                   <button
                     type="submit"
-                    disabled={isCompressing}
-                    className="px-5 py-2 bg-primary-600 hover:bg-primary-700 text-white text-xs font-bold rounded-xl transition-colors cursor-pointer shadow-sm disabled:opacity-50"
+                    disabled={isCompressing || loading}
+                    className="px-5 py-2 bg-primary-600 hover:bg-primary-700 text-white text-xs font-bold rounded-xl transition-colors cursor-pointer shadow-sm disabled:opacity-50 flex items-center gap-2"
                   >
-                    {editingCategory ? 'আপডেট করুন' : 'সংরক্ষণ করুন'}
+                    {loading && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                    <span>{editingCategory ? 'আপডেট করুন' : 'সংরক্ষণ করুন'}</span>
                   </button>
                 </div>
               </form>

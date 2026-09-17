@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import {
   Plus,
   Search,
@@ -15,40 +15,52 @@ import {
   Heart,
   User,
   Upload,
-} from 'lucide-react';
-import { RichTextEditor } from '../../../components/common/RichTextEditor';
-import BlogData from '../../../data/blogData.json';
-import { compressAndConvertToBase64 } from '../../../utils/imageUtils';
-import { type BlogPost } from '../../../types/index';
+} from "lucide-react";
+import { RichTextEditor } from "../../../components/common/RichTextEditor";
+import BlogData from "../../../data/blogData.json";
+import { compressAndConvertToBase64 } from "../../../utils/imageUtils";
+import { type BlogPost } from "../../../types/index";
+import { confirm } from "../../../features/confirm/confirmSlice";
+import { useAppDispatch } from "../../../app/hooks";
 
-const CATEGORIES = ['All', 'কৃষি টিপস', 'জৈব চাষাবাদ', 'Fashion', 'Shopping Guide', 'Lifestyle'];
+const CATEGORIES = [
+  "All",
+  "কৃষি টিপস",
+  "জৈব চাষাবাদ",
+  "Fashion",
+  "Shopping Guide",
+  "Lifestyle",
+];
 
 export const SellerBlogs: React.FC = () => {
+  const dispatch = useAppDispatch();
   const [blogs, setBlogs] = useState<BlogPost[]>(() =>
     (BlogData as BlogPost[]).map((item) => ({
       ...item,
-      status: item.status ?? 'published',
-    }))
+      status: item.status ?? "published",
+    })),
   );
-  const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('All');
-  const [statusFilter, setStatusFilter] = useState<'all' | 'published' | 'draft' | 'archived'>('all');
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState("All");
+  const [statusFilter, setStatusFilter] = useState<
+    "all" | "published" | "draft" | "archived"
+  >("all");
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingBlog, setEditingBlog] = useState<BlogPost | null>(null);
   const [imageUploading, setImageUploading] = useState(false);
 
   const [formData, setFormData] = useState({
-    title: '',
-    metaDescription: '',
-    category: 'কৃষি টিপস',
-    author: 'Admin',
-    authorRole: 'লেখক',
-    readTime: '৫ মিনিট',
-    image: '',
-    tags: '',
-    content: '',
-    status: 'published' as 'published' | 'draft' | 'archived',
+    title: "",
+    metaDescription: "",
+    category: "কৃষি টিপস",
+    author: "Admin",
+    authorRole: "লেখক",
+    readTime: "৫ মিনিট",
+    image: "",
+    tags: "",
+    content: "",
+    status: "published" as "published" | "draft" | "archived",
   });
 
   const handleOpenModal = (blog?: BlogPost) => {
@@ -56,29 +68,29 @@ export const SellerBlogs: React.FC = () => {
       setEditingBlog(blog);
       setFormData({
         title: blog.title,
-        metaDescription: blog.metaDescription || '',
+        metaDescription: blog.metaDescription || "",
         category: blog.category,
         author: blog.author,
-        authorRole: blog.authorRole || '',
+        authorRole: blog.authorRole || "",
         readTime: blog.readTime,
         image: blog.image,
-        tags: blog.tags.join(', '),
+        tags: blog.tags.join(", "),
         content: blog.content,
-        status: blog.status || 'published',
+        status: blog.status || "published",
       });
     } else {
       setEditingBlog(null);
       setFormData({
-        title: '',
-        metaDescription: '',
-        category: 'কৃষি টিপস',
-        author: 'Admin',
-        authorRole: 'লেখক',
-        readTime: '৫ মিনিট',
-        image: '',
-        tags: '',
-        content: '',
-        status: 'published',
+        title: "",
+        metaDescription: "",
+        category: "কৃষি টিপস",
+        author: "Admin",
+        authorRole: "লেখক",
+        readTime: "৫ মিনিট",
+        image: "",
+        tags: "",
+        content: "",
+        status: "published",
       });
     }
     setIsModalOpen(true);
@@ -89,7 +101,9 @@ export const SellerBlogs: React.FC = () => {
     setEditingBlog(null);
   };
 
-  const handleImageFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageFileChange = async (
+    e: React.ChangeEvent<HTMLInputElement>,
+  ) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
@@ -98,7 +112,7 @@ export const SellerBlogs: React.FC = () => {
       const base64Image = await compressAndConvertToBase64(file);
       setFormData((prev) => ({ ...prev, image: base64Image }));
     } catch (error) {
-      console.error('Image upload failed:', error);
+      console.error("Image upload failed:", error);
     } finally {
       setImageUploading(false);
     }
@@ -108,14 +122,14 @@ export const SellerBlogs: React.FC = () => {
     e.preventDefault();
 
     const tagArray = formData.tags
-      .split(',')
+      .split(",")
       .map((tag) => tag.trim())
       .filter((tag) => tag.length > 0);
 
-    const formattedDate = new Date().toLocaleDateString('bn-BD', {
-      day: 'numeric',
-      month: 'long',
-      year: 'numeric',
+    const formattedDate = new Date().toLocaleDateString("bn-BD", {
+      day: "numeric",
+      month: "long",
+      year: "numeric",
     });
 
     if (editingBlog) {
@@ -127,8 +141,8 @@ export const SellerBlogs: React.FC = () => {
                 ...formData,
                 tags: tagArray,
               }
-            : item
-        )
+            : item,
+        ),
       );
     } else {
       const newBlog: BlogPost = {
@@ -144,18 +158,32 @@ export const SellerBlogs: React.FC = () => {
     handleCloseModal();
   };
 
-  const handleDelete = (id: string) => {
-    if (window.confirm('আপনি কি নিশ্চিত যে এই ব্লগটি মুছে ফেলতে চান?')) {
-      setBlogs((prev) => prev.filter((item) => item.id !== id));
-    }
+  const handleDelete = async (id: string) => {
+    const isConfirmed = await dispatch(
+      confirm({
+        title: "ব্লগ মুছে ফেলার নিশ্চিতকরণ",
+        message:
+          "আপনি কি নিশ্চিত যে এই ব্লগটি মুছে ফেলতে চান? এই অ্যাকশনটি ফিরিয়ে আনা যাবে না।",
+        confirmText: "হ্যাঁ, ডিলিট করুন",
+        cancelText: "বাতিল",
+        type: "danger",
+      }),
+    );
+
+    // ইউজার বাতিল করলে ফাংশন থামবে
+    if (!isConfirmed) return;
+
+    setBlogs((prev) => prev.filter((item) => item.id !== id));
   };
 
   const filteredBlogs = blogs.filter((blog) => {
     const matchesSearch =
       blog.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       blog.content.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesCategory = selectedCategory === 'All' || blog.category === selectedCategory;
-    const matchesStatus = statusFilter === 'all' || (blog.status || 'published') === statusFilter;
+    const matchesCategory =
+      selectedCategory === "All" || blog.category === selectedCategory;
+    const matchesStatus =
+      statusFilter === "all" || (blog.status || "published") === statusFilter;
 
     return matchesSearch && matchesCategory && matchesStatus;
   });
@@ -164,8 +192,12 @@ export const SellerBlogs: React.FC = () => {
     <div className="p-4 md:p-6 max-w-7xl mx-auto space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">ব্লগ ম্যানেজমেন্ট</h1>
-          <p className="text-sm text-gray-500 mt-1">আপনার পোস্টসমূহ তৈরি ও পরিচালনা করুন</p>
+          <h1 className="text-2xl font-bold text-gray-900">
+            ব্লগ ম্যানেজমেন্ট
+          </h1>
+          <p className="text-sm text-gray-500 mt-1">
+            আপনার পোস্টসমূহ তৈরি ও পরিচালনা করুন
+          </p>
         </div>
         <button
           onClick={() => handleOpenModal()}
@@ -194,7 +226,10 @@ export const SellerBlogs: React.FC = () => {
           <div>
             <p className="text-xs text-gray-500">পাবলিশড ব্লগ</p>
             <h3 className="text-xl font-bold text-gray-900">
-              {blogs.filter((b) => (b.status || 'published') === 'published').length}
+              {
+                blogs.filter((b) => (b.status || "published") === "published")
+                  .length
+              }
             </h3>
           </div>
         </div>
@@ -206,7 +241,7 @@ export const SellerBlogs: React.FC = () => {
           <div>
             <p className="text-xs text-gray-500">ড্রাফট</p>
             <h3 className="text-xl font-bold text-gray-900">
-              {blogs.filter((b) => b.status === 'draft').length}
+              {blogs.filter((b) => b.status === "draft").length}
             </h3>
           </div>
         </div>
@@ -243,25 +278,31 @@ export const SellerBlogs: React.FC = () => {
 
             <div className="flex items-center gap-1 border border-gray-200 rounded-xl p-1 bg-gray-50 text-xs">
               <button
-                onClick={() => setStatusFilter('all')}
+                onClick={() => setStatusFilter("all")}
                 className={`px-3 py-1 rounded-lg transition-colors cursor-pointer ${
-                  statusFilter === 'all' ? 'bg-white shadow-xs font-semibold text-gray-900' : 'text-gray-600'
+                  statusFilter === "all"
+                    ? "bg-white shadow-xs font-semibold text-gray-900"
+                    : "text-gray-600"
                 }`}
               >
                 সব
               </button>
               <button
-                onClick={() => setStatusFilter('published')}
+                onClick={() => setStatusFilter("published")}
                 className={`px-3 py-1 rounded-lg transition-colors cursor-pointer ${
-                  statusFilter === 'published' ? 'bg-white shadow-xs font-semibold text-emerald-600' : 'text-gray-600'
+                  statusFilter === "published"
+                    ? "bg-white shadow-xs font-semibold text-emerald-600"
+                    : "text-gray-600"
                 }`}
               >
                 পাবলিশড
               </button>
               <button
-                onClick={() => setStatusFilter('draft')}
+                onClick={() => setStatusFilter("draft")}
                 className={`px-3 py-1 rounded-lg transition-colors cursor-pointer ${
-                  statusFilter === 'draft' ? 'bg-white shadow-xs font-semibold text-amber-600' : 'text-gray-600'
+                  statusFilter === "draft"
+                    ? "bg-white shadow-xs font-semibold text-amber-600"
+                    : "text-gray-600"
                 }`}
               >
                 ড্রাফট
@@ -285,7 +326,10 @@ export const SellerBlogs: React.FC = () => {
             </thead>
             <tbody className="divide-y divide-gray-200 text-sm">
               {filteredBlogs.map((blog) => (
-                <tr key={blog.id} className="hover:bg-gray-50/50 transition-colors">
+                <tr
+                  key={blog.id}
+                  className="hover:bg-gray-50/50 transition-colors"
+                >
                   <td className="p-3.5 max-w-md">
                     <div className="flex items-center gap-3">
                       <div className="h-12 w-16 shrink-0 bg-gray-100 rounded-lg overflow-hidden border border-gray-200">
@@ -329,7 +373,9 @@ export const SellerBlogs: React.FC = () => {
                       <User className="w-3.5 h-3.5 text-gray-400" />
                       <span>{blog.author}</span>
                       {blog.authorRole && (
-                        <span className="text-gray-400">({blog.authorRole})</span>
+                        <span className="text-gray-400">
+                          ({blog.authorRole})
+                        </span>
                       )}
                     </div>
                   </td>
@@ -348,12 +394,14 @@ export const SellerBlogs: React.FC = () => {
                   <td className="p-3.5 whitespace-nowrap">
                     <span
                       className={`inline-flex items-center gap-1 text-xs font-medium px-2.5 py-1 rounded-full border ${
-                        (blog.status || 'published') === 'published'
-                          ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
-                          : 'bg-amber-50 text-amber-700 border-amber-200'
+                        (blog.status || "published") === "published"
+                          ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                          : "bg-amber-50 text-amber-700 border-amber-200"
                       }`}
                     >
-                      {(blog.status || 'published') === 'published' ? 'Published' : 'Draft'}
+                      {(blog.status || "published") === "published"
+                        ? "Published"
+                        : "Draft"}
                     </span>
                   </td>
                   <td className="p-3.5 whitespace-nowrap text-right">
@@ -393,7 +441,7 @@ export const SellerBlogs: React.FC = () => {
           <div className="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto shadow-xl border border-gray-200">
             <div className="p-4 md:p-6 border-b border-gray-200 flex items-center justify-between sticky top-0 bg-white z-10">
               <h2 className="text-lg font-bold text-gray-900">
-                {editingBlog ? 'ব্লগ এডিট করুন' : 'নতুন ব্লগ তৈরি করুন'}
+                {editingBlog ? "ব্লগ এডিট করুন" : "নতুন ব্লগ তৈরি করুন"}
               </h2>
               <button
                 onClick={handleCloseModal}
@@ -406,25 +454,33 @@ export const SellerBlogs: React.FC = () => {
             <form onSubmit={handleSubmit} className="p-4 md:p-6 space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-1">
-                  <label className="text-xs font-semibold text-gray-700">ব্লগ টাইটেল *</label>
+                  <label className="text-xs font-semibold text-gray-700">
+                    ব্লগ টাইটেল *
+                  </label>
                   <input
                     type="text"
                     required
                     value={formData.title}
-                    onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                    onChange={(e) =>
+                      setFormData({ ...formData, title: e.target.value })
+                    }
                     placeholder="ব্লগের শিরোনাম লিখুন"
                     className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-primary-500"
                   />
                 </div>
 
                 <div className="space-y-1">
-                  <label className="text-xs font-semibold text-gray-700">ক্যাটাগরি</label>
+                  <label className="text-xs font-semibold text-gray-700">
+                    ক্যাটাগরি
+                  </label>
                   <select
                     value={formData.category}
-                    onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                    onChange={(e) =>
+                      setFormData({ ...formData, category: e.target.value })
+                    }
                     className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-primary-500"
                   >
-                    {CATEGORIES.filter((c) => c !== 'All').map((cat) => (
+                    {CATEGORIES.filter((c) => c !== "All").map((cat) => (
                       <option key={cat} value={cat}>
                         {cat}
                       </option>
@@ -434,11 +490,18 @@ export const SellerBlogs: React.FC = () => {
               </div>
 
               <div className="space-y-1">
-                <label className="text-xs font-semibold text-gray-700">মেটা ডেসক্রিপশন (SEO এর জন্য)</label>
+                <label className="text-xs font-semibold text-gray-700">
+                  মেটা ডেসক্রিপশন (SEO এর জন্য)
+                </label>
                 <textarea
                   rows={2}
                   value={formData.metaDescription}
-                  onChange={(e) => setFormData({ ...formData, metaDescription: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      metaDescription: e.target.value,
+                    })
+                  }
                   placeholder="ব্লগের একটি সংক্ষিপ্ত বিবরণ লিখুন (SEO & Share Preview)"
                   className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-primary-500 resize-none"
                 />
@@ -446,33 +509,45 @@ export const SellerBlogs: React.FC = () => {
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="space-y-1">
-                  <label className="text-xs font-semibold text-gray-700">লেখকের নাম</label>
+                  <label className="text-xs font-semibold text-gray-700">
+                    লেখকের নাম
+                  </label>
                   <input
                     type="text"
                     value={formData.author}
-                    onChange={(e) => setFormData({ ...formData, author: e.target.value })}
+                    onChange={(e) =>
+                      setFormData({ ...formData, author: e.target.value })
+                    }
                     placeholder="যেমন: কৃষিবিদ হাসান"
                     className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-primary-500"
                   />
                 </div>
 
                 <div className="space-y-1">
-                  <label className="text-xs font-semibold text-gray-700">লেখকের পদবি (Role)</label>
+                  <label className="text-xs font-semibold text-gray-700">
+                    লেখকের পদবি (Role)
+                  </label>
                   <input
                     type="text"
                     value={formData.authorRole}
-                    onChange={(e) => setFormData({ ...formData, authorRole: e.target.value })}
+                    onChange={(e) =>
+                      setFormData({ ...formData, authorRole: e.target.value })
+                    }
                     placeholder="যেমন: কৃষি পরামর্শক"
                     className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-primary-500"
                   />
                 </div>
 
                 <div className="space-y-1">
-                  <label className="text-xs font-semibold text-gray-700">পড়ার সময় (Read Time)</label>
+                  <label className="text-xs font-semibold text-gray-700">
+                    পড়ার সময় (Read Time)
+                  </label>
                   <input
                     type="text"
                     value={formData.readTime}
-                    onChange={(e) => setFormData({ ...formData, readTime: e.target.value })}
+                    onChange={(e) =>
+                      setFormData({ ...formData, readTime: e.target.value })
+                    }
                     placeholder="যেমন: ৫ মিনিট"
                     className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-primary-500"
                   />
@@ -481,7 +556,9 @@ export const SellerBlogs: React.FC = () => {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-1">
-                  <label className="text-xs font-semibold text-gray-700">কভার ইমেজ</label>
+                  <label className="text-xs font-semibold text-gray-700">
+                    কভার ইমেজ
+                  </label>
                   {formData.image ? (
                     <div className="relative h-32 w-full rounded-xl overflow-hidden border border-gray-200 group">
                       <img
@@ -501,7 +578,9 @@ export const SellerBlogs: React.FC = () => {
                         </label>
                         <button
                           type="button"
-                          onClick={() => setFormData({ ...formData, image: '' })}
+                          onClick={() =>
+                            setFormData({ ...formData, image: "" })
+                          }
                           className="px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white rounded-lg text-xs font-medium transition-colors cursor-pointer"
                         >
                           মুছুন
@@ -512,7 +591,9 @@ export const SellerBlogs: React.FC = () => {
                     <label className="flex flex-col items-center justify-center h-32 border-2 border-dashed border-gray-200 rounded-xl cursor-pointer hover:bg-gray-50/50 transition-colors">
                       <Upload className="w-5 h-5 text-gray-400 mb-1" />
                       <span className="text-xs text-gray-500">
-                        {imageUploading ? 'প্রসেসিং হচ্ছে...' : 'ছবি আপলোড করতে ক্লিক করুন'}
+                        {imageUploading
+                          ? "প্রসেসিং হচ্ছে..."
+                          : "ছবি আপলোড করতে ক্লিক করুন"}
                       </span>
                       <input
                         type="file"
@@ -526,13 +607,18 @@ export const SellerBlogs: React.FC = () => {
                 </div>
 
                 <div className="space-y-1">
-                  <label className="text-xs font-semibold text-gray-700">স্ট্যাটাস</label>
+                  <label className="text-xs font-semibold text-gray-700">
+                    স্ট্যাটাস
+                  </label>
                   <select
                     value={formData.status}
                     onChange={(e) =>
                       setFormData({
                         ...formData,
-                        status: e.target.value as 'published' | 'draft' | 'archived',
+                        status: e.target.value as
+                          | "published"
+                          | "draft"
+                          | "archived",
                       })
                     }
                     className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-primary-500"
@@ -545,21 +631,29 @@ export const SellerBlogs: React.FC = () => {
               </div>
 
               <div className="space-y-1">
-                <label className="text-xs font-semibold text-gray-700">ট্যাগসমূহ (Commas দ্বারা আলাদা করুন)</label>
+                <label className="text-xs font-semibold text-gray-700">
+                  ট্যাগসমূহ (Commas দ্বারা আলাদা করুন)
+                </label>
                 <input
                   type="text"
                   value={formData.tags}
-                  onChange={(e) => setFormData({ ...formData, tags: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, tags: e.target.value })
+                  }
                   placeholder="ছাদ বাগান, টমেটো চাষ, জৈব কৃষি"
                   className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-primary-500"
                 />
               </div>
 
               <div className="space-y-1">
-                <label className="text-xs font-semibold text-gray-700">ব্লগের বিস্তারিত বিষয়বস্তু *</label>
+                <label className="text-xs font-semibold text-gray-700">
+                  ব্লগের বিস্তারিত বিষয়বস্তু *
+                </label>
                 <RichTextEditor
                   content={formData.content}
-                  onChange={(newContent) => setFormData({ ...formData, content: newContent })}
+                  onChange={(newContent) =>
+                    setFormData({ ...formData, content: newContent })
+                  }
                   placeholder="ব্লগের বিস্তারিত লেখা এখানে শুরু করুন..."
                 />
               </div>
@@ -576,7 +670,7 @@ export const SellerBlogs: React.FC = () => {
                   type="submit"
                   className="px-5 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-xl text-sm font-medium transition-colors cursor-pointer shadow-xs"
                 >
-                  {editingBlog ? 'আপডেট করুন' : 'পাবলিশ করুন'}
+                  {editingBlog ? "আপডেট করুন" : "পাবলিশ করুন"}
                 </button>
               </div>
             </form>

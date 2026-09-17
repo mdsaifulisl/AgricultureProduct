@@ -42,7 +42,12 @@ model Product {
   tags             String[]
   createdAt        DateTime        @default(now())
   updatedAt        DateTime        @updatedAt
+
+  @@map("products")
 }
+
+
+
 
 model Specification {
   id        String  @id @default(uuid())
@@ -50,4 +55,68 @@ model Specification {
   value     String
   productId String
   product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@map("specifications")
+}
+
+//End product
+
+//order
+enum OrderStatus {
+  PENDING
+  PROCESSING
+  SHIPPED
+  DELIVERED
+  CANCELLED
+}
+
+model Order {
+  id            String      @id @default(uuid())
+  trackingId    String      @unique
+  fullName      String
+  phone         String
+  address       String
+  note          String?
+  paymentMethod String      @default("COD")
+  deliveryFee   Float
+  totalAmount   Float
+  status        OrderStatus @default(PENDING)
+  seenName      String      @default("unSeen")
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  items OrderItem[]
+
+  @@map("orders")
+}
+
+model OrderItem {
+  id         String  @id @default(uuid())
+  orderId    String
+  productId  String
+  name       String
+  price      Float
+  image      String
+  unit       String?
+  baseAmount Float?
+  sku        String?
+  quantity   Float
+
+  order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@map("order_items")
+}
+
+
+// Catagory
+model Category {
+  id          String   @id @default(uuid())
+  name        String
+  image       String
+  description String
+  badge       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@map("categorys")
 }

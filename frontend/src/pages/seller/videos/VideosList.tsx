@@ -15,19 +15,22 @@ import {
 } from "lucide-react";
 
 import { type VideoItem } from "../../../types/index";
+import { confirm } from "../../../features/confirm/confirmSlice";
+import { useAppDispatch } from "../../../app/hooks";
 
 const MOCK_VIDEOS: VideoItem[] = [
   {
-      id: "1",
-      title: "টবে সহজ পদ্ধতিতে টমেটো চাষ ও পরিচর্যা গাইড-২৫৫৪",
-      description: "বাসার ছাদে বা বারান্দায় কীভাবে সহজে অর্গানিক উপায়ে লাল টমেটো ফলন বৃদ্ধি করবেন তার সম্পূর্ণ গাইডলাইন।",
-      youtubeId: "https://youtu.be/7wtfhZwyrcc?si=DaxUknUGG7znoIRP",
-      category: "কৃষি টিউটোরিয়াল",
-      duration: "০৩:৩৭",
-      views: "১.২ কে",
-      createdAt: "2026-08-14T10:00:00.000Z",
-      featured: true,
-      status: "active",
+    id: "1",
+    title: "টবে সহজ পদ্ধতিতে টমেটো চাষ ও পরিচর্যা গাইড-২৫৫৪",
+    description:
+      "বাসার ছাদে বা বারান্দায় কীভাবে সহজে অর্গানিক উপায়ে লাল টমেটো ফলন বৃদ্ধি করবেন তার সম্পূর্ণ গাইডলাইন।",
+    youtubeId: "https://youtu.be/7wtfhZwyrcc?si=DaxUknUGG7znoIRP",
+    category: "কৃষি টিউটোরিয়াল",
+    duration: "০৩:৩৭",
+    views: "১.২ কে",
+    createdAt: "2026-08-14T10:00:00.000Z",
+    featured: true,
+    status: "active",
   },
   {
     id: "2",
@@ -100,6 +103,7 @@ const getYoutubeVideoId = (urlOrId: string): string => {
 };
 
 export const VideosList: React.FC = () => {
+  const dispatch = useAppDispatch();
   const [videos, setVideos] = useState<VideoItem[]>(MOCK_VIDEOS);
   const [searchTerm, setSearchTerm] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -143,10 +147,21 @@ export const VideosList: React.FC = () => {
   };
 
   // Delete Video
-  const handleDelete = (id: string | number) => {
-    if (window.confirm("আপনি কি নিশ্চিত যে এই ভিডিওটি মুছে ফেলতে চান?")) {
-      setVideos(videos.filter((item) => item.id !== id));
-    }
+  const handleDelete = async (id: string | number) => {
+    const isConfirmed = await dispatch(
+      confirm({
+        title: "ভিডিও মুছে ফেলার নিশ্চিতকরণ",
+        message:
+          "আপনি কি নিশ্চিত যে এই ভিডিওটি মুছে ফেলতে চান? এই অ্যাকশনটি ফিরিয়ে আনা যাবে না।",
+        confirmText: "হ্যাঁ, ডিলিট করুন",
+        cancelText: "বাতিল",
+        type: "danger",
+      }),
+    );
+
+    if (!isConfirmed) return;
+
+    setVideos((prev) => prev.filter((item) => item.id !== id));
   };
 
   // Toggle Active/Inactive Status
@@ -160,7 +175,7 @@ export const VideosList: React.FC = () => {
           };
         }
         return item;
-      })
+      }),
     );
   };
 
@@ -175,8 +190,8 @@ export const VideosList: React.FC = () => {
     if (editingVideo) {
       setVideos(
         videos.map((item) =>
-          item.id === editingVideo.id ? { ...item, ...formData } : item
-        )
+          item.id === editingVideo.id ? { ...item, ...formData } : item,
+        ),
       );
     } else {
       const newVideo: VideoItem = {
@@ -195,7 +210,7 @@ export const VideosList: React.FC = () => {
     (video) =>
       video.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
       video.category.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      video.description.toLowerCase().includes(searchTerm.toLowerCase())
+      video.description.toLowerCase().includes(searchTerm.toLowerCase()),
   );
 
   return (

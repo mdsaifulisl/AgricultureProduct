@@ -22,12 +22,12 @@ export const AddEditProduct: React.FC = () => {
   const isEditMode = Boolean(id);
 
   // useProduct থেকে প্রয়োজনীয় ডাটা ও অ্যাকশন হ্যান্ডলার আনা হলো
-  const { 
-    products, 
-    createNewProduct, 
-    editProduct,
-    isLoading 
-  } = useProduct(true);
+const { 
+  products, 
+  createNewProduct, 
+  editProduct,
+  isLoading 
+} = useProduct(isEditMode); // <--- এখানে isEditMode দিন
 
   // Extract all unique categories dynamically from products array
   const availableCategories = useMemo(() => {
@@ -499,7 +499,7 @@ export const AddEditProduct: React.FC = () => {
             </div>
 
             {/* SKU (Optional) */}
-            <div>
+            <div className="hidden">
               <label className="block text-xs font-bold text-gray-700 mb-1.5">
                 SKU কোড <span className="text-gray-400 font-normal">(ঐচ্ছিক)</span>
               </label>

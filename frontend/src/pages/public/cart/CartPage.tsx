@@ -9,7 +9,7 @@ import { parseProductUnit, formatDisplayUnit } from '../../../utils/unitConverte
 
 export const CartPage: React.FC = () => {
   const dispatch = useAppDispatch();
-  const { cartItems, updateQuantity, removeFromCart, clearCart } = useCart();
+  const { cartItems, updateQuantity, removeFromCart, clearCart, totalAmount } = useCart();
 
   // parseProductUnit ব্যবহার করে Step নির্ধারণ এবং Quantity Update
   const handleUpdateQuantity = (id: string, delta: number) => {
@@ -76,11 +76,11 @@ export const CartPage: React.FC = () => {
   };
 
   // সাবটোটাল হিসাব
-  const subtotal = cartItems.reduce((acc, item) => {
-    const base = item.baseAmount || 1;
-    const itemTotal = (item.price / base) * item.quantity;
-    return acc + itemTotal;
-  }, 0);
+  // const subtotal = cartItems.reduce((acc, item) => {
+  //   const base = item.baseAmount || 1;
+  //   const itemTotal = (item.price / base) * item.quantity;
+  //   return acc + itemTotal;
+  // }, 0);
 
   if (cartItems.length === 0) {
     return (
@@ -234,7 +234,7 @@ export const CartPage: React.FC = () => {
             <div className="space-y-2.5 text-sm">
               <div className="flex justify-between text-gray-600">
                 <span>উপ-মোট (Subtotal)</span>
-                <span className="font-bold text-gray-900">{Math.round(subtotal)}৳</span>
+                <span className="font-bold text-gray-900">{Math.round(totalAmount)}৳</span>
               </div>
               <div className="flex justify-between text-gray-600">
                 <span>ডেলিভারি চার্জ</span>
@@ -244,7 +244,7 @@ export const CartPage: React.FC = () => {
 
             <div className="pt-3 border-t border-gray-100 flex justify-between items-center">
               <span className="text-base font-bold text-gray-900">সর্বমোট</span>
-              <span className="text-xl font-black text-primary-700">{Math.round(subtotal)}৳</span>
+              <span className="text-xl font-black text-primary-700">{Math.round(totalAmount)}৳</span>
             </div>
 
             <Link
@@ -262,3 +262,6 @@ export const CartPage: React.FC = () => {
 };
 
 export default CartPage;
+
+
+// আমার এখানে যেই কেল্কুলেশন টা হয়েছে এখানেও সেম কেলকুলেশন টা হবে

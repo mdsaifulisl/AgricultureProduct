@@ -15,8 +15,12 @@ import {
   AlertCircle
 } from 'lucide-react';
 import { useProduct } from "../../../features/product/useProduct";
+import { confirm } from '../../../features/confirm/confirmSlice';
+import { useAppDispatch } from '../../../app/hooks';
+import { getCleanUnit } from '../../../utils/formatUnit';
 
 export const ProductsList: React.FC = () => {
+  const dispatch = useAppDispatch();
   const { products = [], isLoading, isError, error, deleteProduct } = useProduct(true);
   const navigate = useNavigate();
 
@@ -28,11 +32,26 @@ export const ProductsList: React.FC = () => {
     navigate(`/seller/edit-product/${id}`);
   };
 
-  const handleDelete = (id: string) => {
-    if (window.confirm('আপনি কি নিশ্চিত যে এই পণ্যটি মুছে ফেলতে চান?')) {
-      deleteProduct(id);
-    }
-  };
+  const handleDelete = async (id: string) => {
+  const isConfirmed = await dispatch(
+    confirm({
+      title: 'পণ্য মুছে ফেলার নিশ্চিতকরণ',
+      message: 'আপনি কি নিশ্চিত যে এই পণ্যটি মুছে ফেলতে চান? এই অ্যাকশনটি ফিরিয়ে আনা যাবে না।',
+      confirmText: 'হ্যাঁ, ডিলিট করুন',
+      cancelText: 'বাতিল',
+      type: 'danger',
+    })
+  );
+
+  // ইউজার বাতিল করলে ফাংশন এখানেই থেমে যাবে
+  if (!isConfirmed) return;
+
+  try {
+    await deleteProduct(id);
+  } catch (error) {
+    console.error("Failed to delete product:", error);
+  }
+};
 
   // ইউনিক ক্যাটাগরি এক্সট্র্যাক্ট করা
   const categories = Array.from(new Set(products.map((p) => p.category)));
@@ -203,8 +222,10 @@ export const ProductsList: React.FC = () => {
                     {/* Stock Count */}
                     <td className="py-3.5 px-4">
                       <span className={`font-bold ${product.stockCount === 0 ? 'text-red-500' : 'text-gray-700'}`}>
-                        {product.stockCount} {product.unit}
+                        {product.stockCount} {getCleanUnit(product.unit)}
                       </span>
+
+                      
                     </td>
 
                     {/* Rating */}

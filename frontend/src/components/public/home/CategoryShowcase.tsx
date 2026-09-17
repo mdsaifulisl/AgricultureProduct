@@ -1,25 +1,46 @@
-import React from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { ArrowRight, Sparkles } from 'lucide-react';
+import React from "react";
+import { useEffect } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { ArrowRight, Sparkles } from "lucide-react";
 
-import { CategoryGrid } from '../Category/CategoryGrid';
-import { CategoryEmptyState } from '../Category/CategoryEmptyState';
-import CATEGORIES_DATA from '../../../data/categoriesData.json';
-
+import { CategoryGrid } from "../Category/CategoryGrid";
+import { CategoryEmptyState } from "../Category/CategoryEmptyState";
+import CATEGORIES_DATA from "../../../data/categoriesData.json";
+import { useCategory } from "../../../features/category/useCategory";
+import { ProductGridSkeleton } from "../../common/ProductGridSkeleton";
 export const CategoryShowcase: React.FC = () => {
   const navigate = useNavigate();
+  const { categories = [], loading, getCategories } = useCategory();
 
+  useEffect(() => {
+    if (getCategories) {
+      getCategories();
+    }
+  }, []);
   const handleCategoryClick = (slug: string) => {
     navigate(`/shop?category=${slug}`);
   };
 
   // হোমপেজ শো-কেসের জন্য প্রথম ৪টি ক্যাটাগরি নেওয়া হলো
-  const featuredCategories = CATEGORIES_DATA.slice(0, 6);
+  const featuredCategories =
+    Array.isArray(categories) && categories.length > 0
+      ? categories.slice(0, 6)
+      : CATEGORIES_DATA.slice(0, 6);
+
+  if (loading) {
+    return (
+      <div className="space-y-10 lg:space-y-16 bg-gray-50/60 py-10 lg:py-16">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
+          <ProductGridSkeleton count={4} showHeader={true} />
+          <ProductGridSkeleton count={4} showHeader={true} />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <section className="py-10 lg:py-16 bg-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        
         {/* Section Header */}
         <div className="flex flex-col md:flex-row md:items-end justify-between mb-6 lg:mb-12 gap-4">
           <div>
@@ -31,7 +52,8 @@ export const CategoryShowcase: React.FC = () => {
               আমাদের ক্যাটাগরি সমূহ
             </h2>
             <p className="text-xs sm:text-sm text-gray-600 font-normal mt-1 max-w-xl">
-              আপনার প্রয়োজনীয় কৃষিপণ্য বা তাজা খাবার সহজে খুঁজে পেতে নিচের ক্যাটাগরিগুলো ব্রাউজ করুন।
+              আপনার প্রয়োজনীয় কৃষিপণ্য বা তাজা খাবার সহজে খুঁজে পেতে নিচের
+              ক্যাটাগরিগুলো ব্রাউজ করুন।
             </p>
           </div>
 
@@ -46,16 +68,18 @@ export const CategoryShowcase: React.FC = () => {
 
         {/* Categories Content */}
         {featuredCategories.length === 0 ? (
-          <CategoryEmptyState searchQuery={''} onReset={function (): void {
-            throw new Error('Function not implemented.');
-          } } />
+          <CategoryEmptyState
+            searchQuery={""}
+            onReset={function (): void {
+              throw new Error("Function not implemented.");
+            }}
+          />
         ) : (
-          <CategoryGrid 
-            categories={featuredCategories} 
-            onCategoryClick={handleCategoryClick} 
+          <CategoryGrid
+            categories={featuredCategories}
+            onCategoryClick={handleCategoryClick}
           />
         )}
-
       </div>
     </section>
   );

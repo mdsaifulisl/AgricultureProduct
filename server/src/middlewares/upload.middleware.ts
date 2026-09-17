@@ -7,7 +7,7 @@ import path from 'path';
 declare global {
   namespace Express {
     interface Request {
-      uploadFolder?: string;
+      uploadFolder?: string; 
     }
   }
 }
@@ -35,7 +35,7 @@ export const upload = multer({
 });
 
 /**
- * Base64 ডাটা থেকে Buffer এবং Extension পাওয়ার হেলপার ফাংশন
+ * Base64 ডাটা থেকে Buffer এবং Extension পাওয়ার হেলপার ফাংশন
  */
 const parseBase64Image = (base64Str: string) => {
   const matches = base64Str.match(/^data:image\/([a-zA-Z]+);base64,(.+)$/);
@@ -48,7 +48,7 @@ const parseBase64Image = (base64Str: string) => {
 };
 
 /**
- * Buffer নিয়ে Sharp দিয়ে প্রসেস ও ফাইল রাইট করার হেলপার ফাংশন
+ * Buffer নিয়ে Sharp দিয়ে প্রসেস ও ফাইল রাইট করার হেলপার ফাংশন
  */
 const saveProcessedImage = async (
   inputBuffer: Buffer,
@@ -81,7 +81,7 @@ const saveProcessedImage = async (
 };
 
 /**
- * একাধিক ছবি (req.files, Base64 স্ট্রিং, অথবা লিঙ্ক) প্রসেস ও সেভ করার মিডলওয়্যার
+ * একাধিক ছবি (req.files/req.file, Base64 স্ট্রিং, অথবা লিঙ্ক) প্রসেস ও সেভ করার সার্বজনীন মিডলওয়্যার
  */
 export const compressAndSaveImages = async (
   req: Request,
@@ -89,7 +89,6 @@ export const compressAndSaveImages = async (
   next: NextFunction
 ): Promise<void> => {
   try {
-    const files = req.files as Express.Multer.File[] | undefined;
     const folderName = req.uploadFolder || 'products';
     const targetDir = path.join(process.cwd(), 'public', 'uploads', folderName);
 
@@ -100,44 +99,86 @@ export const compressAndSaveImages = async (
     let existingUrls: string[] = [];
     const base64Buffers: Buffer[] = [];
 
-    // ১. req.body.images থেকে Base64 ডাটা এবং আগের URL আলাদা করা
-    if (req.body.images) {
-      const imagesArray = Array.isArray(req.body.images)
-        ? req.body.images
-        : [req.body.images];
+    // ১. req.body.images এবং req.body.image থেকে Base64 এবং আগের URL হ্যান্ডেল করা
+    const rawInputs: any[] = [];
 
-      for (const item of imagesArray) {
-        if (typeof item === 'string') {
-          if (item.startsWith('data:image')) {
-            const parsed = parseBase64Image(item);
-            if (parsed) base64Buffers.push(parsed.buffer);
-          } else {
-            existingUrls.push(item);
+    const parseInput = (input: any) => {
+      if (!input) return;
+      if (typeof input === 'string') {
+        if (input.startsWith('[') && input.endsWith(']')) {
+          try {
+            const parsed = JSON.parse(input);
+            if (Array.isArray(parsed)) rawInputs.push(...parsed);
+          } catch {
+            rawInputs.push(input);
           }
+        } else {
+          rawInputs.push(input);
         }
+      } else if (Array.isArray(input)) {
+        input.forEach(parseInput);
+      }
+    };
+
+    parseInput(req.body.images);
+    parseInput(req.body.image);
+
+    for (const item of rawInputs) {
+      if (typeof item === 'string') {
+        if (item.startsWith('data:image')) {
+          const parsed = parseBase64Image(item);
+          if (parsed) base64Buffers.push(parsed.buffer);
+        } else if (item.trim() !== '') {
+          existingUrls.push(item);
+        }
+      }
+    }
+
+    // ২. Multer এর ফাইল প্রসেসিং
+    const multerFiles: Express.Multer.File[] = [];
+
+    if (req.file) {
+      multerFiles.push(req.file);
+    }
+
+    if (req.files) {
+      if (Array.isArray(req.files)) {
+        multerFiles.push(...req.files);
+      } else {
+        Object.values(req.files).forEach((fileArray) => {
+          multerFiles.push(...fileArray);
+        });
       }
     }
 
     const uploadedPaths: string[] = [];
 
-    // ২. FormData (req.files) এর মাধ্যমে আসা ছবি প্রসেস করা
-    if (files && Array.isArray(files) && files.length > 0) {
-      for (const file of files) {
-        const savedPath = await saveProcessedImage(file.buffer, targetDir, folderName);
-        uploadedPaths.push(savedPath);
-      }
+    // ৩. Multer Files থেকে ফাইল সেভ করা
+    for (const file of multerFiles) {
+      const savedPath = await saveProcessedImage(file.buffer, targetDir, folderName);
+      uploadedPaths.push(savedPath);
     }
 
-    // ৩. JSON-এ পাঠানো Base64 ছবি প্রসেস করে ফাইলে সেভ করা
-    if (base64Buffers.length > 0) {
-      for (const buffer of base64Buffers) {
-        const savedPath = await saveProcessedImage(buffer, targetDir, folderName);
-        uploadedPaths.push(savedPath);
-      }
+    // ৪. Base64 থেকে ছবি সেভ করা
+    for (const buffer of base64Buffers) {
+      const savedPath = await saveProcessedImage(buffer, targetDir, folderName);
+      uploadedPaths.push(savedPath);
     }
 
-    // ৪. আগের লিঙ্ক এবং নতুন সেভ হওয়া সব ফাইল লিঙ্ক একসাথে সেট করা
-    req.body.images = [...existingUrls, ...uploadedPaths];
+    const allImages = [...existingUrls, ...uploadedPaths];
+
+    // ৫. প্রসেস করা ডাটা req.body তে সেট করা
+    // আগের অতিরিক্ত 'image' এবং 'images' ফিল্ড ক্লিনআপ
+    delete req.body.image;
+    delete req.body.images;
+
+    if (folderName === 'categories') {
+      // ক্যাটাগরির জন্য সিঙ্গেল ইমেজ স্ট্রিং
+      req.body.image = allImages[0] || '';
+    } else {
+      // প্রোডাক্টের জন্য ইমেজ অ্যারে
+      req.body.images = allImages;
+    }
 
     next();
   } catch (error) {

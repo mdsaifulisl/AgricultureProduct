@@ -2,6 +2,7 @@ import { Prisma } from '@prisma/client';
 import prisma from '../config/prisma.js';
 import type { CreateProductInput, UpdateProductInput } from '../validations/product.validation.js';
 import { deleteLocalFile, deleteLocalFiles } from '../utils/file.util.js';
+import { getCleanUnit } from '../utils/formatUnit.js';
 
 export interface IProductQuery {
   categorySlug?: string;
@@ -187,4 +188,50 @@ export const deleteProductService = async (id: string) => {
 
   return deletedProduct;
 };
+
+
+
+// product.service.ts
+
+export const updateProductStockService = async (
+  id: string,
+  quantityToDeduct: number,
+  tx?: Prisma.TransactionClient
+) => {
+  const client = tx || prisma;
+
+  // ১. প্রোডাক্ট খোঁজা
+  const product = await client.product.findUnique({
+    where: { id },
+    select: { id: true, name: true, stockCount: true, inStock: true, unit: true },
+  });
+
+  if (!product) {
+    throw new Error('পণ্যটি পাওয়া যায়নি।');
+  }
+
+  // ২. স্টক চেক করা (ক্লিন ইউনিট ব্যবহার করে এরর মেসেজ জেনারেট)
+  if (!product.inStock || product.stockCount < quantityToDeduct) {
+    const cleanUnit = getCleanUnit(product.unit);
+    throw new Error(
+      `"${product.name}"-এর পর্যাপ্ত স্টক নেই। বর্তমান স্টক: ${product.stockCount} ${cleanUnit}`
+    );
+  }
+
+  const newStockCount = product.stockCount - quantityToDeduct;
+
+  // ৩. স্টক আপডেট করা
+  return await client.product.update({
+    where: { id },
+    data: {
+      stockCount: {
+        decrement: quantityToDeduct,
+      },
+      inStock: newStockCount > 0,
+    },
+  });
+};
+
+
+
 
