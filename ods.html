@@ -1,0 +1,165 @@
+{isMobileMenuOpen && (
+  <div className="md:hidden border-t border-gray-100 bg-white px-4 pt-3 pb-6 space-y-4 animate-fade-in">
+    <div className="flex flex-col text-sm text-gray-700 font-semibold space-y-1">
+      <Link
+        to="/"
+        className="py-2.5 px-2 hover:bg-primary-50 rounded-lg flex items-center gap-2"
+        onClick={() => setIsMobileMenuOpen(false)}
+      >
+        <Home className="w-4 h-4 text-primary-600" /> হোম
+      </Link>
+
+      <div>
+        <button
+          onClick={() => setIsMobileCategoryOpen(!isMobileCategoryOpen)}
+          className="w-full py-2.5 px-2 hover:bg-primary-50 rounded-lg flex items-center justify-between text-left cursor-pointer"
+        >
+          <span className="flex items-center gap-2">
+            <Store className="w-4 h-4 text-primary-600" /> সকল ক্যাটাগরি
+          </span>
+          <ChevronDown
+            className={`w-4 h-4 transition-transform ${isMobileCategoryOpen ? "rotate-180" : ""}`}
+          />
+        </button>
+
+        {isMobileCategoryOpen && (
+          <div className="pl-6 space-y-1 py-1 bg-gray-50 rounded-lg my-1">
+            {dynamicCategories.map((cat) => (
+              <Link
+                key={cat.name}
+                to={`/shop?category=${encodeURIComponent(cat.name)}`}
+                className="block py-2 text-xs font-medium text-gray-600 hover:text-primary-700"
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                {cat.name}
+              </Link>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <Link
+        to="/shop"
+        className="py-2.5 px-2 hover:bg-primary-50 rounded-lg flex items-center gap-2"
+        onClick={() => setIsMobileMenuOpen(false)}
+      >
+        <Store className="w-4 h-4 text-primary-600" /> সকল পণ্য (Shop)
+      </Link>
+
+      <Link
+        to="/offers"
+        className="py-2.5 px-2 hover:bg-primary-50 rounded-lg flex items-center gap-2"
+        onClick={() => setIsMobileMenuOpen(false)}
+      >
+        <Percent className="w-4 h-4 text-accent-500" /> অফার ও ডিসকাউন্ট
+      </Link>
+
+      <Link
+        to="/videos"
+        className="py-2.5 px-2 hover:bg-primary-50 rounded-lg flex items-center gap-2"
+        onClick={() => setIsMobileMenuOpen(false)}
+      >
+        <Video className="w-4 h-4 text-primary-600" /> ভিডিও টিউটোরিয়াল
+      </Link>
+
+      <Link
+        to="/blog"
+        className="py-2.5 px-2 hover:bg-primary-50 rounded-lg flex items-center gap-2"
+        onClick={() => setIsMobileMenuOpen(false)}
+      >
+        <BookOpen className="w-4 h-4 text-primary-600" /> ব্লগ
+      </Link>
+
+      <button
+        className="w-full py-2.5 px-2 hover:bg-primary-50 rounded-lg flex items-center justify-between cursor-pointer"
+        onClick={() => {
+          setIsMobileMenuOpen(false);
+          if (onOpenCart) onOpenCart();
+        }}
+      >
+        <span className="flex items-center gap-2 text-left">
+          <ShoppingBag className="w-4 h-4 text-primary-600" /> শপিং কার্ট
+        </span>
+        {cartCount > 0 && (
+          <span className="bg-accent-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">
+            {cartCount}
+          </span>
+        )}
+      </button>
+
+      <Link
+        to="/about"
+        className="py-2.5 px-2 hover:bg-primary-50 rounded-lg flex items-center gap-2"
+        onClick={() => setIsMobileMenuOpen(false)}
+      >
+        <Info className="w-4 h-4 text-primary-600" /> আমাদের সম্পর্কে
+      </Link>
+    </div>
+
+    {/* 👇 কন্ডিশনাল বাটন পার্ট */}
+    {user ? (
+      <button
+        onClick={() => {
+          setIsMobileMenuOpen(false);
+          navigate("/seller");
+        }}
+        className="w-full flex items-center justify-between bg-primary-50 hover:bg-primary-100 border border-primary-200 text-primary-800 p-2.5 rounded-xl transition-all cursor-pointer mt-2"
+      >
+        <div className="flex items-center gap-3">
+          <span className="flex items-center justify-center w-9 h-9 rounded-full bg-primary-600 text-white font-bold text-xs uppercase shadow-xs">
+            {user?.name ? user.name.slice(0, 2) : "US"}
+          </span>
+          <div className="text-left">
+            <p className="text-sm font-semibold text-gray-800 leading-tight">
+              {user?.name || "User"}
+            </p>
+            <p className="text-[11px] text-gray-500 leading-tight">
+              {user?.email || ""}
+            </p>
+          </div>
+        </div>
+        <span className="text-xs bg-primary-600 text-white px-2.5 py-1 rounded-md font-medium">
+          ড্যাশবোর্ড
+        </span>
+      </button>
+    ) : (
+      <button
+        onClick={() => {
+          setIsMobileMenuOpen(false);
+          navigate("/login");
+        }}
+        className="w-full flex items-center justify-center gap-2 bg-primary-600 hover:bg-primary-700 active:scale-95 text-white py-3 rounded-xl font-semibold text-sm shadow-xs transition-all cursor-pointer mt-2"
+      >
+        <UserIcon className="w-4 h-4" />
+        <span>লগইন / সাইনআপ</span>
+      </button>
+    )}
+
+    <div className="pt-3 border-t border-gray-100 text-xs text-center text-gray-500">
+      📞 হটলাইন:{" "}
+      <strong className="text-primary-700 font-bold">
+        {HOTLINE_NUMBER}
+      </strong>
+    </div>
+  </div>
+)}
+
+এখন যখন 
+
+{isMobileCategoryOpen && (
+          <div className="pl-6 space-y-1 py-1 bg-gray-50 rounded-lg my-1">
+            {dynamicCategories.map((cat) => (
+              <Link
+                key={cat.name}
+                to={`/shop?category=${encodeURIComponent(cat.name)}`}
+                className="block py-2 text-xs font-medium text-gray-600 hover:text-primary-700"
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                {cat.name}
+              </Link>
+            ))}
+          </div>
+        )}
+
+
+        এটা ওপেন হয় তখন বাকি জিনিস গুলা নিচে চলে যায় স্ক্রোহ হচ্ছে না 

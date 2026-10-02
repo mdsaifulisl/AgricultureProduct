@@ -10,58 +10,56 @@ import {
   clearCurrentOrder,
   clearOrderError,
 } from './orderSlice';
-import type {
-  CreateOrderPayload,
-  OrderStatus,
-} from './orderTypes';
+import type { CreateOrderPayload, OrderStatus } from './orderTypes';
 
 export const useOrder = () => {
   const dispatch = useAppDispatch();
   const { orders, currentOrder, loading, error } = useAppSelector((state) => state.order);
 
-  const handleFetchAllOrders = useCallback(async () => {
-    return await dispatch(fetchAllOrders()).unwrap();
+  const handleFetchAllOrders = useCallback(() => {
+    return dispatch(fetchAllOrders()).unwrap();
   }, [dispatch]);
 
   const handleCreateOrder = useCallback(
-    async (payload: CreateOrderPayload) => {
-      return await dispatch(createOrder(payload)).unwrap();
+    (payload: CreateOrderPayload) => {
+      return dispatch(createOrder(payload)).unwrap();
     },
     [dispatch]
   );
 
   const handleGetOrderById = useCallback(
-    async (id: string) => {
-      return await dispatch(fetchOrderById(id)).unwrap();
+    (id: string) => {
+      return dispatch(fetchOrderById(id)).unwrap();
     },
     [dispatch]
   );
 
+  // Core update status handler
   const handleUpdateStatus = useCallback(
-    async (id: string, status: OrderStatus) => {
-      return await dispatch(updateOrderStatus({ id, status })).unwrap();
+    (id: string, status: OrderStatus) => {
+      return dispatch(updateOrderStatus({ id, status })).unwrap();
     },
     [dispatch]
   );
 
-  // Object-based wrapper for flexibility
+  // Object-based variant referencing core handler
   const handleUpdateOrderStatus = useCallback(
-    async ({ id, status }: { id: string; status: OrderStatus }) => {
-      return await dispatch(updateOrderStatus({ id, status })).unwrap();
+    ({ id, status }: { id: string; status: OrderStatus }) => {
+      return handleUpdateStatus(id, status);
     },
-    [dispatch]
+    [handleUpdateStatus]
   );
 
   const handleMarkAsSeen = useCallback(
-    async (id: string, adminName: string) => {
-      return await dispatch(markOrderAsSeen({ id, adminName })).unwrap();
+    (id: string, adminName: string) => {
+      return dispatch(markOrderAsSeen({ id, adminName })).unwrap();
     },
     [dispatch]
   );
 
   const handleDeleteOrder = useCallback(
-    async (id: string) => {
-      return await dispatch(deleteOrder(id)).unwrap();
+    (id: string) => {
+      return dispatch(deleteOrder(id)).unwrap();
     },
     [dispatch]
   );
@@ -75,19 +73,22 @@ export const useOrder = () => {
   }, [dispatch]);
 
   return {
+    // State
     orders,
     currentOrder,
     loading,
-    isLoading: loading, // Aliased for component compatibility
+    isLoading: loading,
     error,
+
+    // Actions
     getAllOrders: handleFetchAllOrders,
     createOrder: handleCreateOrder,
     getOrderById: handleGetOrderById,
     updateStatus: handleUpdateStatus,
-    updateOrderStatus: handleUpdateOrderStatus, // Dual support
+    updateOrderStatus: handleUpdateOrderStatus,
     markAsSeen: handleMarkAsSeen,
     removeOrder: handleDeleteOrder,
     clearCurrentOrder: handleClearCurrentOrder,
     clearError: handleClearError,
   };
-}; 
+};

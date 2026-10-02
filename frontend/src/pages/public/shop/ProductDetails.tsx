@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/set-state-in-effect */
 import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { 
@@ -24,12 +25,17 @@ export const ProductDetails: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
 
-  // Custom hook ব্যবহার করে Redux state ও action আনা
   const { products, isLoading, isError, error, fetchAllProducts } = useProduct();
   const { addToCart } = useCart();
 
-  // Redux-এর products array থেকে আইডি দিয়ে প্রোডাক্ট খোঁজা
-  const product = products.find((item) => item.id === id);
+  // ১. পেজ রিলোড হলে যদি products খালি থাকে, তবে প্রোডাক্ট ফেচ করুন
+  useEffect(() => {
+    if (products.length === 0) {
+      fetchAllProducts();
+    }
+  }, [fetchAllProducts, products.length]);
+
+  const product = products.find((item) => String(item.id) === String(id));
 
   const imagesList: string[] = product?.images
     ? (Array.isArray(product.images) ? product.images : [product.images])
@@ -37,32 +43,29 @@ export const ProductDetails: React.FC = () => {
 
   const [selectedImage, setSelectedImage] = useState<string>('');
 
-  // প্রোডাক্ট লোড হলে প্রথম ছবিটিকে fallback হিসেবে ব্যবহার করা
   const currentImage = imagesList.includes(selectedImage)
     ? selectedImage
     : imagesList[0] || '';
 
-  // unitParser ব্যবহার করে ইউনিটের তথ্য এক্সট্র্যাক্ট করা
   const { initialQuantity, baseAmount, unitLabel } = parseProductUnit(product?.unit);
 
-  const STEP_SIZE = initialQuantity;
-  const MIN_QUANTITY = initialQuantity;
+  const STEP_SIZE = initialQuantity || 1;
+  const MIN_QUANTITY = initialQuantity || 1;
 
   const [quantityState, setQuantityState] = useState({
     productId: id,
     value: MIN_QUANTITY,
   });
 
-  // Page reload বা async data fetch হওয়ার পর quantity সঠিকভাবে sync করার জন্য useEffect
+  // প্রোডাক্ট লোড হলে Quantity Sync করা
   useEffect(() => {
     if (product) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       setQuantityState({
         productId: id,
-        value: initialQuantity,
+        value: initialQuantity || 1,
       });
     }
-  }, [product?.id, initialQuantity, id]);
+  }, [product, initialQuantity, id]);
 
   const quantity = quantityState.productId === id
     ? quantityState.value
@@ -97,7 +100,6 @@ export const ProductDetails: React.FC = () => {
     setQuantity(Number(val.toFixed(2)));
   };
 
-  // ডাইনামিক প্রাইস হিসাব
   const calculatedTotalPrice = Math.round((product?.price || 0) / (baseAmount || 1) * quantity);
 
   const handleAddToCart = () => {
@@ -116,8 +118,8 @@ export const ProductDetails: React.FC = () => {
     );
   };
 
-  // লোডিং স্টেট হ্যান্ডলিং
-  if (isLoading && products.length === 0) {
+  // ২. সঠিক লোডিং স্টেট চেক: ডাটা ফেচিং চলায় অথবা products খালি থাকলে Loader দেখাবে
+  if (isLoading || (products.length === 0 && !isError)) {
     return (
       <div className="min-h-[60vh] flex flex-col items-center justify-center py-12 text-primary-600">
         <Loader2 className="w-10 h-10 animate-spin mb-3" />
@@ -126,7 +128,7 @@ export const ProductDetails: React.FC = () => {
     );
   }
 
-  // এরর স্টেট হ্যান্ডলিং
+  // ৩. এরর স্টেট হ্যান্ডলিং
   if (isError) {
     return (
       <div className="min-h-[60vh] flex flex-col items-center justify-center py-12 px-4 text-center">
@@ -134,7 +136,7 @@ export const ProductDetails: React.FC = () => {
         <h2 className="text-xl font-bold text-gray-900 mb-1">সমস্যা দেখা দিয়েছে!</h2>
         <p className="text-gray-600 text-sm mb-4">{error || 'ডাটা ফেচ করতে সমস্যা হচ্ছে।'}</p>
         <button
-          onClick={fetchAllProducts}
+          onClick={() => fetchAllProducts()}
           className="bg-primary-600 text-white font-bold px-5 py-2 rounded-xl text-sm cursor-pointer"
         >
           আবার চেষ্টা করুন
@@ -143,7 +145,7 @@ export const ProductDetails: React.FC = () => {
     );
   }
 
-  // প্রোডাক্ট না পাওয়া গেলে
+  // ৪. প্রোডাক্ট সত্যি না থাকলে (ডাটা ফেচিং শেষ হওয়ার পর)
   if (!product) {
     return (
       <div className="min-h-[60vh] flex flex-col items-center justify-center py-12 px-4 text-center">
@@ -171,7 +173,6 @@ export const ProductDetails: React.FC = () => {
       <Helmet>
         <title>{product.name}</title>
         <meta name="description" content={metaDescription} />
-
         <meta property="og:title" content={product.name} />
         <meta property="og:description" content={metaDescription} />
         <meta property="og:image" content={currentImage} />
@@ -179,7 +180,6 @@ export const ProductDetails: React.FC = () => {
       </Helmet>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        
         {/* Breadcrumb Navigation */}
         <nav className="flex items-center gap-2 text-xs sm:text-sm text-gray-500 mb-6 lg:mb-8 overflow-x-auto whitespace-nowrap">
           <Link to="/" className="hover:text-primary-600 transition-colors">হোম</Link>
@@ -229,7 +229,6 @@ export const ProductDetails: React.FC = () => {
             {/* Content Section */}
             <div className="flex flex-col justify-between">
               <div>
-                {/* Category & Stock Status */}
                 <div className="flex items-center justify-between gap-2 mb-2">
                   <span className="text-xs font-bold text-primary-600 uppercase tracking-wider bg-primary-50 px-2.5 py-1 rounded-md">
                     {product.category}
@@ -248,12 +247,10 @@ export const ProductDetails: React.FC = () => {
                   </div>
                 </div>
 
-                {/* Title */}
                 <h1 className="text-xl sm:text-2xl lg:text-3xl font-black text-gray-900 leading-tight mb-3">
                   {product.name}
                 </h1>
 
-                {/* Rating */}
                 {product.rating && (
                   <div className="flex items-center gap-2 mb-4">
                     <div className="flex items-center text-amber-400">
@@ -267,7 +264,6 @@ export const ProductDetails: React.FC = () => {
                   </div>
                 )}
 
-                {/* Price Display */}
                 <div className="flex flex-wrap items-baseline gap-3 p-4 bg-gray-50/80 rounded-2xl mb-6">
                   <span className="text-2xl sm:text-3xl font-black text-gray-900">
                     {product.price}৳
@@ -288,14 +284,12 @@ export const ProductDetails: React.FC = () => {
                   </div>
                 </div>
 
-                {/* Description */}
                 {(product.shortDescription || product.description) && (
                   <p className="text-sm text-gray-600 leading-relaxed mb-6">
                     {product.shortDescription || product.description}
                   </p>
                 )}
 
-                {/* Dynamic Quantity Controls */}
                 <div className="space-y-4 pt-4 border-t border-gray-100">
                   <div className="flex items-center gap-4">
                     <span className="text-xs font-bold text-gray-700">পরিমাণ:</span>
@@ -333,7 +327,6 @@ export const ProductDetails: React.FC = () => {
                     </div>
                   </div>
 
-                  {/* Action Buttons */}
                   <div className="flex items-center gap-3 pt-2">
                     <button
                       onClick={handleAddToCart}
@@ -354,7 +347,6 @@ export const ProductDetails: React.FC = () => {
                 </div>
               </div>
 
-              {/* Service Features */}
               <div className="grid grid-cols-3 gap-2 mt-8 pt-6 border-t border-gray-100 text-center">
                 <div className="p-2 rounded-xl bg-gray-50 flex flex-col items-center">
                   <Truck className="w-5 h-5 text-primary-600 mb-1" />

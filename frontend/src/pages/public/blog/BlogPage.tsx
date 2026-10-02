@@ -1,45 +1,58 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState, useMemo, useEffect } from 'react';
-import { Leaf, Search } from 'lucide-react';
+import { Leaf, Search, Loader2, AlertCircle } from 'lucide-react';
 import { BlogGrid } from '../../../components/public/blog/BlogGrid';
-import BlogsData from '../../../data/blogData.json';
-import { type BlogPost } from '../../../types/index';
+import { useBlog } from '../../../features/blog/useBlog';
 
-const MOCK_BLOGS = BlogsData as BlogPost[];
-
-// RegEx ব্যবহার করে HTML ট্যাগ স্ট্রিপ করার সেফ হেলপার ফাংশন
 const stripHtml = (html?: string): string => {
   if (!html) return '';
   return html.replace(/<[^>]*>/g, '');
 };
 
-const BLOG_CATEGORIES = ['সকল পোস্ট', 'কৃষি টিপস', 'জৈব চাষাবাদ', 'গাছের যত্ন', 'আধুনিক প্রযুক্তি'];
-
 export const BlogPage: React.FC = () => {
   const [selectedCategory, setSelectedCategory] = useState<string>('সকল পোস্ট');
   const [searchQuery, setSearchQuery] = useState<string>('');
 
+  // useBlog Hook Integration
+  const { blogs, isLoading, isError, errorMessage, getAllBlogs } = useBlog();
+
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
-  }, []);
+    getAllBlogs();
+  }, [getAllBlogs]);
+
+  // Dynamic Categories Extraction
+  const blogCategories = useMemo(() => {
+    if (!blogs || blogs.length === 0) return ['সকল পোস্ট'];
+
+    const extractedCategories = Array.from(
+      new Set(
+        blogs
+          .map((blog) => blog.category)
+          .filter((cat): cat is string => Boolean(cat && cat.trim()))
+      )
+    );
+
+    return ['সকল পোস্ট', ...extractedCategories];
+  }, [blogs]);
 
   const filteredBlogs = useMemo(() => {
     const query = searchQuery.trim().toLowerCase();
 
-    return MOCK_BLOGS.filter((blog) => {
-      const matchesCategory = selectedCategory === 'সকল পোস্ট' || blog.category === selectedCategory;
+    return (blogs || []).filter((blog) => {
+      const matchesCategory =
+        selectedCategory === 'সকল পোস্ট' || blog.category === selectedCategory;
 
       if (!matchesCategory) return false;
       if (!query) return true;
 
-      // excerpt বা content যেকোনো ফিল্ড সেফলি রিড করা
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const rawText = (blog as any).excerpt || blog.content || '';
+      const rawText = blog.metaDescription || blog.content || '';
       const plainExcerpt = stripHtml(rawText).toLowerCase();
       const titleMatches = blog.title?.toLowerCase().includes(query);
 
       return titleMatches || plainExcerpt.includes(query);
     });
-  }, [selectedCategory, searchQuery]);
+  }, [blogs, selectedCategory, searchQuery]);
 
   return (
     <div className="bg-gray-50/50 min-h-screen pb-16">
@@ -63,7 +76,7 @@ export const BlogPage: React.FC = () => {
         {/* Controls */}
         <div className="bg-white rounded-2xl shadow-lg p-4 mb-10 border border-gray-100 flex flex-col md:flex-row gap-4 items-center justify-between">
           <div className="flex items-center gap-2 overflow-x-auto w-full md:w-auto pb-2 md:pb-0 no-scrollbar">
-            {BLOG_CATEGORIES.map((category) => (
+            {blogCategories.map((category) => (
               <button
                 key={category}
                 type="button"
@@ -91,8 +104,31 @@ export const BlogPage: React.FC = () => {
           </div>
         </div>
 
+        {/* Loading State */}
+        {isLoading && (
+          <div className="flex flex-col items-center justify-center py-20 text-gray-500">
+            <Loader2 className="w-10 h-10 animate-spin text-primary-600 mb-3" />
+            <p className="text-sm font-medium">ব্লগ পোস্ট লোড হচ্ছে...</p>
+          </div>
+        )}
+
+        {/* Error State */}
+        {isError && !isLoading && (
+          <div className="bg-red-50 border border-red-200 rounded-2xl p-6 text-center max-w-md mx-auto my-10">
+            <AlertCircle className="w-10 h-10 text-red-500 mx-auto mb-2" />
+            <h3 className="text-lg font-bold text-red-800 mb-1">সমস্যা হয়েছে</h3>
+            <p className="text-sm text-red-600 mb-4">{errorMessage || 'ব্লগসমূহ লোড করা সম্ভব হয়নি।'}</p>
+            <button
+              onClick={() => getAllBlogs()}
+              className="bg-red-600 hover:bg-red-700 text-white text-xs font-bold px-4 py-2 rounded-xl transition-colors cursor-pointer"
+            >
+              পুনরায় চেষ্টা করুন
+            </button>
+          </div>
+        )}
+
         {/* Blog Grid Component */}
-        <BlogGrid blogs={filteredBlogs} />
+        {!isLoading && !isError && <BlogGrid blogs={filteredBlogs as any} />}
       </div>
     </div>
   );

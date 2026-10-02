@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Plus,
   Search,
@@ -12,89 +12,18 @@ import {
   ExternalLink,
   Clock,
   Eye as ViewsIcon,
+  Star,
+  Loader2,
+  AlertCircle,
 } from "lucide-react";
 
 import { type VideoItem } from "../../../types/index";
 import { confirm } from "../../../features/confirm/confirmSlice";
 import { useAppDispatch } from "../../../app/hooks";
+import { useVideos } from "../../../features/videos/useVideos";
+import { showToast } from "../../../features/toast/toastSlice";
+import { useAuth } from "../../../features/auth/useAuth";
 
-const MOCK_VIDEOS: VideoItem[] = [
-  {
-    id: "1",
-    title: "টবে সহজ পদ্ধতিতে টমেটো চাষ ও পরিচর্যা গাইড-২৫৫৪",
-    description:
-      "বাসার ছাদে বা বারান্দায় কীভাবে সহজে অর্গানিক উপায়ে লাল টমেটো ফলন বৃদ্ধি করবেন তার সম্পূর্ণ গাইডলাইন।",
-    youtubeId: "https://youtu.be/7wtfhZwyrcc?si=DaxUknUGG7znoIRP",
-    category: "কৃষি টিউটোরিয়াল",
-    duration: "০৩:৩৭",
-    views: "১.২ কে",
-    createdAt: "2026-08-14T10:00:00.000Z",
-    featured: true,
-    status: "active",
-  },
-  {
-    id: "2",
-    status: "active",
-    title: "জৈব কেঁচো সার (Vermicompost) ব্যবহারের সঠিক নিয়ম",
-    description:
-      "মাটির উর্বরতা বৃদ্ধি ও গাছের দ্রুত বৃদ্ধির জন্য কীভাবে ভার্মিকম্পোস্ট প্রয়োগ করবেন জানুন।",
-    youtubeId: "https://youtu.be/7wtfhZwyrcc?si=DaxUknUGG7znoIRP",
-    category: "সার ও কীটনাশক",
-    duration: "০৭:৪৫",
-    views: "৮৫০",
-    createdAt: "2026-07-10T12:00:00.000Z",
-  },
-  {
-    id: "3",
-    status: "active",
-    title: "১০ লিটার ম্যানুয়াল স্প্রে মেশিনের আনবক্সিং ও রিভিউ",
-    description:
-      "আমাদের শপে থাকা উচ্চ ক্ষমতার স্প্রে পাম্পের কার্যক্ষমতা ও নজেল সেটিং দেখুন।",
-    youtubeId: "https://youtu.be/7wtfhZwyrcc?si=DaxUknUGG7znoIRP",
-    category: "পণ্য রিভিউ",
-    duration: "০৫:১৫",
-    views: "২.১ কে",
-    createdAt: "2026-08-08T08:30:00.000Z",
-  },
-  {
-    id: "4",
-    status: "active",
-    title: "হাইব্রিড শসা চাষে দ্বিগুণ লাভের আধুনিক কৌশল",
-    description:
-      "পরামর্শ ও মাটির প্রস্তুতি থেকে শুরু করে বাজারজাতকরণ পর্যন্ত পুরো প্রক্রিয়া।",
-    youtubeId: "7wtfhZwyrcc",
-    category: "কৃষক সাফল্য",
-    duration: "১২:৩০",
-    views: "৩.৪ কে",
-    createdAt: "2026-06-01T15:00:00.000Z",
-  },
-  {
-    id: "5",
-    status: "active",
-    title: "ড্রিপ ইরিগেশন বা ড্রিপ সেচ ব্যবস্থা কীভাবে স্থাপন করবেন?",
-    description:
-      "কম পানিতে বেশি ফলন পেতে আধুনিক ড্রিপ ইরিগেশন প্রযুক্তির ব্যবহার।",
-    youtubeId: "https://www.youtube.com/watch?v=7wtfhZwyrcc",
-    category: "আধুনিক প্রযুক্তি",
-    duration: "০৮:৫০",
-    views: "১.৯ কে",
-    createdAt: "2026-07-25T11:20:00.000Z",
-  },
-  {
-    id: "6",
-    status: "inactive",
-    title: "গাছের পোকা দমনে ঘরোয়া নিম তেলের স্প্রে তৈরি",
-    description:
-      "কোনো রাসায়নিক ছাড়াই পোকা-মাকড় দূর করার সহজ ও পরিবেশবান্ধব সমাধান।",
-    youtubeId: "7wtfhZwyrcc",
-    category: "সার ও কীটনাশক",
-    duration: "০৬:১০",
-    views: "৯২০",
-    createdAt: "2025-08-16T09:00:00.000Z",
-  },
-];
-
-// Helper to extract clean YouTube Video ID from any format (URL or raw ID)
 const getYoutubeVideoId = (urlOrId: string): string => {
   if (!urlOrId) return "";
   const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
@@ -102,51 +31,69 @@ const getYoutubeVideoId = (urlOrId: string): string => {
   return match && match[2].length === 11 ? match[2] : urlOrId;
 };
 
+const INITIAL_FORM_STATE = {
+  title: "",
+  description: "",
+  youtubeId: "",
+  category: "",
+  duration: "",
+  views: "",
+  featured: false,
+};
+
 export const VideosList: React.FC = () => {
   const dispatch = useAppDispatch();
-  const [videos, setVideos] = useState<VideoItem[]>(MOCK_VIDEOS);
+  const { user } = useAuth();
+  const isAdmin = user?.role === "admin";
+  const {
+    videos = [],
+    getVideos,
+    loading,
+    error,
+    createVideo,
+    updateVideo,
+    deleteVideo,
+    clearError,
+  } = useVideos();
+
+  useEffect(() => {
+    getVideos();
+  }, [getVideos]);
+
   const [searchTerm, setSearchTerm] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingVideo, setEditingVideo] = useState<VideoItem | null>(null);
   const [playingVideoId, setPlayingVideoId] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [formData, setFormData] = useState(INITIAL_FORM_STATE);
 
-  // Form State
-  const [formData, setFormData] = useState({
-    title: "",
-    description: "",
-    youtubeId: "",
-    category: "",
-    duration: "",
-    views: "",
-  });
-
-  // Open Modal for Create / Edit
   const handleOpenModal = (video?: VideoItem) => {
+    if (clearError) clearError();
     if (video) {
       setEditingVideo(video);
       setFormData({
-        title: video.title,
+        title: video.title || "",
         description: video.description || "",
-        youtubeId: video.youtubeId,
+        youtubeId: video.youtubeId || "",
         category: video.category || "",
         duration: video.duration || "",
         views: video.views || "",
+        featured: video.featured || false,
       });
     } else {
       setEditingVideo(null);
-      setFormData({
-        title: "",
-        description: "",
-        youtubeId: "",
-        category: "",
-        duration: "",
-        views: "",
-      });
+      setFormData(INITIAL_FORM_STATE);
     }
     setIsModalOpen(true);
   };
 
-  // Delete Video
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setEditingVideo(null);
+    setFormData(INITIAL_FORM_STATE);
+    if (clearError) clearError();
+  };
+
   const handleDelete = async (id: string | number) => {
     const isConfirmed = await dispatch(
       confirm({
@@ -159,64 +106,79 @@ export const VideosList: React.FC = () => {
       }),
     );
 
-    if (!isConfirmed) return;
-
-    setVideos((prev) => prev.filter((item) => item.id !== id));
+    if (isConfirmed && deleteVideo) {
+      await deleteVideo(String(id));
+    }
   };
 
-  // Toggle Active/Inactive Status
-  const handleToggleStatus = (id: string | number) => {
-    setVideos(
-      videos.map((item) => {
-        if (item.id === id) {
-          return {
-            ...item,
-            status: item.status === "inactive" ? "active" : "inactive",
-          };
-        }
-        return item;
-      }),
-    );
+  const handleToggleStatus = async (video: VideoItem) => {
+    if (updateVideo) {
+      const currentStatus = video.status ?? "inactive";
+      const nextStatus = currentStatus === "inactive" ? "active" : "inactive";
+
+      // createdAt কে স্ট্রিং আকারে ফরম্যাট করা
+      const formattedCreatedAt = video.createdAt
+        ? typeof video.createdAt === "string"
+          ? video.createdAt
+          : video.createdAt.toISOString()
+        : undefined;
+
+      await updateVideo(video.id, {
+        ...video,
+        status: nextStatus,
+        createdAt: formattedCreatedAt,
+      });
+
+      dispatch(showToast("ভিডিও স্টেটাস আপডেট করা হয়েছে!", "success"));
+    }
   };
 
-  // Submit Form Handler
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.youtubeId.trim()) {
-      alert("অনুগ্রহ করে ইউটিউব লিংক বা ভিডিও আইডি লিখুন");
+      // alert("অনুগ্রহ করে ইউটিউব লিংক বা ভিডিও আইডি লিখুন");
+      dispatch(
+        showToast("অনুগ্রহ করে ইউটিউব লিংক বা ভিডিও আইডি লিখুন", "success"),
+      );
       return;
     }
 
-    if (editingVideo) {
-      setVideos(
-        videos.map((item) =>
-          item.id === editingVideo.id ? { ...item, ...formData } : item,
-        ),
-      );
-    } else {
-      const newVideo: VideoItem = {
-        id: Date.now().toString(),
-        ...formData,
-        createdAt: new Date().toISOString(),
-        status: "active",
-      };
-      setVideos([newVideo, ...videos]);
+    setIsSubmitting(true);
+    try {
+      const cleanedYtId = getYoutubeVideoId(formData.youtubeId);
+      const payload = { ...formData, youtubeId: cleanedYtId };
+
+      if (editingVideo && updateVideo) {
+        await updateVideo(editingVideo.id, payload);
+        dispatch(showToast("ভিডিও সফলভাবে আপডেট করা হয়েছে!", "success"));
+      } else if (createVideo) {
+        await createVideo({
+          ...payload,
+          status: "active",
+          createdAt: new Date().toISOString(),
+        });
+        dispatch(showToast("ভিডিও সফলভাবে তৈরি করা হয়েছে!", "success"));
+      }
+      handleCloseModal();
+    } catch (err) {
+      console.error("Failed to save video:", err);
+    } finally {
+      setIsSubmitting(false);
+      getVideos();
     }
-    setIsModalOpen(false);
   };
 
-  // Search Filter
   const filteredVideos = videos.filter(
     (video) =>
-      video.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      video.category.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      video.description.toLowerCase().includes(searchTerm.toLowerCase()),
+      video.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      video.category?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      video.description?.toLowerCase().includes(searchTerm.toLowerCase()),
   );
 
   return (
     <div className="p-4 sm:p-6 lg:p-8 bg-gray-50/50 min-h-screen">
       <div className="max-w-7xl mx-auto space-y-6">
-        {/* Header Section */}
+        {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
           <div>
             <div className="flex items-center gap-2 text-primary-600 font-bold text-xs uppercase tracking-wider mb-1">
@@ -228,20 +190,41 @@ export const VideosList: React.FC = () => {
             </h1>
             <p className="text-gray-500 text-sm mt-0.5">
               ওয়েবসাইটের প্রোডাক্ট রিভিউ, টিউটোরিয়াল এবং প্রচারমূলক ভিডিওগুলো
-              নিয়ন্ত্রণ করুন
+              নিয়ন্ত্রণ করুন
             </p>
           </div>
 
-          <button
-            onClick={() => handleOpenModal()}
-            className="flex items-center justify-center gap-2 bg-primary-600 hover:bg-primary-700 text-white font-bold px-5 py-3 rounded-xl transition-colors cursor-pointer text-sm shadow-sm"
-          >
-            <Plus className="w-4 h-4" />
-            <span>নতুন ভিডিও যোগ করুন</span>
-          </button>
+          {isAdmin && (
+            <button
+              type="button"
+              onClick={() => handleOpenModal()}
+              className="flex items-center justify-center gap-2 bg-primary-600 hover:bg-primary-700 text-white font-bold px-5 py-3 rounded-xl transition-colors cursor-pointer text-sm shadow-sm"
+            >
+              <Plus className="w-4 h-4" />
+              <span>নতুন ভিডিও যোগ করুন</span>
+            </button>
+          )}
         </div>
 
-        {/* Search & Filter Bar */}
+        {/* Global Error Banner */}
+        {error && (
+          <div className="bg-rose-50 border border-rose-200 text-rose-700 px-4 py-3 rounded-xl flex items-center justify-between text-sm">
+            <div className="flex items-center gap-2">
+              <AlertCircle className="w-4 h-4 shrink-0" />
+              <span>{error}</span>
+            </div>
+            {clearError && (
+              <button
+                onClick={clearError}
+                className="p-1 hover:bg-rose-100 rounded-lg transition-colors cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            )}
+          </div>
+        )}
+
+        {/* Search Bar */}
         <div className="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="relative w-full sm:w-80">
             <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
@@ -262,7 +245,7 @@ export const VideosList: React.FC = () => {
           </span>
         </div>
 
-        {/* Videos Table */}
+        {/* Table */}
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
@@ -276,7 +259,16 @@ export const VideosList: React.FC = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100 text-sm">
-                {filteredVideos.length > 0 ? (
+                {loading ? (
+                  <tr>
+                    <td colSpan={5} className="py-12 text-center text-gray-500">
+                      <div className="flex items-center justify-center gap-2">
+                        <Loader2 className="w-5 h-5 animate-spin text-primary-600" />
+                        <span>লোড হচ্ছে...</span>
+                      </div>
+                    </td>
+                  </tr>
+                ) : filteredVideos.length > 0 ? (
                   filteredVideos.map((video) => {
                     const cleanYtId = getYoutubeVideoId(video.youtubeId);
                     const thumbnailUrl = cleanYtId
@@ -288,7 +280,6 @@ export const VideosList: React.FC = () => {
                         key={video.id}
                         className="hover:bg-gray-50/50 transition-colors"
                       >
-                        {/* Thumbnail & Title */}
                         <td className="py-4 px-6">
                           <div className="flex items-center gap-4">
                             <div
@@ -309,18 +300,25 @@ export const VideosList: React.FC = () => {
                               </div>
                             </div>
 
-                            <div className="max-w-md">
-                              <h2 className="font-bold text-gray-900 leading-snug line-clamp-1 hover:text-primary-600 transition-colors">
-                                {video.title}
-                              </h2>
-                              <p className="text-xs text-gray-400 line-clamp-2 mt-0.5">
+                            <div className="max-w-md space-y-1">
+                              <div className="flex items-center gap-2">
+                                <h2 className="font-bold text-gray-900 leading-snug line-clamp-1 hover:text-primary-600 transition-colors">
+                                  {video.title}
+                                </h2>
+                                {video.featured && (
+                                  <span className="inline-flex items-center gap-1 bg-amber-50 text-amber-700 border border-amber-200 text-[10px] font-extrabold px-2 py-0.5 rounded-md shrink-0">
+                                    <Star className="w-3 h-3 fill-amber-400 text-amber-500" />
+                                    ফিচার্ড
+                                  </span>
+                                )}
+                              </div>
+                              <p className="text-xs text-gray-400 line-clamp-2">
                                 {video.description}
                               </p>
                             </div>
                           </div>
                         </td>
 
-                        {/* Category */}
                         <td className="py-4 px-6 whitespace-nowrap">
                           {video.category && (
                             <span className="inline-block bg-primary-50 text-primary-700 font-bold text-xs px-2.5 py-1 rounded-lg">
@@ -329,7 +327,6 @@ export const VideosList: React.FC = () => {
                           )}
                         </td>
 
-                        {/* Duration & Views */}
                         <td className="py-4 px-6 whitespace-nowrap">
                           <div className="space-y-1 text-xs text-gray-500">
                             {video.duration && (
@@ -347,15 +344,17 @@ export const VideosList: React.FC = () => {
                           </div>
                         </td>
 
-                        {/* Status */}
                         <td className="py-4 px-6 whitespace-nowrap">
                           <button
-                            onClick={() => handleToggleStatus(video.id)}
+                            type="button"
+                            onClick={() =>
+                              handleToggleStatus(video as VideoItem)
+                            }
                             className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold transition-colors cursor-pointer ${
                               video.status !== "inactive"
                                 ? "bg-emerald-50 text-emerald-600"
                                 : "bg-gray-100 text-gray-500"
-                            }`}
+                            } ${isAdmin ? "" : "pointer-events-none"}`}
                           >
                             {video.status !== "inactive" ? (
                               <>
@@ -371,12 +370,11 @@ export const VideosList: React.FC = () => {
                           </button>
                         </td>
 
-                        {/* Actions */}
                         <td className="py-4 px-6 text-right whitespace-nowrap">
                           <div className="flex items-center justify-end gap-2">
                             <a
                               href={
-                                video.youtubeId.startsWith("http")
+                                video.youtubeId?.startsWith("http")
                                   ? video.youtubeId
                                   : `https://www.youtube.com/watch?v=${video.youtubeId}`
                               }
@@ -387,20 +385,29 @@ export const VideosList: React.FC = () => {
                             >
                               <ExternalLink className="w-4 h-4" />
                             </a>
-                            <button
-                              onClick={() => handleOpenModal(video)}
-                              className="p-2 text-gray-500 hover:text-primary-600 hover:bg-primary-50 rounded-lg transition-colors cursor-pointer"
-                              title="এডিট করুন"
-                            >
-                              <Edit3 className="w-4 h-4" />
-                            </button>
-                            <button
-                              onClick={() => handleDelete(video.id)}
-                              className="p-2 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors cursor-pointer"
-                              title="মুছে ফেলুন"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </button>
+
+                            {isAdmin && (
+                              <>
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    handleOpenModal(video as VideoItem)
+                                  }
+                                  className="p-2 text-gray-500 hover:text-primary-600 hover:bg-primary-50 rounded-lg transition-colors cursor-pointer"
+                                  title="এডিট করুন"
+                                >
+                                  <Edit3 className="w-4 h-4" />
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => handleDelete(video.id)}
+                                  className="p-2 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors cursor-pointer"
+                                  title="মুছে ফেলুন"
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </button>
+                              </>
+                            )}
                           </div>
                         </td>
                       </tr>
@@ -418,11 +425,12 @@ export const VideosList: React.FC = () => {
           </div>
         </div>
 
-        {/* Video Player Modal */}
+        {/* Player Modal */}
         {playingVideoId && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-xs">
             <div className="relative bg-black w-full max-w-3xl rounded-2xl overflow-hidden shadow-2xl border border-gray-800">
               <button
+                type="button"
                 onClick={() => setPlayingVideoId(null)}
                 className="absolute top-3 right-3 z-10 p-2 text-white/80 hover:text-white bg-black/50 hover:bg-black/80 rounded-full backdrop-blur-md transition-colors cursor-pointer"
               >
@@ -441,29 +449,13 @@ export const VideosList: React.FC = () => {
           </div>
         )}
 
-        {/* Add/Edit Video Modal */}
+        {/* Form Modal */}
         {isModalOpen && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs overflow-y-auto">
             <div className="bg-white w-full max-w-xl my-8 rounded-2xl shadow-xl overflow-hidden animate-in fade-in zoom-in-95 duration-150">
-              {/* Modal Header */}
               <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
                 <div className="flex items-center gap-2">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="20"
-                    height="20"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="#dc2626"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    className="w-5 h-5 text-red-600"
-                  >
-                    <path d="M2.5 17a24.12 24.12 0 0 1 0-10 2 2 0 0 1 1.4-1.4 49.56 49.56 0 0 1 16.2 0A2 2 0 0 1 21.5 7a24.12 24.12 0 0 1 0 10 2 2 0 0 1-1.4 1.4 49.55 49.55 0 0 1-16.2 0A2 2 0 0 1 2.5 17" />
-                    <path d="m10 15 5-3-5-3z" />
-                  </svg>
-
+                  <Video className="w-5 h-5 text-red-600" />
                   <h3 className="text-lg font-bold text-gray-900">
                     {editingVideo
                       ? "ভিডিও আপডেট করুন"
@@ -471,19 +463,18 @@ export const VideosList: React.FC = () => {
                   </h3>
                 </div>
                 <button
-                  onClick={() => setIsModalOpen(false)}
+                  type="button"
+                  onClick={handleCloseModal}
                   className="p-1.5 text-gray-400 hover:text-gray-600 rounded-lg cursor-pointer"
                 >
                   <X className="w-5 h-5" />
                 </button>
               </div>
 
-              {/* Form */}
               <form
                 onSubmit={handleSubmit}
                 className="p-6 space-y-4 max-h-[80vh] overflow-y-auto"
               >
-                {/* YouTube Link or ID */}
                 <div>
                   <label className="block text-xs font-bold text-gray-700 mb-1">
                     ইউটিউব ভিডিও লিংক / ভিডিও আইডি{" "}
@@ -491,7 +482,6 @@ export const VideosList: React.FC = () => {
                   </label>
                   <input
                     type="text"
-                    required
                     placeholder="https://youtu.be/7wtfhZwyrcc অথবা 7wtfhZwyrcc"
                     value={formData.youtubeId}
                     onChange={(e) =>
@@ -504,7 +494,6 @@ export const VideosList: React.FC = () => {
                   </p>
                 </div>
 
-                {/* Title */}
                 <div>
                   <label className="block text-xs font-bold text-gray-700 mb-1">
                     ভিডিওর মূল শিরোনাম <span className="text-red-500">*</span>
@@ -521,7 +510,6 @@ export const VideosList: React.FC = () => {
                   />
                 </div>
 
-                {/* Category & Duration */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-xs font-bold text-gray-700 mb-1">
@@ -553,7 +541,6 @@ export const VideosList: React.FC = () => {
                   </div>
                 </div>
 
-                {/* Views & Description */}
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <div>
                     <label className="block text-xs font-bold text-gray-700 mb-1">
@@ -588,20 +575,42 @@ export const VideosList: React.FC = () => {
                   </div>
                 </div>
 
-                {/* Modal Actions */}
+                <div className="pt-2 border-t border-gray-100">
+                  <label className="flex items-center gap-2 cursor-pointer select-none">
+                    <input
+                      type="checkbox"
+                      checked={formData.featured}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          featured: e.target.checked,
+                        })
+                      }
+                      className="w-4 h-4 text-primary-600 rounded border-gray-300 focus:ring-primary-500"
+                    />
+                    <span className="text-xs font-bold text-gray-700">
+                      ফিচার্ড ভিডিও হিসেবে দেখান
+                    </span>
+                  </label>
+                </div>
+
                 <div className="flex items-center justify-end gap-3 pt-4 border-t border-gray-100">
                   <button
                     type="button"
-                    onClick={() => setIsModalOpen(false)}
-                    className="px-4 py-2 text-xs font-bold text-gray-600 hover:bg-gray-100 rounded-xl transition-colors cursor-pointer"
+                    onClick={handleCloseModal}
+                    className="px-4 py-2 rounded-xl text-xs font-bold text-gray-600 hover:bg-gray-100 transition-colors"
                   >
                     বাতিল
                   </button>
                   <button
                     type="submit"
-                    className="px-5 py-2 bg-primary-600 hover:bg-primary-700 text-white text-xs font-bold rounded-xl transition-colors cursor-pointer shadow-sm"
+                    disabled={isSubmitting}
+                    className="flex items-center gap-2 px-5 py-2 rounded-xl text-xs font-bold bg-primary-600 hover:bg-primary-700 text-white transition-colors disabled:opacity-50"
                   >
-                    {editingVideo ? "আপডেট করুন" : "সংরক্ষণ করুন"}
+                    {isSubmitting && (
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    )}
+                    <span>{editingVideo ? "সংরক্ষণ করুন" : "যোগ করুন"}</span>
                   </button>
                 </div>
               </form>

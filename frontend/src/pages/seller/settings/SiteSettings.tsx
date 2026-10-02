@@ -1,5 +1,10 @@
-import React, { useState } from 'react';
-import { Save, Globe, Share2, Phone, CheckCircle2, Upload, Image as ImageIcon } from 'lucide-react';
+/* eslint-disable react-hooks/set-state-in-effect */
+import React, { useState, useEffect } from 'react';
+import { Save, Globe, Share2, Phone, Upload, Image as ImageIcon } from 'lucide-react';
+import { compressAndConvertToBase64 } from '../../../utils/imageUtils';
+import { showToast } from '../../../features/toast/toastSlice';
+import { useAppDispatch } from '../../../app/hooks';
+import { useSiteSettings } from '../../../features/siteSettings/useSiteSettings';
 
 // Custom Safe Social Icons SVG Components
 const FacebookIcon = () => (
@@ -32,54 +37,86 @@ const TiktokIcon = () => (
   </svg>
 );
 
-export const SiteSettings: React.FC = () => {
-  const [settings, setSettings] = useState({
-    siteLogo: '',
-    siteFavicon: '',
-    siteTitle: 'কৃষি শপ - বিশ্বস্ত অর্গানিক কৃষি পণ্য ও সরঞ্জাম',
-    siteDescription: 'বাংলাদেশের সেরা অনলাইন এগ্রো শপ। তাজা ফল, সবজি, বীজ, জৈব সার ও কৃষি যন্ত্রপাতি সহজে কিনুন।',
-    metaKeywords: 'কৃষি, অর্গানিক খাবার, তাজা সবজি, সার, বীজ, এগ্রো শপ',
-    contactPhone: '01700000000',
-    contactEmail: 'info@agroshop.com',
-    facebookUrl: 'https://facebook.com/yourpage',
-    youtubeUrl: 'https://youtube.com/@yourchannel',
-    tiktokUrl: 'https://tiktok.com/@yourprofile',
-    instagramUrl: 'https://instagram.com/yourprofile',
-    linkedinUrl: 'https://linkedin.com/company/yourcompany'
-  });
+const defaultFormState = {
+  siteLogo: '',
+  siteFavicon: '',
+  siteTitle: 'কৃষি শপ - বিশ্বস্ত অর্গানিক কৃষি পণ্য ও সরঞ্জাম',
+  siteDescription: 'বাংলাদেশের সেরা অনলাইন এগ্রো শপ। তাজা ফল, সবজি, বীজ, জৈব সার ও কৃষি যন্ত্রপাতি সহজে কিনুন।',
+  metaKeywords: 'কৃষি, অর্গানিক খাবার, তাজা সবজি, সার, বীজ, এগ্রো শপ',
+  contactPhone: '01700000000',
+  contactEmail: 'info@agroshop.com',
+  facebookUrl: 'https://facebook.com/yourpage',
+  youtubeUrl: 'https://youtube.com/@yourchannel',
+  tiktokUrl: 'https://tiktok.com/@yourprofile',
+  instagramUrl: 'https://instagram.com/yourprofile',
+  linkedinUrl: 'https://linkedin.com/company/yourcompany',
+};
 
-  const [toast, setToast] = useState(false);
+export const SiteSettings: React.FC = () => {
+  const dispatch = useAppDispatch();
+  const { settings: fetchedSettings, isLoading, editSettings, fetchSettings } = useSiteSettings();
+
+  const [formState, setFormState] = useState(defaultFormState);
+
+  // Initial Fetch Call (if hook doesn't auto-fetch)
+  useEffect(() => {
+    if (fetchSettings) {
+      fetchSettings();
+    }
+  }, [fetchSettings]);
+
+  // Sync fetched settings to form local state
+  useEffect(() => {
+    if (fetchedSettings && Object.keys(fetchedSettings).length > 0) {
+      setFormState({
+        siteLogo: fetchedSettings.siteLogo || '',
+        siteFavicon: fetchedSettings.siteFavicon || '',
+        siteTitle: fetchedSettings.siteTitle || defaultFormState.siteTitle,
+        siteDescription: fetchedSettings.siteDescription || defaultFormState.siteDescription,
+        metaKeywords: fetchedSettings.metaKeywords || defaultFormState.metaKeywords,
+        contactPhone: fetchedSettings.contactPhone || defaultFormState.contactPhone,
+        contactEmail: fetchedSettings.contactEmail || defaultFormState.contactEmail,
+        facebookUrl: fetchedSettings.facebookUrl || '',
+        youtubeUrl: fetchedSettings.youtubeUrl || '',
+        tiktokUrl: fetchedSettings.tiktokUrl || '',
+        instagramUrl: fetchedSettings.instagramUrl || '',
+        linkedinUrl: fetchedSettings.linkedinUrl || '',
+      });
+    }
+  }, [fetchedSettings]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    setSettings({ ...settings, [e.target.name]: e.target.value });
+    setFormState((prev) => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>, field: 'siteLogo' | 'siteFavicon') => {
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>, field: 'siteLogo' | 'siteFavicon') => {
     const file = e.target.files?.[0];
     if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setSettings((prev) => ({ ...prev, [field]: reader.result as string }));
-      };
-      reader.readAsDataURL(file);
+      try {
+        const compressedBase64 = await compressAndConvertToBase64(file);
+        setFormState((prev) => ({ ...prev, [field]: compressedBase64 }));
+      } catch (error) {
+        console.error('Error compressing image:', error);
+        dispatch(showToast('ছবি প্রসেস করতে সমস্যা হয়েছে', 'error'));
+      }
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setToast(true);
-    setTimeout(() => setToast(false), 2500);
+    try {
+      if (editSettings) {
+        await editSettings(formState);
+        dispatch(showToast('সাইট সেটিংস সফলভাবে আপডেট হয়েছে!', 'success'));
+      }
+    } catch (error) {
+      console.error('Failed to update site settings:', error);
+      dispatch(showToast('সেটিংস সেভ করতে ব্যর্থ হয়েছে', 'error'));
+    }
   };
 
   return (
     <div className="max-w-4xl mx-auto space-y-6 pb-12">
-      {toast && (
-        <div className="fixed top-5 right-5 z-50 bg-emerald-600 text-white px-5 py-3 rounded-xl shadow-lg flex items-center gap-2 text-sm font-bold animate-bounce">
-          <CheckCircle2 className="w-5 h-5" />
-          <span>সাইট সেটিংস সফলভাবে আপডেট হয়েছে!</span>
-        </div>
-      )}
-
       <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-xs">
         <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
           <Globe className="w-6 h-6 text-primary-600" />
@@ -106,8 +143,8 @@ export const SiteSettings: React.FC = () => {
               </label>
               <div className="flex items-center gap-4">
                 <div className="w-20 h-20 bg-white border border-gray-200 rounded-xl flex items-center justify-center overflow-hidden shrink-0">
-                  {settings.siteLogo ? (
-                    <img src={settings.siteLogo} alt="Logo" className="w-full h-full object-contain p-2" />
+                  {formState.siteLogo ? (
+                    <img src={formState.siteLogo} alt="Logo" className="w-full h-full object-contain p-2" />
                   ) : (
                     <ImageIcon className="w-8 h-8 text-gray-300" />
                   )}
@@ -133,8 +170,8 @@ export const SiteSettings: React.FC = () => {
               </label>
               <div className="flex items-center gap-4">
                 <div className="w-16 h-16 bg-white border border-gray-200 rounded-xl flex items-center justify-center overflow-hidden shrink-0">
-                  {settings.siteFavicon ? (
-                    <img src={settings.siteFavicon} alt="Favicon" className="w-10 h-10 object-contain" />
+                  {formState.siteFavicon ? (
+                    <img src={formState.siteFavicon} alt="Favicon" className="w-10 h-10 object-contain" />
                   ) : (
                     <Globe className="w-6 h-6 text-gray-300" />
                   )}
@@ -169,7 +206,7 @@ export const SiteSettings: React.FC = () => {
             <input
               type="text"
               name="siteTitle"
-              value={settings.siteTitle}
+              value={formState.siteTitle}
               onChange={handleChange}
               className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:border-primary-500 outline-none text-xs"
             />
@@ -182,7 +219,7 @@ export const SiteSettings: React.FC = () => {
             <textarea
               name="siteDescription"
               rows={3}
-              value={settings.siteDescription}
+              value={formState.siteDescription}
               onChange={handleChange}
               className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:border-primary-500 outline-none text-xs resize-y"
             />
@@ -195,7 +232,7 @@ export const SiteSettings: React.FC = () => {
             <input
               type="text"
               name="metaKeywords"
-              value={settings.metaKeywords}
+              value={formState.metaKeywords}
               onChange={handleChange}
               className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:border-primary-500 outline-none text-xs"
             />
@@ -218,7 +255,7 @@ export const SiteSettings: React.FC = () => {
               <input
                 type="url"
                 name="facebookUrl"
-                value={settings.facebookUrl}
+                value={formState.facebookUrl}
                 onChange={handleChange}
                 placeholder="https://facebook.com/yourpage"
                 className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:border-primary-500 outline-none text-xs"
@@ -233,7 +270,7 @@ export const SiteSettings: React.FC = () => {
               <input
                 type="url"
                 name="youtubeUrl"
-                value={settings.youtubeUrl}
+                value={formState.youtubeUrl}
                 onChange={handleChange}
                 placeholder="https://youtube.com/@channel"
                 className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:border-primary-500 outline-none text-xs"
@@ -248,7 +285,7 @@ export const SiteSettings: React.FC = () => {
               <input
                 type="url"
                 name="tiktokUrl"
-                value={settings.tiktokUrl}
+                value={formState.tiktokUrl}
                 onChange={handleChange}
                 placeholder="https://tiktok.com/@yourprofile"
                 className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:border-primary-500 outline-none text-xs"
@@ -263,7 +300,7 @@ export const SiteSettings: React.FC = () => {
               <input
                 type="url"
                 name="instagramUrl"
-                value={settings.instagramUrl}
+                value={formState.instagramUrl}
                 onChange={handleChange}
                 placeholder="https://instagram.com/yourprofile"
                 className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:border-primary-500 outline-none text-xs"
@@ -278,7 +315,7 @@ export const SiteSettings: React.FC = () => {
               <input
                 type="url"
                 name="linkedinUrl"
-                value={settings.linkedinUrl}
+                value={formState.linkedinUrl}
                 onChange={handleChange}
                 placeholder="https://linkedin.com/company/yourcompany"
                 className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:border-primary-500 outline-none text-xs"
@@ -300,7 +337,7 @@ export const SiteSettings: React.FC = () => {
               <input
                 type="text"
                 name="contactPhone"
-                value={settings.contactPhone}
+                value={formState.contactPhone}
                 onChange={handleChange}
                 className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:border-primary-500 outline-none text-xs"
               />
@@ -310,7 +347,7 @@ export const SiteSettings: React.FC = () => {
               <input
                 type="email"
                 name="contactEmail"
-                value={settings.contactEmail}
+                value={formState.contactEmail}
                 onChange={handleChange}
                 className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:border-primary-500 outline-none text-xs"
               />
@@ -320,10 +357,11 @@ export const SiteSettings: React.FC = () => {
 
         <button
           type="submit"
-          className="bg-primary-600 hover:bg-primary-700 text-white font-bold px-6 py-3.5 rounded-xl text-xs flex items-center justify-center gap-2 cursor-pointer shadow-xs transition-colors w-full sm:w-auto"
+          disabled={isLoading}
+          className="bg-primary-600 hover:bg-primary-700 disabled:opacity-50 text-white font-bold px-6 py-3.5 rounded-xl text-xs flex items-center justify-center gap-2 cursor-pointer shadow-xs transition-colors w-full sm:w-auto"
         >
           <Save className="w-4 h-4" />
-          <span>সেটিংসে সেভ করুন</span>
+          <span>{isLoading ? 'সেভ হচ্ছে...' : 'সেটিংসে সেভ করুন'}</span>
         </button>
       </form>
     </div>

@@ -60,7 +60,9 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
         allowBase64: true,
         inline: false,
         HTMLAttributes: {
-          class: 'block max-w-full max-h-[400px] h-auto object-cover my-4 mx-auto rounded-xl border border-gray-200',
+          // ProseMirror-selectednode ক্লাসে ভিজ্যুয়াল বর্ডার ও আউটলাইন যুক্ত করা হয়েছে
+          class:
+            'block max-w-full max-h-[400px] h-auto object-cover my-4 mx-auto rounded-xl border border-gray-200 cursor-pointer transition-all [&.ProseMirror-selectednode]:outline-3 [&.ProseMirror-selectednode]:outline-primary-600 [&.ProseMirror-selectednode]:ring-4 [&.ProseMirror-selectednode]:ring-primary-500/20',
         },
       }),
       Table.configure({
@@ -84,7 +86,6 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
     content,
     editorProps: {
       attributes: {
-        // হেডিং (h2, h3) স্টাইল দেওয়ার জন্য TailWind Arbitrary Selectors যুক্ত করা হয়েছে
         class:
           'prose max-w-none p-4 min-h-[220px] focus:outline-none text-gray-800 text-sm leading-relaxed [&_h2]:text-xl [&_h2]:font-bold [&_h2]:text-gray-900 [&_h2]:my-3 [&_h3]:text-lg [&_h3]:font-semibold [&_h3]:text-gray-800 [&_h3]:my-2 [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5 [&_blockquote]:border-l-4 [&_blockquote]:border-primary-500 [&_blockquote]:pl-4 [&_blockquote]:italic [&_pre]:bg-gray-900 [&_pre]:text-white [&_pre]:p-3 [&_pre]:rounded-xl [&_p.is-editor-empty:first-child::before]:text-gray-400 [&_p.is-editor-empty:first-child::before]:content-[attr(data-placeholder)] [&_p.is-editor-empty:first-child::before]:float-left [&_p.is-editor-empty:first-child::before]:pointer-events-none',
       },
@@ -124,16 +125,11 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
     try {
       let imageUrl = '';
 
-      // ১. যদি parent component থেকে API-ভিত্তিক onImageUpload ফাংশন দেওয়া থাকে
       if (onImageUpload) {
         imageUrl = await onImageUpload(file);
-      } 
-      // ২. অন্যথায় Local compression helper ব্যবহার করবে
-      else if (compressAndConvertToBase64) {
+      } else if (compressAndConvertToBase64) {
         imageUrl = await compressAndConvertToBase64(file);
-      } 
-      // ৩. দুটিই না থাকলে Native FileReader ব্যবহার করবে
-      else {
+      } else {
         imageUrl = await new Promise<string>((resolve, reject) => {
           const reader = new FileReader();
           reader.onload = () => resolve(reader.result as string);
@@ -147,8 +143,7 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
       }
     } catch (error) {
       console.error('Image upload/conversion failed:', error);
-      
-      // কম্প্রেশন ইউটিলিটিতে সমস্যা হলে ডাইরেক্ট FileReader এ ফলব্যাক
+
       const reader = new FileReader();
       reader.onload = () => {
         if (reader.result && editor) {
@@ -378,6 +373,22 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
         >
           <ImageIcon className="w-4 h-4" />
         </button>
+
+        {/* ছবি সিলেক্ট থাকা অবস্থায় টুলবারে ডিলিট বাটন ডিসপ্লে করবে */}
+        {editor.isActive('image') && (
+          <>
+            <div className="w-[1px] h-5 bg-gray-300 mx-1" />
+            <button
+              type="button"
+              onClick={() => editor.chain().focus().deleteSelection().run()}
+              className="px-2 py-1 rounded-lg bg-red-100 text-red-600 hover:bg-red-200 transition-colors cursor-pointer flex items-center gap-1 text-xs font-medium"
+              title="Delete Selected Image"
+            >
+              <Trash2 className="w-3.5 h-3.5" />
+              <span>ছবি মুছুন</span>
+            </button>
+          </>
+        )}
 
         <div className="w-[1px] h-5 bg-gray-300 mx-1" />
 

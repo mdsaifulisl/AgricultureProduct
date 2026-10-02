@@ -30,3 +30,8 @@ export const deleteProductApi = async (id: string): Promise<ApiResponse<{ id: st
   const response = await axiosInstance.delete<ApiResponse<{ id: string }>>(`/product/${id}`);
   return response.data;
 };
+
+
+
+
+

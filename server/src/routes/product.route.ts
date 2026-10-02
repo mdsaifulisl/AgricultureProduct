@@ -12,38 +12,52 @@ import {
   updateProductSchema,
 } from '../validations/product.validation.js';
 import { upload, compressAndSaveImages } from '../middlewares/upload.middleware.js'; 
+import { auth } from '../middlewares/auth.js';
 
 const router = Router();
 
-// আপলোড ফোল্ডার নাম সেট করার কাস্টম মিডলওয়্যার
 const setProductFolder = (req: Request, res: Response, next: NextFunction) => {
   req.uploadFolder = 'products';
   next();
 };
 
-router
-  .route('/')
-  .post(
-    setProductFolder,
-    upload.array('images', 5), // সর্বোচ্চ ৫টি ছবি আপলোড নেওয়ার জন্য
-    compressAndSaveImages,
-    validate(createProductSchema),
-    createProductHandler
-  )
-  .get(getProductsHandler);
+// ----------------------------------------------------------------------
+// 🌐 PUBLIC ROUTES: 
+// ----------------------------------------------------------------------
+router.get('/', getProductsHandler);
+router.get('/:id', getProductByIdHandler);
 
-router
-  .route('/:id')
-  .get(getProductByIdHandler)
-  .patch(
-    setProductFolder,
-    upload.array('images', 5),
-    compressAndSaveImages,
-    validate(updateProductSchema),
-    updateProductHandler
-  )
-  .delete(deleteProductHandler);
+// ----------------------------------------------------------------------
+// 🔐 PROTECTED ROUTES: 
+// ----------------------------------------------------------------------
+
+// ১. প্রোডাক্ট তৈরি করা (ADMIN & MODERATOR)
+router.post(
+  '/',
+  auth('ADMIN', 'MODERATOR'),
+  setProductFolder,
+  upload.array('images', 5), 
+  validate(createProductSchema),
+  compressAndSaveImages,
+  createProductHandler
+);
+
+// ২. প্রোডাক্ট আপডেট করা (ADMIN & MODERATOR)
+router.patch(
+  '/:id',
+  auth('ADMIN', 'MODERATOR'),
+  setProductFolder,
+  upload.array('images', 5),
+  validate(updateProductSchema),
+  compressAndSaveImages,
+  updateProductHandler
+);
+
+// ৩. প্রোডাক্ট ডিলেট করা (শুধুমাত্র ADMIN)
+router.delete(
+  '/:id',
+  auth('ADMIN'),
+  deleteProductHandler
+);
 
 export default router;
-
-

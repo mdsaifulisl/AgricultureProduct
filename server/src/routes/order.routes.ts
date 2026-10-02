@@ -12,6 +12,7 @@ import {
   updateOrderStatusSchema,
   markOrderSeenSchema,
 } from '../validations/order.validation.js';
+import { auth } from '../middlewares/auth.js';
 
 // Generic Zod Validation Middleware
 const validate = (schema: any) => (req: any, res: any, next: any) => {
@@ -28,9 +29,17 @@ const validate = (schema: any) => (req: any, res: any, next: any) => {
 
 const router = Router();
 
-router.get('/', getAllOrdersController);
+
 // Create Order
 router.post('/', validate(createOrderSchema), createOrderController);
+
+// Delete Order
+router.delete('/:id', auth('admin'), deleteOrderController);
+
+router.use(auth('admin', 'moderator')); 
+// Get All Orders
+router.get('/', getAllOrdersController);
+
 
 // Get Single Order
 router.get('/:id', getOrderByIdController);
@@ -41,7 +50,6 @@ router.patch('/:id/seen', validate(markOrderSeenSchema), markOrderAsSeenControll
 // Update Order Status (PENDING, PROCESSING, SHIPPED, DELIVERED, CANCELLED)
 router.patch('/:id/status', validate(updateOrderStatusSchema), updateOrderStatusController);
 
-// Delete Order
-router.delete('/:id', deleteOrderController);
+
 
 export default router;

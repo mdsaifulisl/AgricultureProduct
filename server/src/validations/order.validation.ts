@@ -31,6 +31,7 @@ export const createOrderSchema = z.object({
     totalAmount: z.number().positive('Total amount must be positive'),
     status: OrderStatusEnum.default('PENDING'),
     seenName: z.string().default('unSeen'),
+    ipAddress: z.string().optional(), // 👈 IP Address ফিল্ড যুক্ত করা হয়েছে
     items: z.array(cartItemSchema).min(1, 'Order must contain at least one item'),
   }),
 });

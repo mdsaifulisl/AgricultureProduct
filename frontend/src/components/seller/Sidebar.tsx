@@ -1,5 +1,5 @@
 import React from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { 
   LayoutDashboard, 
   Package, 
@@ -17,6 +17,7 @@ import {
   Settings,
   Lock // পাসওয়ার্ড চেঞ্জের জন্য আইকন
 } from 'lucide-react';
+import { useAuth } from '../../features/auth/useAuth';
 
 interface SidebarProps {
   sidebarOpen: boolean;
@@ -25,6 +26,13 @@ interface SidebarProps {
 
 export const Sidebar: React.FC<SidebarProps> = ({ sidebarOpen, setSidebarOpen }) => {
   const location = useLocation();
+  const navigate = useNavigate();
+  const { handleLogout } = useAuth();
+
+  const handleLogoutClick = async () => {
+    await handleLogout();
+    navigate('/');
+  };
 
   const menuItems = [
     { name: 'ড্যাশবোর্ড', path: '/seller', icon: LayoutDashboard },
@@ -113,7 +121,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ sidebarOpen, setSidebarOpen })
           </Link>
 
           <button
-            onClick={() => alert('লগআউট করা হচ্ছে...')}
+            onClick={handleLogoutClick}
             className="w-full flex items-center gap-3 px-4 py-2.5 text-xs font-bold text-red-500 hover:bg-red-50 rounded-xl transition-colors cursor-pointer"
           >
             <LogOut className="w-4 h-4" />

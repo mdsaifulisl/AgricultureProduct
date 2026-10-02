@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { 
@@ -9,7 +10,7 @@ import {
   Save, 
   Loader2
 } from 'lucide-react';
-import type { Product } from '../../../types/index';
+import type { Product } from '../../../types/index'; 
 import { compressAndConvertToBase64 } from '../../../utils/imageUtils';
 import { useProduct } from "../../../features/product/useProduct";
 import { useAppDispatch } from '../../../app/hooks';
@@ -26,7 +27,7 @@ const {
   products, 
   createNewProduct, 
   editProduct,
-  isLoading 
+  isLoading
 } = useProduct(isEditMode); // <--- এখানে isEditMode দিন
 
   // Extract all unique categories dynamically from products array
@@ -188,42 +189,48 @@ const {
 
   // Form Submission with createNewProduct & editProduct
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsSubmitting(true);
+  e.preventDefault();
+  setIsSubmitting(true);
 
-    const cleanedSpecs = (formData.specifications || []).filter(
-      (spec) => spec.key.trim() !== '' && spec.value.trim() !== ''
-    );
+  const cleanedSpecs = (formData.specifications || []).filter(
+    (spec) => spec.key.trim() !== '' && spec.value.trim() !== ''
+  );
 
-    const payload: Partial<Product> = {
-      ...formData,
-      rating: formData.rating || 5.0,
-      reviewsCount: formData.reviewsCount || 0,
-      specifications: cleanedSpecs,
-      inStock: (formData.stockCount || 0) > 0
-    };
-
-    try {
-      if (isEditMode && id) {
-        // Edit Existing Product
-        await editProduct(id, payload);
-        dispatch(showToast('পণ্য সফলভাবে আপডেট করা হয়েছে!', 'info'));
-      } else {
-        // Create New Product
-        await createNewProduct(payload as Omit<Product, 'id'>);
-        dispatch(showToast('নতুন পণ্য সংরক্ষণ করা হয়েছে!', 'success'));
-      }
-
-      setTimeout(() => {
-        navigate('/seller/products');
-      }, 1200);
-    } catch (err) {
-      console.error('Submit error:', err);
-      alert('পণ্য সংরক্ষণ করতে সমস্যা হয়েছে। পুনরায় চেষ্টা করুন।');
-    } finally {
-      setIsSubmitting(false);
-    }
+  const payload: Partial<Product> = {
+    ...formData,
+    rating: formData.rating || 5.0,
+    reviewsCount: formData.reviewsCount || 0,
+    specifications: cleanedSpecs,
+    inStock: (formData.stockCount || 0) > 0,
   };
+
+  try {
+    if (isEditMode && id) {
+      // Edit Existing Product
+      await editProduct(id, payload);
+      dispatch(showToast('পণ্য সফলভাবে আপডেট করা হয়েছে!', 'info'));
+    } else {
+      // Create New Product
+      await createNewProduct(payload as Omit<Product, 'id'>);
+      dispatch(showToast('নতুন পণ্য সংরক্ষণ করা হয়েছে!', 'success'));
+    }
+
+    // সফল হলে নেভিগেট হবে
+    setTimeout(() => {
+      navigate('/seller/products');
+    }, 1200);
+
+  } catch (err: any) {
+    console.error('Submit error:', err);
+    
+    // err হিসেবে rejectWithValue থেকে আসা মেসেজটি পাওয়া যাবে
+    const errorMessage = typeof err === 'string' ? err : 'পণ্য সংরক্ষণ করতে সমস্যা হয়েছে। পুনরায় চেষ্টা করুন।';
+    dispatch(showToast(errorMessage, 'error'));
+
+  } finally {
+    setIsSubmitting(false);
+  }
+};
 
   return (
     <div className="max-w-5xl mx-auto space-y-6 pb-12">

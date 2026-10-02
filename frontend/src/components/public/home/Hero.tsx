@@ -12,20 +12,22 @@ import {
   Award,
   Users
 } from 'lucide-react';
+import { useSlider } from "../../../features/hero-slider/useSlider";
 
-interface Slide {
-  id: number;
-  badge: string;
+export interface Slide {
+  id: string | number;
+  badge?: string;
   title: string;
-  highlightText: string;
-  description: string;
-  primaryBtnText: string;
-  primaryBtnLink: string;
-  secondaryBtnText: string;
-  secondaryBtnLink: string;
+  highlightText?: string;
+  description?: string;
+  primaryBtnText?: string;
+  primaryBtnLink?: string;
+  secondaryBtnText?: string;
+  secondaryBtnLink?: string;
   image: string;
-  imageAlt: string;
-  tag: string;
+  imageAlt?: string;
+  tag?: string;
+  status?: 'active' | 'inactive';
 }
 
 const HERO_SLIDES: Slide[] = [
@@ -33,8 +35,8 @@ const HERO_SLIDES: Slide[] = [
     id: 1,
     badge: '১০০% প্রাকৃতিকভাবে উৎপাদিত',
     title: 'ক্ষেতের তাজা সবজি ও ফলমূল সরাসরি',
-    highlightText: 'আপনার দরজায়',
-    description: 'কোনো প্রকার মধ্যস্বত্বভোগী ছাড়াই সরাসরি প্রান্তিক কৃষকের মাঠ থেকে সংগ্রহ করা খাঁটি ও তাজা উপাদান এখন সহজে পৌঁছে যাচ্ছে আপনার ঘরে।',
+    highlightText: 'আপনার দরজায়',
+    description: 'কোনো প্রকার মধ্যস্বত্বভোগী ছাড়াই সরাসরি প্রান্তিক কৃষকের মাঠ থেকে সংগ্রহ করা খাঁটি ও তাজা উপাদান এখন সহজে পৌঁছে যাচ্ছে আপনার ঘরে।',
     primaryBtnText: 'পণ্যসমূহ দেখুন',
     primaryBtnLink: '/shop',
     secondaryBtnText: 'আজকের অফার',
@@ -48,7 +50,7 @@ const HERO_SLIDES: Slide[] = [
     badge: 'উন্নত ফলনের ভরসা',
     title: 'উচ্চ ফলনশীল বীজ ও আধুনিক',
     highlightText: 'কৃষি যন্ত্রপাতি',
-    description: 'গুণগত মানসম্পন্ন সার, হাইব্রিড বীজ এবং আধুনিক স্প্রেয়ার ও অন্যান্য যন্ত্রপাতি দিয়ে আপনার কৃষিকাজকে করুন আরও সহজ ও লাভজনক।',
+    description: 'গুণগত মানসম্পন্ন সার, হাইব্রিড বীজ এবং আধুনিক স্প্রেয়ার ও অন্যান্য যন্ত্রপাতি দিয়ে আপনার কৃষিকাজকে করুন আরও সহজ ও লাভজনক।',
     primaryBtnText: 'বীজ ও সার কিনুন',
     primaryBtnLink: '/shop?category=seeds',
     secondaryBtnText: 'যন্ত্রপাতি দেখুন',
@@ -76,7 +78,7 @@ const FEATURES = [
     id: 3,
     icon: Award,
     title: 'ন্যায্য মূল্য',
-    description: 'কৃষক এবং ক্রেতা উভয়ের জন্য সেরা দাম'
+    description: 'কৃষক এবং ক্রেতা উভয়ের জন্য সেরা দাম'
   },
   {
     id: 4,
@@ -89,20 +91,36 @@ const FEATURES = [
 export const Hero: React.FC = () => {
   const [currentSlide, setCurrentSlide] = useState(0);
 
+  // useSlider হুক থেকে স্লাইড ও লোডিং স্টেট আনছি
+  const { slides, loading, getSlides } = useSlider();
+
+
+  // যদি লোডিং চলে, slides না থাকে বা খালি অ্যারে আসে, তবে static HERO_SLIDES দেখাবে
+  const activeSlides = (!loading && slides && slides.length > 0) ? slides : HERO_SLIDES;
+
+  // স্লাইডার কাউন্ট পরিবর্তন হলে নিরাপদ index হ্যান্ডলিং
+  const totalSlides = activeSlides.length;
+
   useEffect(() => {
+    getSlides();
+    if (totalSlides === 0) return;
+
     const timer = setInterval(() => {
-      setCurrentSlide((prev) => (prev + 1) % HERO_SLIDES.length);
+      setCurrentSlide((prev) => (prev + 1) % totalSlides);
     }, 6000);
+
     return () => clearInterval(timer);
-  }, []);
+  }, [totalSlides, getSlides]);
 
   const nextSlide = () => {
-    setCurrentSlide((prev) => (prev + 1) % HERO_SLIDES.length);
+    setCurrentSlide((prev) => (prev + 1) % totalSlides);
   };
 
   const prevSlide = () => {
-    setCurrentSlide((prev) => (prev - 1 + HERO_SLIDES.length) % HERO_SLIDES.length);
+    setCurrentSlide((prev) => (prev - 1 + totalSlides) % totalSlides);
   };
+
+  const current = activeSlides[currentSlide] || activeSlides[0];
 
   return (
     <section className="relative bg-gradient-to-b from-primary-50/50 via-white to-gray-50/50 overflow-hidden pt-4 pb-12 lg:pb-16">
@@ -118,62 +136,74 @@ export const Hero: React.FC = () => {
           
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-12 items-center">
             
-            {/* Image Column - Mobile এ উপরে (order-1), Desktop এ ডানে (lg:order-2) */}
+            {/* Image Column */}
             <div className="order-1 lg:order-2 lg:col-span-5 relative flex items-center justify-center">
               <div className="relative w-full aspect-4/3 sm:aspect-square lg:aspect-4/3 rounded-2xl overflow-hidden shadow-xl border-4 border-white group">
                 <img
-                  src={HERO_SLIDES[currentSlide].image}
-                  alt={HERO_SLIDES[currentSlide].imageAlt}
+                  src={current?.image}
+                  alt={current?.imageAlt || current?.title}
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
                 />
 
                 {/* Floating Image Tag Badge */}
-                <div className="absolute top-3 left-3 sm:top-4 sm:left-4 bg-white/95 backdrop-blur-md px-3 py-1 sm:px-3.5 sm:py-1.5 rounded-full text-[11px] sm:text-xs font-bold text-primary-800 shadow-md border border-gray-100 flex items-center gap-1.5">
-                  <span className="w-2 h-2 rounded-full bg-primary-500 animate-pulse" />
-                  {HERO_SLIDES[currentSlide].tag}
-                </div>
+                {current?.tag && (
+                  <div className="absolute top-3 left-3 sm:top-4 sm:left-4 bg-white/95 backdrop-blur-md px-3 py-1 sm:px-3.5 sm:py-1.5 rounded-full text-[11px] sm:text-xs font-bold text-primary-800 shadow-md border border-gray-100 flex items-center gap-1.5">
+                    <span className="w-2 h-2 rounded-full bg-primary-500 animate-pulse" />
+                    {current.tag}
+                  </div>
+                )}
               </div>
             </div>
 
-            {/* Text Column - Mobile এ নিচে (order-2), Desktop এ বামে (lg:order-1) */}
+            {/* Text Column */}
             <div className="order-2 lg:order-1 lg:col-span-7 space-y-4 sm:space-y-6 text-center lg:text-left z-10">
               
               {/* Badge */}
-              <div className="inline-flex items-center gap-2 bg-primary-100/80 text-primary-800 border border-primary-200/60 text-xs sm:text-sm font-semibold px-4 py-1.5 rounded-full animate-fade-in">
-                <Sparkles className="w-4 h-4 text-accent-500" />
-                <span>{HERO_SLIDES[currentSlide].badge}</span>
-              </div>
+              {current?.badge && (
+                <div className="inline-flex items-center gap-2 bg-primary-100/80 text-primary-800 border border-primary-200/60 text-xs sm:text-sm font-semibold px-4 py-1.5 rounded-full animate-fade-in">
+                  <Sparkles className="w-4 h-4 text-accent-500" />
+                  <span>{current.badge}</span>
+                </div>
+              )}
 
               {/* Main Heading */}
               <h1 className="text-2xl sm:text-4xl lg:text-5xl font-black text-gray-900 tracking-tight leading-tight sm:leading-tight">
-                {HERO_SLIDES[currentSlide].title}{' '}
-                <span className="text-primary-600 underline decoration-accent-400 decoration-wavy decoration-2 underline-offset-4">
-                  {HERO_SLIDES[currentSlide].highlightText}
-                </span>
+                {current?.title}{' '}
+                {current?.highlightText && (
+                  <span className="text-primary-600 underline decoration-accent-400 decoration-wavy decoration-2 underline-offset-4">
+                    {current.highlightText}
+                  </span>
+                )}
               </h1>
 
               {/* Description */}
-              <p className="text-xs sm:text-base text-gray-600 font-normal leading-relaxed max-w-2xl mx-auto lg:mx-0">
-                {HERO_SLIDES[currentSlide].description}
-              </p>
+              {current?.description && (
+                <p className="text-xs sm:text-base text-gray-600 font-normal leading-relaxed max-w-2xl mx-auto lg:mx-0">
+                  {current.description}
+                </p>
+              )}
 
               {/* CTA Action Buttons */}
               <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-3 pt-1 sm:pt-2">
-                <Link
-                  to={HERO_SLIDES[currentSlide].primaryBtnLink}
-                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-primary-600 hover:bg-primary-700 active:scale-95 text-white font-bold text-sm sm:text-base px-7 py-3.5 rounded-xl shadow-lg shadow-primary-600/25 transition-all cursor-pointer"
-                >
-                  <ShoppingBag className="w-5 h-5" />
-                  <span>{HERO_SLIDES[currentSlide].primaryBtnText}</span>
-                  <ArrowRight className="w-4 h-4 ml-1" />
-                </Link>
+                {current?.primaryBtnText && (
+                  <Link
+                    to={current.primaryBtnLink || '/shop'}
+                    className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-primary-600 hover:bg-primary-700 active:scale-95 text-white font-bold text-sm sm:text-base px-7 py-3.5 rounded-xl shadow-lg shadow-primary-600/25 transition-all cursor-pointer"
+                  >
+                    <ShoppingBag className="w-5 h-5" />
+                    <span>{current.primaryBtnText}</span>
+                    <ArrowRight className="w-4 h-4 ml-1" />
+                  </Link>
+                )}
 
-                <Link
-                  to={HERO_SLIDES[currentSlide].secondaryBtnLink}
-                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-gray-100 hover:bg-gray-200 text-gray-800 font-bold text-sm sm:text-base px-6 py-3.5 rounded-xl border border-gray-200/80 transition-all cursor-pointer"
-                >
-                  <span>{HERO_SLIDES[currentSlide].secondaryBtnText}</span>
-                </Link>
+                {current?.secondaryBtnText && (
+                  <Link
+                    to={current.secondaryBtnLink || '/offers'}
+                    className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-gray-100 hover:bg-gray-200 text-gray-800 font-bold text-sm sm:text-base px-6 py-3.5 rounded-xl border border-gray-200/80 transition-all cursor-pointer"
+                  >
+                    <span>{current.secondaryBtnText}</span>
+                  </Link>
+                )}
               </div>
 
               {/* Quick Trust Badges */}
@@ -191,37 +221,43 @@ export const Hero: React.FC = () => {
           </div>
 
           {/* Slider Arrow Controls */}
-          <button
-            onClick={prevSlide}
-            aria-label="Previous Slide"
-            className="absolute left-3 top-1/2 -translate-y-1/2 p-2.5 rounded-full bg-white/90 hover:bg-white text-gray-800 shadow-lg border border-gray-100 transition-all hover:scale-110 active:scale-95 hidden sm:flex cursor-pointer"
-          >
-            <ChevronLeft className="w-5 h-5" />
-          </button>
+          {totalSlides > 1 && (
+            <>
+              <button
+                onClick={prevSlide}
+                aria-label="Previous Slide"
+                className="absolute left-3 top-1/2 -translate-y-1/2 p-2.5 rounded-full bg-white/90 hover:bg-white text-gray-800 shadow-lg border border-gray-100 transition-all hover:scale-110 active:scale-95 hidden sm:flex cursor-pointer"
+              >
+                <ChevronLeft className="w-5 h-5" />
+              </button>
 
-          <button
-            onClick={nextSlide}
-            aria-label="Next Slide"
-            className="absolute right-3 top-1/2 -translate-y-1/2 p-2.5 rounded-full bg-white/90 hover:bg-white text-gray-800 shadow-lg border border-gray-100 transition-all hover:scale-110 active:scale-95 hidden sm:flex cursor-pointer"
-          >
-            <ChevronRight className="w-5 h-5" />
-          </button>
+              <button
+                onClick={nextSlide}
+                aria-label="Next Slide"
+                className="absolute right-3 top-1/2 -translate-y-1/2 p-2.5 rounded-full bg-white/90 hover:bg-white text-gray-800 shadow-lg border border-gray-100 transition-all hover:scale-110 active:scale-95 hidden sm:flex cursor-pointer"
+              >
+                <ChevronRight className="w-5 h-5" />
+              </button>
+            </>
+          )}
 
           {/* Slide Indicator Dots */}
-          <div className="flex items-center justify-center gap-2 mt-6 lg:mt-0 lg:absolute lg:bottom-6 lg:left-12">
-            {HERO_SLIDES.map((_, index) => (
-              <button
-                key={index}
-                onClick={() => setCurrentSlide(index)}
-                aria-label={`Go to slide ${index + 1}`}
-                className={`h-2.5 rounded-full transition-all cursor-pointer ${
-                  currentSlide === index 
-                    ? 'w-8 bg-primary-600' 
-                    : 'w-2.5 bg-gray-300 hover:bg-gray-400'
-                }`}
-              />
-            ))}
-          </div>
+          {totalSlides > 1 && (
+            <div className="flex items-center justify-center gap-2 mt-6 lg:mt-0 lg:absolute lg:bottom-6 lg:left-12">
+              {activeSlides.map((_, index) => (
+                <button
+                  key={index}
+                  onClick={() => setCurrentSlide(index)}
+                  aria-label={`Go to slide ${index + 1}`}
+                  className={`h-2.5 rounded-full transition-all cursor-pointer ${
+                    currentSlide === index 
+                      ? 'w-8 bg-primary-600' 
+                      : 'w-2.5 bg-gray-300 hover:bg-gray-400'
+                  }`}
+                />
+              ))}
+            </div>
+          )}
 
         </div>
 

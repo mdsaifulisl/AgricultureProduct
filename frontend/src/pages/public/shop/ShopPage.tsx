@@ -25,7 +25,7 @@ export const ShopPage: React.FC<ShopPageProps> = ({ onAddToCart }) => {
   const [searchParams, setSearchParams] = useSearchParams();
 
   // Redux Store থেকে Real Product Data ও Loading State নিয়ে আসা
-  const { products, isLoading, isError, error } = useProduct(true);
+  const { products, isLoading, isError, error } = useProduct();
 
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [sortBy, setSortBy] = useState<string>("default");

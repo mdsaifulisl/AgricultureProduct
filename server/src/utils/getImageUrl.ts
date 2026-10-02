@@ -2,7 +2,7 @@
 import { Request } from 'express';
 
 export const getFullImageUrl = (req: Request, relativePath: string): string => {
-  // যদি আগে থেকেই http বা https দিয়ে শুরু হয় (যেমন Cloudinary বা External Link)
+  
   if (relativePath.startsWith('http://') || relativePath.startsWith('https://')) {
     return relativePath;
   }

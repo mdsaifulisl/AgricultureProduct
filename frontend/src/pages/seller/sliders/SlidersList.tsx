@@ -1,44 +1,66 @@
-import React, { useState } from 'react';
-import { 
-  Plus, 
-  Search, 
-  Edit3, 
-  Trash2, 
-  X, 
-  Sliders, 
-  Eye, 
-  EyeOff, 
-  Upload, 
-  ExternalLink 
-} from 'lucide-react';
+/* eslint-disable @typescript-eslint/no-unused-vars */
+import React, { useState, useEffect } from "react";
+import {
+  Plus,
+  Search,
+  Edit3,
+  Trash2,
+  X,
+  Sliders,
+  Eye,
+  EyeOff,
+  Upload,
+  ExternalLink,
+} from "lucide-react";
 
-import heroSlidesData from '../../../data/heroSlidesData.json';
-import { type Slide } from '../../../types/index';
-import { compressAndConvertToBase64 } from '../../../utils/imageUtils';
-import { confirm } from '../../../features/confirm/confirmSlice';
-import { useAppDispatch } from '../../../app/hooks';
+import { type Slide } from "../../../types/index";
+import { compressAndConvertToBase64 } from "../../../utils/imageUtils";
+import { confirm } from "../../../features/confirm/confirmSlice";
+import { useAppDispatch } from "../../../app/hooks";
+import { useSlider } from "../../../features/hero-slider/useSlider";
+import { showToast } from "../../../features/toast/toastSlice";
+import { useAuth } from "../../../features/auth/useAuth";
 
 export const SlidersList: React.FC = () => {
   const dispatch = useAppDispatch();
-  const [slides, setSlides] = useState<Slide[]>(heroSlidesData as Slide[]);
-  const [searchTerm, setSearchTerm] = useState('');
+
+  // Custom Hook destructuring based on your returned properties
+  const {
+    slides = [],
+    addSlide,
+    editSlide,
+    removeSlide,
+    toggleStatus,
+    getSlides,
+  } = useSlider();
+
+  const { user } = useAuth();
+  const isAdmin = user?.role === "admin";
+  const isAdminOrModerator = isAdmin || user?.role === "moderator";
+
+  useEffect(() => {
+    getSlides();
+  }, [getSlides]);
+  console.log("slides:", slides);
+
+  const [searchTerm, setSearchTerm] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingSlide, setEditingSlide] = useState<Slide | null>(null);
   const [isCompressing, setIsCompressing] = useState(false);
 
   // Form State
   const [formData, setFormData] = useState({
-    badge: '',
-    title: '',
-    highlightText: '',
-    description: '',
-    primaryBtnText: '',
-    primaryBtnLink: '',
-    secondaryBtnText: '',
-    secondaryBtnLink: '',
-    image: '', // Base64 or backend URL
-    imageAlt: '',
-    tag: ''
+    badge: "",
+    title: "",
+    highlightText: "",
+    description: "",
+    primaryBtnText: "",
+    primaryBtnLink: "",
+    secondaryBtnText: "",
+    secondaryBtnLink: "",
+    image: "",
+    imageAlt: "",
+    tag: "",
   });
 
   // Open Modal for Create / Edit
@@ -46,32 +68,32 @@ export const SlidersList: React.FC = () => {
     if (slide) {
       setEditingSlide(slide);
       setFormData({
-        badge: slide.badge || '',
+        badge: slide.badge || "",
         title: slide.title,
-        highlightText: slide.highlightText || '',
-        description: slide.description || '',
-        primaryBtnText: slide.primaryBtnText || '',
-        primaryBtnLink: slide.primaryBtnLink || '',
-        secondaryBtnText: slide.secondaryBtnText || '',
-        secondaryBtnLink: slide.secondaryBtnLink || '',
+        highlightText: slide.highlightText || "",
+        description: slide.description || "",
+        primaryBtnText: slide.primaryBtnText || "",
+        primaryBtnLink: slide.primaryBtnLink || "",
+        secondaryBtnText: slide.secondaryBtnText || "",
+        secondaryBtnLink: slide.secondaryBtnLink || "",
         image: slide.image,
-        imageAlt: slide.imageAlt || '',
-        tag: slide.tag || ''
+        imageAlt: slide.imageAlt || "",
+        tag: slide.tag || "",
       });
     } else {
       setEditingSlide(null);
       setFormData({
-        badge: '',
-        title: '',
-        highlightText: '',
-        description: '',
-        primaryBtnText: 'পণ্যসমূহ দেখুন',
-        primaryBtnLink: '/shop',
-        secondaryBtnText: 'আজকের অফার',
-        secondaryBtnLink: '/offers',
-        image: '',
-        imageAlt: '',
-        tag: ''
+        badge: "",
+        title: "",
+        highlightText: "",
+        description: "",
+        primaryBtnText: "পণ্যসমূহ দেখুন",
+        primaryBtnLink: "/shop",
+        secondaryBtnText: "আজকের অফার",
+        secondaryBtnLink: "/offers",
+        image: "",
+        imageAlt: "",
+        tag: "",
       });
     }
     setIsModalOpen(true);
@@ -87,84 +109,81 @@ export const SlidersList: React.FC = () => {
       const base64Image = await compressAndConvertToBase64(file);
       setFormData((prev) => ({ ...prev, image: base64Image }));
     } catch (error) {
-      console.error('Image processing failed:', error);
-      alert('ছবি প্রসেস করতে সমস্যা হয়েছে। আবার চেষ্টা করুন।');
+      console.error("Image processing failed:", error);
+      alert("ছবি প্রসেস করতে সমস্যা হয়েছে। আবার চেষ্টা করুন।");
     } finally {
       setIsCompressing(false);
     }
   };
 
   // Delete Slide
-const handleDelete = async (id: string | number) => {
-  const isConfirmed = await dispatch(
-    confirm({
-      title: "স্লাইডার মুছে ফেলার নিশ্চিতকরণ",
-      message: "আপনি কি নিশ্চিত যে এই স্লাইডারটি মুছে ফেলতে চান? এই অ্যাকশনটি ফিরিয়ে আনা যাবে না।",
-      confirmText: "হ্যাঁ, ডিলিট করুন",
-      cancelText: "বাতিল",
-      type: "danger",
-    })
-  );
-
-  if (!isConfirmed) return;
-
-  setSlides((prev) => prev.filter((slide) => slide.id !== id));
-};
-
-  // Toggle Active/Inactive Status
-  const handleToggleStatus = (id: string | number) => {
-    setSlides(
-      slides.map((slide) => {
-        if (slide.id === id) {
-          return {
-            ...slide,
-            status: slide.status === 'inactive' ? 'active' : 'inactive'
-          };
-        }
-        return slide;
-      })
+  const handleDelete = async (id: string | number) => {
+    const isConfirmed = await dispatch(
+      confirm({
+        title: "স্লাইডার মুছে ফেলার নিশ্চিতকরণ",
+        message:
+          "আপনি কি নিশ্চিত যে এই স্লাইডারটি মুছে ফেলতে চান? এই অ্যাকশনটি ফিরিয়ে আনা যাবে না।",
+        confirmText: "হ্যাঁ, ডিলিট করুন",
+        cancelText: "বাতিল",
+        type: "danger",
+      }),
     );
+
+    if (!isConfirmed) return;
+
+    removeSlide(String(id));
+  };
+
+  const handleToggleStatus = async (slideId: string | number) => {
+    const id = String(slideId);
+
+    try {
+      await toggleStatus(id);
+      dispatch(showToast("স্লাইডার সফলভাবে আপডেট করা হয়েছে!", "success"));
+    } catch (error) {
+      dispatch(showToast("স্ট্যাটাস পরিবর্তন করতে সমস্যা হয়েছে", "error"));
+    }
   };
 
   // Submit Handler
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.image) {
-      alert('অনুগ্রহ করে স্লাইডারের ব্যানার ছবি আপলোড করুন');
+      dispatch(
+        showToast("অনুগ্রহ করে স্লাইডারের ব্যানার ছবি আপলোড করুন", "error"),
+      );
+      // alert("অনুগ্রহ করে স্লাইডারের ব্যানার ছবি আপলোড করুন");
       return;
     }
 
     if (editingSlide) {
-      setSlides(
-        slides.map((slide) =>
-          slide.id === editingSlide.id
-            ? { ...slide, ...formData }
-            : slide
-        )
-      );
+      await editSlide(String(editingSlide.id), formData);
+      dispatch(showToast("স্লাইডার সফলভাবে আপডেট করা হয়েছে!", "success"));
     } else {
       const newSlide: Slide = {
         id: Date.now(),
         ...formData,
-        status: 'active'
+        status: "active",
       };
-      setSlides([newSlide, ...slides]);
+      await addSlide(newSlide);
+      dispatch(showToast("নতুন স্লাইডার সফলভাবে তৈরি করা হয়েছে!", "success"));
     }
     setIsModalOpen(false);
   };
 
   // Search Filter
-  const filteredSlides = slides.filter(
+  const filteredSlides = (slides || []).filter(
     (slide) =>
-      slide.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (slide.tag && slide.tag.toLowerCase().includes(searchTerm.toLowerCase())) ||
-      (slide.badge && slide.badge.toLowerCase().includes(searchTerm.toLowerCase()))
+      slide.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (slide.tag &&
+        slide.tag.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      (slide.badge &&
+        slide.badge.toLowerCase().includes(searchTerm.toLowerCase())),
   );
 
   return (
     <div className="p-4 sm:p-6 lg:p-8 bg-gray-50/50 min-h-screen">
       <div className="max-w-7xl mx-auto space-y-6">
-        
         {/* Header Section */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
           <div>
@@ -172,19 +191,23 @@ const handleDelete = async (id: string | number) => {
               <Sliders className="w-4 h-4" />
               <span>স্লাইডার ম্যানেজমেন্ট</span>
             </div>
-            <h1 className="text-2xl font-black text-gray-900">হোমপেজ স্লাইডারসমূহ</h1>
+            <h1 className="text-2xl font-black text-gray-900">
+              হোমপেজ স্লাইডারসমূহ
+            </h1>
             <p className="text-gray-500 text-sm mt-0.5">
               ওয়েবসাইটের প্রধান স্লাইডার ব্যানার, অফার ও বাটনসমূহ ম্যানেজ করুন
             </p>
           </div>
 
-          <button
-            onClick={() => handleOpenModal()}
-            className="flex items-center justify-center gap-2 bg-primary-600 hover:bg-primary-700 text-white font-bold px-5 py-3 rounded-xl transition-colors cursor-pointer text-sm shadow-sm"
-          >
-            <Plus className="w-4 h-4" />
-            <span>নতুন স্লাইডার যোগ করুন</span>
-          </button>
+          {isAdminOrModerator && (
+            <button
+              onClick={() => handleOpenModal()}
+              className="flex items-center justify-center gap-2 bg-primary-600 hover:bg-primary-700 text-white font-bold px-5 py-3 rounded-xl transition-colors cursor-pointer text-sm shadow-sm"
+            >
+              <Plus className="w-4 h-4" />
+              <span>নতুন স্লাইডার যোগ করুন</span>
+            </button>
+          )}
         </div>
 
         {/* Search Bar */}
@@ -200,7 +223,11 @@ const handleDelete = async (id: string | number) => {
             />
           </div>
           <span className="text-xs font-bold text-gray-500">
-            মোট স্লাইডার: <span className="text-primary-600 font-black">{filteredSlides.length}</span> টি
+            মোট স্লাইডার:{" "}
+            <span className="text-primary-600 font-black">
+              {filteredSlides.length}
+            </span>{" "}
+            টি
           </span>
         </div>
 
@@ -220,21 +247,26 @@ const handleDelete = async (id: string | number) => {
               <tbody className="divide-y divide-gray-100 text-sm">
                 {filteredSlides.length > 0 ? (
                   filteredSlides.map((slide) => (
-                    <tr key={slide.id} className="hover:bg-gray-50/50 transition-colors">
-                      
+                    <tr
+                      key={slide.id}
+                      className="hover:bg-gray-50/50 transition-colors"
+                    >
                       {/* Image & Title */}
                       <td className="py-4 px-6">
                         <div className="flex items-center gap-4">
                           <div className="w-20 h-12 rounded-xl overflow-hidden bg-gray-100 shrink-0 border border-gray-200">
-                            <img 
-                              src={slide.image} 
-                              alt={slide.imageAlt || slide.title} 
-                              className="w-full h-full object-cover" 
+                            <img
+                              src={slide.image}
+                              alt={slide.imageAlt || slide.title}
+                              className="w-full h-full object-cover"
                             />
                           </div>
                           <div className="max-w-xs">
                             <h2 className="font-bold text-gray-900 leading-snug line-clamp-1">
-                              {slide.title} <span className="text-primary-600">{slide.highlightText}</span>
+                              {slide.title}{" "}
+                              <span className="text-primary-600">
+                                {slide.highlightText}
+                              </span>
                             </h2>
                             <p className="text-xs text-gray-400 line-clamp-1 mt-0.5">
                               {slide.description}
@@ -252,7 +284,9 @@ const handleDelete = async (id: string | number) => {
                             </span>
                           )}
                           {slide.badge && (
-                            <p className="text-xs text-gray-500 truncate">{slide.badge}</p>
+                            <p className="text-xs text-gray-500 truncate">
+                              {slide.badge}
+                            </p>
                           )}
                         </div>
                       </td>
@@ -262,15 +296,21 @@ const handleDelete = async (id: string | number) => {
                         <div className="space-y-1">
                           {slide.primaryBtnText && (
                             <div className="flex items-center gap-1 text-xs text-gray-700 font-medium">
-                              <span className="font-bold text-primary-600">{slide.primaryBtnText}</span>
+                              <span className="font-bold text-primary-600">
+                                {slide.primaryBtnText}
+                              </span>
                               <ExternalLink className="w-3 h-3 text-gray-400" />
-                              <span className="text-gray-400">({slide.primaryBtnLink})</span>
+                              <span className="text-gray-400">
+                                ({slide.primaryBtnLink})
+                              </span>
                             </div>
                           )}
                           {slide.secondaryBtnText && (
                             <div className="flex items-center gap-1 text-[11px] text-gray-500">
                               <span>{slide.secondaryBtnText}</span>
-                              <span className="text-gray-400">({slide.secondaryBtnLink})</span>
+                              <span className="text-gray-400">
+                                ({slide.secondaryBtnLink})
+                              </span>
                             </div>
                           )}
                         </div>
@@ -281,20 +321,20 @@ const handleDelete = async (id: string | number) => {
                         <button
                           onClick={() => handleToggleStatus(slide.id)}
                           className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold transition-colors cursor-pointer ${
-                            slide.status !== 'inactive'
-                              ? 'bg-emerald-50 text-emerald-600'
-                              : 'bg-gray-100 text-gray-500'
+                            slide.status !== "inactive"
+                              ? "bg-emerald-50 text-emerald-600"
+                              : "bg-gray-100 text-gray-500"
                           }`}
                         >
-                          {slide.status !== 'inactive' ? (
+                          {slide.status !== "inactive" ? (
                             <>
                               <Eye className="w-3.5 h-3.5" />
-                              <span>সক্রিয়</span>
+                              <span>সক্রিয়</span>
                             </>
                           ) : (
                             <>
                               <EyeOff className="w-3.5 h-3.5" />
-                              <span>নিষ্ক্রিয়</span>
+                              <span>নিষ্ক্রিয়</span>
                             </>
                           )}
                         </button>
@@ -319,7 +359,6 @@ const handleDelete = async (id: string | number) => {
                           </button>
                         </div>
                       </td>
-
                     </tr>
                   ))
                 ) : (
@@ -338,11 +377,12 @@ const handleDelete = async (id: string | number) => {
         {isModalOpen && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs overflow-y-auto">
             <div className="bg-white w-full max-w-2xl my-8 rounded-2xl shadow-xl overflow-hidden animate-in fade-in zoom-in-95 duration-150">
-              
               {/* Modal Header */}
               <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
                 <h3 className="text-lg font-bold text-gray-900">
-                  {editingSlide ? 'স্লাইডার এডিট করুন' : 'নতুন স্লাইডার যোগ করুন'}
+                  {editingSlide
+                    ? "স্লাইডার এডিট করুন"
+                    : "নতুন স্লাইডার যোগ করুন"}
                 </h3>
                 <button
                   onClick={() => setIsModalOpen(false)}
@@ -353,8 +393,10 @@ const handleDelete = async (id: string | number) => {
               </div>
 
               {/* Form */}
-              <form onSubmit={handleSubmit} className="p-6 space-y-4 max-h-[80vh] overflow-y-auto">
-                
+              <form
+                onSubmit={handleSubmit}
+                className="p-6 space-y-4 max-h-[80vh] overflow-y-auto"
+              >
                 {/* Title & Highlight */}
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <div className="sm:col-span-2">
@@ -366,7 +408,9 @@ const handleDelete = async (id: string | number) => {
                       required
                       placeholder="যেমন: ক্ষেতের তাজা সবজি ও ফলমূল সরাসরি"
                       value={formData.title}
-                      onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                      onChange={(e) =>
+                        setFormData({ ...formData, title: e.target.value })
+                      }
                       className="w-full px-3.5 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-primary-500"
                     />
                   </div>
@@ -378,7 +422,12 @@ const handleDelete = async (id: string | number) => {
                       type="text"
                       placeholder="যেমন: আপনার দরজায়"
                       value={formData.highlightText}
-                      onChange={(e) => setFormData({ ...formData, highlightText: e.target.value })}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          highlightText: e.target.value,
+                        })
+                      }
                       className="w-full px-3.5 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-primary-500"
                     />
                   </div>
@@ -394,7 +443,9 @@ const handleDelete = async (id: string | number) => {
                       type="text"
                       placeholder="যেমন: দৈনিক তাজা বাজার"
                       value={formData.tag}
-                      onChange={(e) => setFormData({ ...formData, tag: e.target.value })}
+                      onChange={(e) =>
+                        setFormData({ ...formData, tag: e.target.value })
+                      }
                       className="w-full px-3.5 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-primary-500"
                     />
                   </div>
@@ -406,7 +457,9 @@ const handleDelete = async (id: string | number) => {
                       type="text"
                       placeholder="যেমন: ১০০% প্রাকৃতিকভাবে উৎপাদিত"
                       value={formData.badge}
-                      onChange={(e) => setFormData({ ...formData, badge: e.target.value })}
+                      onChange={(e) =>
+                        setFormData({ ...formData, badge: e.target.value })
+                      }
                       className="w-full px-3.5 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-primary-500"
                     />
                   </div>
@@ -421,15 +474,19 @@ const handleDelete = async (id: string | number) => {
                     rows={2}
                     placeholder="স্লাইডারের বিস্তারিত বর্ণনা..."
                     value={formData.description}
-                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                    onChange={(e) =>
+                      setFormData({ ...formData, description: e.target.value })
+                    }
                     className="w-full px-3.5 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-primary-500 resize-none"
                   />
                 </div>
 
                 {/* Buttons Config */}
                 <div className="p-4 bg-gray-50 rounded-xl space-y-3">
-                  <h4 className="text-xs font-bold text-gray-700 uppercase tracking-wider">বাটন কনফিগারেশন</h4>
-                  
+                  <h4 className="text-xs font-bold text-gray-700 uppercase tracking-wider">
+                    বাটন কনফিগারেশন
+                  </h4>
+
                   {/* Primary Button */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div>
@@ -440,7 +497,12 @@ const handleDelete = async (id: string | number) => {
                         type="text"
                         placeholder="পণ্যসমূহ দেখুন"
                         value={formData.primaryBtnText}
-                        onChange={(e) => setFormData({ ...formData, primaryBtnText: e.target.value })}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            primaryBtnText: e.target.value,
+                          })
+                        }
                         className="w-full px-3 py-1.5 bg-white border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-primary-500"
                       />
                     </div>
@@ -452,7 +514,12 @@ const handleDelete = async (id: string | number) => {
                         type="text"
                         placeholder="/shop"
                         value={formData.primaryBtnLink}
-                        onChange={(e) => setFormData({ ...formData, primaryBtnLink: e.target.value })}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            primaryBtnLink: e.target.value,
+                          })
+                        }
                         className="w-full px-3 py-1.5 bg-white border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-primary-500"
                       />
                     </div>
@@ -468,7 +535,12 @@ const handleDelete = async (id: string | number) => {
                         type="text"
                         placeholder="আজকের অফার"
                         value={formData.secondaryBtnText}
-                        onChange={(e) => setFormData({ ...formData, secondaryBtnText: e.target.value })}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            secondaryBtnText: e.target.value,
+                          })
+                        }
                         className="w-full px-3 py-1.5 bg-white border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-primary-500"
                       />
                     </div>
@@ -480,7 +552,12 @@ const handleDelete = async (id: string | number) => {
                         type="text"
                         placeholder="/offers"
                         value={formData.secondaryBtnLink}
-                        onChange={(e) => setFormData({ ...formData, secondaryBtnLink: e.target.value })}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            secondaryBtnLink: e.target.value,
+                          })
+                        }
                         className="w-full px-3 py-1.5 bg-white border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-primary-500"
                       />
                     </div>
@@ -492,27 +569,29 @@ const handleDelete = async (id: string | number) => {
                   <label className="block text-xs font-bold text-gray-700 mb-1">
                     ব্যানার ছবি <span className="text-red-500">*</span>
                   </label>
-                  
+
                   {formData.image ? (
                     <div className="relative w-full h-44 rounded-xl overflow-hidden border border-gray-200 group bg-gray-50">
-                      <img 
-                        src={formData.image} 
-                        alt="Slide Preview" 
-                        className="w-full h-full object-cover" 
+                      <img
+                        src={formData.image}
+                        alt="Slide Preview"
+                        className="w-full h-full object-cover"
                       />
                       <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
                         <label className="p-2 bg-white rounded-lg cursor-pointer hover:bg-gray-100 transition-colors">
                           <Upload className="w-4 h-4 text-gray-700" />
-                          <input 
-                            type="file" 
-                            accept="image/*" 
-                            onChange={handleImageUpload} 
-                            className="hidden" 
+                          <input
+                            type="file"
+                            accept="image/*"
+                            onChange={handleImageUpload}
+                            className="hidden"
                           />
                         </label>
                         <button
                           type="button"
-                          onClick={() => setFormData({ ...formData, image: '' })}
+                          onClick={() =>
+                            setFormData({ ...formData, image: "" })
+                          }
                           className="p-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors cursor-pointer"
                         >
                           <X className="w-4 h-4" />
@@ -533,17 +612,17 @@ const handleDelete = async (id: string | number) => {
                               স্লাইডার ব্যানার সিলেক্ট করুন
                             </p>
                             <p className="text-[10px] text-gray-400 mt-1">
-                              PNG, JPG বা WEBP (স্বয়ংক্রিয়ভাবে কম্প্রেস হবে)
+                              PNG, JPG বা WEBP (স্বয়ংক্রিয়ভাবে কম্প্রেস হবে)
                             </p>
                           </>
                         )}
                       </div>
-                      <input 
-                        type="file" 
-                        accept="image/*" 
+                      <input
+                        type="file"
+                        accept="image/*"
                         disabled={isCompressing}
-                        onChange={handleImageUpload} 
-                        className="hidden" 
+                        onChange={handleImageUpload}
+                        className="hidden"
                       />
                     </label>
                   )}
@@ -563,15 +642,13 @@ const handleDelete = async (id: string | number) => {
                     disabled={isCompressing}
                     className="px-5 py-2 bg-primary-600 hover:bg-primary-700 text-white text-xs font-bold rounded-xl transition-colors cursor-pointer shadow-sm disabled:opacity-50"
                   >
-                    {editingSlide ? 'আপডেট করুন' : 'সংরক্ষণ করুন'}
+                    {editingSlide ? "আপডেট করুন" : "সংরক্ষণ করুন"}
                   </button>
                 </div>
-
               </form>
             </div>
           </div>
         )}
-
       </div>
     </div>
   );

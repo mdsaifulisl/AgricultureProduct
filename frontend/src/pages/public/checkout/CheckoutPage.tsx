@@ -304,7 +304,6 @@ export const CheckoutPage: React.FC = () => {
                 <input
                   type="text"
                   name="address"
-                  required
                   disabled={loading}
                   value={formData.address}
                   onChange={handleInputChange}

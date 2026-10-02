@@ -1,3 +1,5 @@
+
+
 export type OrderStatus = 'PENDING' | 'PROCESSING' | 'SHIPPED' | 'DELIVERED' | 'CANCELLED';
 
 export interface OrderItem {
@@ -22,8 +24,9 @@ export interface Order {
   paymentMethod: string;
   deliveryFee: number;
   totalAmount: number;
-  status: OrderStatus;
+  status: OrderStatus; 
   seenName: string;
+  ipAddress: string;
   createdAt: string;
   updatedAt: string;
   items: OrderItem[];
@@ -59,3 +62,9 @@ export interface OrderState {
   loading: boolean;
   error: string | null;
 }
+
+
+
+
+
+

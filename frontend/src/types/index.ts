@@ -38,22 +38,32 @@ export interface Product {
 
 // --- TYPES Slide ---
 export interface Slide {
-  status: string;
-  id: number;
-  badge: string;
+  id: string | number; // string এবং number দুটোই এলাউ করা হলো
+  badge?: string;
   title: string;
-  highlightText: string;
-  description: string;
-  primaryBtnText: string;
-  primaryBtnLink: string;
-  secondaryBtnText: string;
-  secondaryBtnLink: string;
+  highlightText?: string;
+  description?: string;
+  primaryBtnText?: string;
+  primaryBtnLink?: string;
+  secondaryBtnText?: string;
+  secondaryBtnLink?: string;
   image: string;
-  imageAlt: string;
-  tag: string;
+  imageAlt?: string;
+  tag?: string;
+  status?: 'active' | 'inactive';
 }
 // --- TYPES Slide End ---
+
+
 // --- TYPES Blog ---
+
+export interface BlogComment {
+  id: string;
+  userName: string;
+  commentText: string;
+  createdAt: string; // ISO date string or formatted string
+}
+
 export interface BlogPost {
   id: string;
   title: string;
@@ -64,11 +74,13 @@ export interface BlogPost {
   authorRole?: string; 
   date: string;
   readTime: string;
-  image: string;
+  image?: string;
   tags: string[];
   likes: number;
+  comments?: BlogComment[]; // কমেন্টের অ্যারে (Optional)
   status?: 'published' | 'draft' | 'archived';
 }
+
 // --- TYPES Blog End ---
 
 // --- TYPES Video ---

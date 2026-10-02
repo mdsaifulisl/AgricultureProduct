@@ -1,20 +1,7 @@
-import React, { useState, useMemo } from "react";
-import { Play, Search, Clock, Eye, Video, Sparkles, X } from "lucide-react";
-import { type VideoItem } from '../../../types/index';
-// --- TYPES ---
-// export interface VideoItem {
-//   id: string;
-//   title: string;
-//   description: string;
-//   youtubeId: string;
-//   category: string;
-//   duration: string;
-//   views: string;
-//   createdAt: string | Date;
-//   featured?: boolean;
-// }
-
-// --- HELPER FUNCTIONS ---
+import React, { useState, useMemo, useEffect } from "react";
+import { Play, Search, Clock, Eye, Video, Sparkles, X, Loader2, AlertCircle } from "lucide-react";
+import { type VideoItem } from "../../../types/index";
+import { useVideos } from "../../../features/videos/useVideos";
 
 // ১. ইংরেজি সংখ্যাকে বাংলায় রূপান্তর করার ফাংশন
 const toBanglaDigits = (num: number | string): string => {
@@ -56,7 +43,7 @@ export const formatRelativeTime = (dateInput: string | Date): string => {
   }
 };
 
-// ৩. YouTube URL অথবা ID থেকে সঠিক ১১ ডিজিটের Video ID বের করার ফিক্সড ফাংশন
+// ৩. YouTube URL অথবা ID থেকে সঠিক ১১ ডিজিটের Video ID বের করার ফাংশন
 const getYoutubeId = (urlOrId: string): string => {
   if (!urlOrId) return "";
   const trimmed = urlOrId.trim();
@@ -76,112 +63,59 @@ const getYoutubeId = (urlOrId: string): string => {
   return match && match[1].length === 11 ? match[1] : trimmed;
 };
 
-// --- CATEGORIES ---
-const CATEGORIES = [
-  "সব ভিডিও",
-  "কৃষি টিউটোরিয়াল",
-  "পণ্য রিভিউ",
-  "সার ও কীটনাশক",
-  "আধুনিক প্রযুক্তি",
-  "কৃষক সাফল্য",
-];
-
-// --- MOCK DATABASE DATA ---
-const MOCK_VIDEOS: VideoItem[] = [
-  {
-      id: "1",
-      title: "টবে সহজ পদ্ধতিতে টমেটো চাষ ও পরিচর্যা গাইড-২৫৫৪",
-      description: "বাসার ছাদে বা বারান্দায় কীভাবে সহজে অর্গানিক উপায়ে লাল টমেটো ফলন বৃদ্ধি করবেন তার সম্পূর্ণ গাইডলাইন।",
-      youtubeId: "https://youtu.be/7wtfhZwyrcc?si=DaxUknUGG7znoIRP",
-      category: "কৃষি টিউটোরিয়াল",
-      duration: "০৩:৩৭",
-      views: "১.২ কে",
-      createdAt: "2026-08-14T10:00:00.000Z",
-      featured: true,
-      status: "active",
-  },
-  {
-    id: "2",
-    status: "active",
-    title: "জৈব কেঁচো সার (Vermicompost) ব্যবহারের সঠিক নিয়ম",
-    description:
-      "মাটির উর্বরতা বৃদ্ধি ও গাছের দ্রুত বৃদ্ধির জন্য কীভাবে ভার্মিকম্পোস্ট প্রয়োগ করবেন জানুন।",
-    youtubeId: "https://youtu.be/7wtfhZwyrcc?si=DaxUknUGG7znoIRP",
-    category: "সার ও কীটনাশক",
-    duration: "০৭:৪৫",
-    views: "৮৫০",
-    createdAt: "2026-07-10T12:00:00.000Z",
-  },
-  {
-    id: "3",
-    status: "active",
-    title: "১০ লিটার ম্যানুয়াল স্প্রে মেশিনের আনবক্সিং ও রিভিউ",
-    description:
-      "আমাদের শপে থাকা উচ্চ ক্ষমতার স্প্রে পাম্পের কার্যক্ষমতা ও নজেল সেটিং দেখুন।",
-    youtubeId: "https://youtu.be/7wtfhZwyrcc?si=DaxUknUGG7znoIRP",
-    category: "পণ্য রিভিউ",
-    duration: "০৫:১৫",
-    views: "২.১ কে",
-    createdAt: "2026-08-08T08:30:00.000Z",
-  },
-  {
-    id: "4",
-    status: "active",
-    title: "হাইব্রিড শসা চাষে দ্বিগুণ লাভের আধুনিক কৌশল",
-    description:
-      "পরামর্শ ও মাটির প্রস্তুতি থেকে শুরু করে বাজারজাতকরণ পর্যন্ত পুরো প্রক্রিয়া।",
-    youtubeId: "7wtfhZwyrcc",
-    category: "কৃষক সাফল্য",
-    duration: "১২:৩০",
-    views: "৩.৪ কে",
-    createdAt: "2026-06-01T15:00:00.000Z",
-  },
-  {
-    id: "5",
-    status: "active",
-    title: "ড্রিপ ইরিগেশন বা ড্রিপ সেচ ব্যবস্থা কীভাবে স্থাপন করবেন?",
-    description:
-      "কম পানিতে বেশি ফলন পেতে আধুনিক ড্রিপ ইরিগেশন প্রযুক্তির ব্যবহার।",
-    youtubeId: "https://www.youtube.com/watch?v=7wtfhZwyrcc",
-    category: "আধুনিক প্রযুক্তি",
-    duration: "০৮:৫০",
-    views: "১.৯ কে",
-    createdAt: "2026-07-25T11:20:00.000Z",
-  },
-  {
-    id: "6",
-    status: "active",
-    title: "গাছের পোকা দমনে ঘরোয়া নিম তেলের স্প্রে তৈরি",
-    description:
-      "কোনো রাসায়নিক ছাড়াই পোকা-মাকড় দূর করার সহজ ও পরিবেশবান্ধব সমাধান।",
-    youtubeId: "7wtfhZwyrcc",
-    category: "সার ও কীটনাশক",
-    duration: "০৬:১০",
-    views: "৯২০",
-    createdAt: "2025-08-16T09:00:00.000Z",
-  },
-];
-
 // --- MAIN COMPONENT ---
 export const VideosPage: React.FC = () => {
+  const { videos = [], loading, error, getVideos } = useVideos();
+
+  useEffect(() => {
+    getVideos();
+  }, [getVideos]);
+
   const [selectedCategory, setSelectedCategory] = useState<string>("সব ভিডিও");
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [activeVideo, setActiveVideo] = useState<VideoItem | null>(null);
 
-  const filteredVideos = useMemo(() => {
-    return MOCK_VIDEOS.filter((video) => {
+  // ডায়নামিক ক্যাটাগরি এক্সট্র্যাক্ট করা (videos থেকে)
+  const categories = useMemo(() => {
+    const extractedCategories = videos.map((video) => video.category).filter(Boolean);
+    const uniqueCategories = Array.from(new Set(extractedCategories));
+    return ["সব ভিডিও", ...uniqueCategories];
+  }, [videos]);
+
+  // ভিডিও ফিল্টারিং logic
+const filteredVideos = useMemo(() => {
+    return videos.filter((video) => {
       const matchesCategory =
         selectedCategory === "সব ভিডিও" || video.category === selectedCategory;
       const matchesSearch =
         video.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        video.description.toLowerCase().includes(searchQuery.toLowerCase());
+        (video.description ?? "").toLowerCase().includes(searchQuery.toLowerCase());
       return matchesCategory && matchesSearch;
     });
-  }, [selectedCategory, searchQuery]);
-
+  }, [videos, selectedCategory, searchQuery]);
+  // Featured Video সিলেক্ট করা
   const featuredVideo = useMemo(() => {
-    return MOCK_VIDEOS.find((v) => v.featured) || MOCK_VIDEOS[0];
-  }, []);
+    return videos.find((v) => v.featured) || videos[0];
+  }, [videos]);
+
+  if (loading) {
+    return (
+      <div className="min-h-[60vh] flex flex-col items-center justify-center gap-3">
+        <Loader2 className="w-8 h-8 animate-spin text-primary-600" />
+        <p className="text-sm text-gray-500 font-medium">ভিডিও লোড হচ্ছে...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-[60vh] flex flex-col items-center justify-center gap-3 text-center px-4">
+        <AlertCircle className="w-10 h-10 text-red-500" />
+        <h3 className="text-base font-bold text-gray-800">কোনো সমস্যা হয়েছে</h3>
+        <p className="text-xs text-gray-500 max-w-sm">{error}</p>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50/50 py-8 px-4 sm:px-6 lg:px-8">
@@ -194,15 +128,13 @@ export const VideosPage: React.FC = () => {
 
           <div className="relative z-10 max-w-2xl space-y-3">
             <span className="inline-flex items-center gap-1.5 bg-primary-700/60 text-primary-200 text-xs font-semibold px-3 py-1 rounded-full border border-primary-600/40 backdrop-blur-xs">
-              <Sparkles className="w-3.5 h-3.5 text-accent-400" /> কৃষি পরামর্শ
-              ও টিউটোরিয়াল
+              <Sparkles className="w-3.5 h-3.5 text-accent-400" /> কৃষি পরামর্শ ও টিউটোরিয়াল
             </span>
             <h1 className="text-2xl sm:text-4xl font-black tracking-tight text-white">
               কৃষি বিষয়ক সকল ভিডিও গাইড
             </h1>
             <p className="text-primary-100 text-xs sm:text-sm leading-relaxed">
-              আধুনিক চাষাবাদ, সার ও কীটনাশকের সঠিক ব্যবহার এবং কৃষি যন্ত্রপাতির
-              রিভিউ দেখে আপনার কৃষি জ্ঞান বাড়ান।
+              আধুনিক চাষাবাদ, সার ও কীটনাশকের সঠিক ব্যবহার এবং কৃষি যন্ত্রপাতির রিভিউ দেখে আপনার কৃষি জ্ঞান বাড়ান।
             </p>
           </div>
         </div>
@@ -211,14 +143,13 @@ export const VideosPage: React.FC = () => {
         {featuredVideo && !searchQuery && selectedCategory === "সব ভিডিও" && (
           <div className="bg-white rounded-3xl border border-gray-100 p-4 sm:p-6 shadow-xs hover:shadow-md transition-shadow">
             <div className="flex items-center gap-2 mb-4 text-xs font-bold text-primary-700 uppercase tracking-wider">
-              <Sparkles className="w-4 h-4 text-accent-500" /> বিশেষ ভিডিও
-              (Featured)
+              <Sparkles className="w-4 h-4 text-accent-500" /> বিশেষ ভিডিও (Featured)
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
               <div
                 className="lg:col-span-7 relative aspect-video rounded-2xl overflow-hidden bg-gray-900 group cursor-pointer shadow-inner"
-                onClick={() => setActiveVideo(featuredVideo)}
+                onClick={() => setActiveVideo(featuredVideo as VideoItem)}
               >
                 <img
                   src={`https://img.youtube.com/vi/${getYoutubeId(featuredVideo.youtubeId)}/hqdefault.jpg`}
@@ -230,9 +161,11 @@ export const VideosPage: React.FC = () => {
                     <Play className="w-7 h-7 fill-current translate-x-0.5" />
                   </div>
                 </div>
-                <span className="absolute bottom-3 right-3 bg-black/80 text-white text-xs font-semibold px-2.5 py-1 rounded-md backdrop-blur-xs">
-                  {featuredVideo.duration}
-                </span>
+                {featuredVideo.duration && (
+                  <span className="absolute bottom-3 right-3 bg-black/80 text-white text-xs font-semibold px-2.5 py-1 rounded-md backdrop-blur-xs">
+                    {featuredVideo.duration}
+                  </span>
+                )}
               </div>
 
               <div className="lg:col-span-5 space-y-4">
@@ -241,7 +174,7 @@ export const VideosPage: React.FC = () => {
                 </span>
                 <h2
                   className="text-xl sm:text-2xl font-bold text-gray-900 leading-snug hover:text-primary-600 transition-colors cursor-pointer"
-                  onClick={() => setActiveVideo(featuredVideo)}
+                  onClick={() => setActiveVideo(featuredVideo as VideoItem)}
                 >
                   {featuredVideo.title}
                 </h2>
@@ -249,13 +182,17 @@ export const VideosPage: React.FC = () => {
                   {featuredVideo.description}
                 </p>
                 <div className="flex items-center gap-4 text-xs text-gray-500 font-medium pt-2 border-t border-gray-100">
-                  <span className="flex items-center gap-1">
-                    <Eye className="w-4 h-4" /> {featuredVideo.views} ভিউ
-                  </span>
-                  <span className="flex items-center gap-1">
-                    <Clock className="w-4 h-4" />{" "}
-                    {formatRelativeTime(featuredVideo.createdAt)}
-                  </span>
+                  {featuredVideo.views && (
+                    <span className="flex items-center gap-1">
+                      <Eye className="w-4 h-4" /> {featuredVideo.views} ভিউ
+                    </span>
+                  )}
+                  {featuredVideo.createdAt && (
+                    <span className="flex items-center gap-1">
+                      <Clock className="w-4 h-4" />{" "}
+                      {formatRelativeTime(featuredVideo.createdAt)}
+                    </span>
+                  )}
                 </div>
               </div>
             </div>
@@ -286,10 +223,10 @@ export const VideosPage: React.FC = () => {
           </div>
 
           <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none">
-            {CATEGORIES.map((cat) => (
+            {categories.map((cat) => (
               <button
                 key={cat}
-                onClick={() => setSelectedCategory(cat)}
+                onClick={() => setSelectedCategory(typeof cat === "string" ? cat : "")}
                 className={`px-4 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
                   selectedCategory === cat
                     ? "bg-primary-600 text-white shadow-xs"
@@ -313,7 +250,7 @@ export const VideosPage: React.FC = () => {
                 <div>
                   <div
                     className="relative aspect-video bg-gray-900 cursor-pointer overflow-hidden"
-                    onClick={() => setActiveVideo(video)}
+                    onClick={() => setActiveVideo(video as VideoItem)}
                   >
                     <img
                       src={`https://img.youtube.com/vi/${getYoutubeId(video.youtubeId)}/hqdefault.jpg`}
@@ -325,9 +262,11 @@ export const VideosPage: React.FC = () => {
                         <Play className="w-5 h-5 fill-current translate-x-0.5" />
                       </div>
                     </div>
-                    <span className="absolute bottom-2.5 right-2.5 bg-black/80 text-white text-[11px] font-semibold px-2 py-0.5 rounded">
-                      {video.duration}
-                    </span>
+                    {video.duration && (
+                      <span className="absolute bottom-2.5 right-2.5 bg-black/80 text-white text-[11px] font-semibold px-2 py-0.5 rounded">
+                        {video.duration}
+                      </span>
+                    )}
                   </div>
 
                   <div className="p-4 space-y-2">
@@ -336,7 +275,7 @@ export const VideosPage: React.FC = () => {
                     </span>
                     <h3
                       className="text-sm font-bold text-gray-900 line-clamp-2 hover:text-primary-600 transition-colors cursor-pointer leading-snug"
-                      onClick={() => setActiveVideo(video)}
+                      onClick={() => setActiveVideo(video as VideoItem)}
                     >
                       {video.title}
                     </h3>
@@ -348,12 +287,14 @@ export const VideosPage: React.FC = () => {
 
                 <div className="px-4 pb-4 pt-2 flex items-center justify-between text-[11px] text-gray-400 font-medium border-t border-gray-50">
                   <span className="flex items-center gap-1">
-                    <Eye className="w-3.5 h-3.5" /> {video.views}
+                    <Eye className="w-3.5 h-3.5" /> {video.views || 0}
                   </span>
-                  <span className="flex items-center gap-1">
-                    <Clock className="w-3.5 h-3.5" />{" "}
-                    {formatRelativeTime(video.createdAt)}
-                  </span>
+                  {video.createdAt && (
+                    <span className="flex items-center gap-1">
+                      <Clock className="w-3.5 h-3.5" />{" "}
+                      {formatRelativeTime(video.createdAt)}
+                    </span>
+                  )}
                 </div>
               </div>
             ))}
@@ -365,23 +306,21 @@ export const VideosPage: React.FC = () => {
               কোনো ভিডিও পাওয়া যায়নি
             </h3>
             <p className="text-xs text-gray-500 max-w-sm mx-auto">
-              আপনার খোঁজা ফিল্টার অনুযায়ী কোনো ফলাফল মেলেনি। অনুগ্রহ করে অন্য
-              কোনো ক্যাটাগরি বা কিওয়ার্ড দিয়ে চেষ্টা করুন।
+              আপনার খোঁজা ফিল্টার অনুযায়ী কোনো ফলাফল মেলেনি। অনুগ্রহ করে অন্য কোনো ক্যাটাগরি বা কিওয়ার্ড দিয়ে চেষ্টা করুন।
             </p>
           </div>
         )}
       </div>
 
       {/* VIDEO MODAL PLAYER */}
-      {/* VIDEO MODAL PLAYER */}
       {activeVideo && (
         <div
           className="fixed inset-0 z-50 bg-black/80 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 animate-fade-in overflow-y-auto"
-          onClick={() => setActiveVideo(null)} // ব্যাকড্রপে ক্লিক করলে মোডাল বন্ধ হবে
+          onClick={() => setActiveVideo(null)}
         >
           <div
             className="bg-white rounded-2xl overflow-hidden max-w-3xl w-full shadow-2xl relative max-h-[90vh] flex flex-col my-auto"
-            onClick={(e) => e.stopPropagation()} // মোডালের ভেতরের ক্লিকে বন্ধ হওয়া থামাবে
+            onClick={(e) => e.stopPropagation()}
           >
             {/* HEADER WITH STICKY CLOSE BUTTON */}
             <div className="p-3 sm:p-4 border-b border-gray-100 flex items-center justify-between bg-gray-50 sticky top-0 z-10 shrink-0">
@@ -419,11 +358,13 @@ export const VideosPage: React.FC = () => {
                   {activeVideo.description}
                 </p>
                 <div className="flex items-center gap-4 text-[11px] text-gray-400 font-medium pt-1">
-                  <span>ভিউ: {activeVideo.views}</span>
-                  <span>•</span>
-                  <span>
-                    প্রকাশিত: {formatRelativeTime(activeVideo.createdAt)}
-                  </span>
+                  {activeVideo.views && <span>ভিউ: {activeVideo.views}</span>}
+                  {activeVideo.views && activeVideo.createdAt && <span>•</span>}
+                  {activeVideo.createdAt && (
+                    <span>
+                      প্রকাশিত: {formatRelativeTime(activeVideo.createdAt)}
+                    </span>
+                  )}
                 </div>
               </div>
             </div>
@@ -432,5 +373,4 @@ export const VideosPage: React.FC = () => {
       )}
     </div>
   );
-  
 };

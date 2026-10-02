@@ -7,7 +7,7 @@ import {
   deleteOrderService,
   getAllOrdersService,
 } from '../services/order.service.js';
-
+import { getClientIp } from '../utils/getIp.js';
 
 
 // Get All Orders Controller
@@ -32,8 +32,11 @@ export const getAllOrdersController = async (req: Request, res: Response) => {
 export const createOrderController = async (req: Request, res: Response) => {
   try {
     const orderData = req.body;
-    const result = await createOrderService(orderData);
-
+    const clientIp = getClientIp(req); // 👈 Request থেকে IP বের করা হচ্ছে
+    
+    // সার্ভিস ফাংশনে orderData এর সাথে clientIp পাস করা হলো
+    const result = await createOrderService(orderData, clientIp);
+    
     return res.status(201).json({
       success: true,
       message: 'Order placed successfully!',

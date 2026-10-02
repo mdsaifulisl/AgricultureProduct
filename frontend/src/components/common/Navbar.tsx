@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/set-state-in-effect */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState, useRef, useEffect, useMemo } from "react";
 import { Link, NavLink, useNavigate, useLocation } from "react-router-dom";
@@ -19,8 +20,11 @@ import {
   Tag,
   BookOpen,
   Video,
+  Package,
 } from "lucide-react";
 import { useProduct } from "../../features/product/useProduct";
+import { useSiteSettings } from "../../features/siteSettings/useSiteSettings";
+import { useAuth } from "../../features/auth/useAuth";
 
 interface NavbarProps {
   cartCount?: number;
@@ -29,24 +33,13 @@ interface NavbarProps {
   onSearch?: (query: string) => void;
 }
 
-const MOCK_PRODUCTS = [
-  { id: "1", name: "তাজা লাল টমেটো", category: "তাজা সবজি", price: "৪০৳ / কেজি", image: "🍅" },
-  { id: "2", name: "দেশি সবুজ শসা", category: "তাজা সবজি", price: "৩০৳ / কেজি", image: "🥒" },
-  { id: "3", name: "মিষ্টি আলফান্সো আম", category: "ফলমূল", price: "১২০৳ / কেজি", image: "🥭" },
-  { id: "4", name: "উচ্চ ফলনশীল বেগুন বীজ", category: "বীজ ও চারা", price: "৫০৳ / প্যাকেট", image: "🌱" },
-  { id: "5", name: "জৈব কেঁচো সার (Vermicompost)", category: "জৈব সার ও কীটনাশক", price: "২৫৳ / কেজি", image: "🧪" },
-  { id: "6", name: "স্প্রে মেশিন ১০ লিটার", category: "কৃষি যন্ত্রপাতি", price: "১২০০৳", image: "🚜" },
-];
-
-const STATIC_CATEGORIES = [ 
+const STATIC_CATEGORIES = [
   { name: "তাজা সবজি", desc: "রাসায়নিক মুক্ত তাজা সবজি", icon: "🥬" },
   { name: "ফলমূল", desc: "দেশি ও আমদানিকৃত তাজা ফল", icon: "🍎" },
   { name: "বীজ ও চারা", desc: "উচ্চ ফলনশীল বীজ ও উন্নত চারা", icon: "🌱" },
   { name: "জৈব সার ও কীটনাশক", desc: "পরিবেশবান্ধব মাটির উপাদান", icon: "🧪" },
   { name: "কৃষি যন্ত্রপাতি", desc: "আধুনিক কৃষি সরঞ্জাম", icon: "🚜" },
 ];
-
-const HOTLINE_NUMBER = "০১৭০০-০০০০০";
 
 export const Navbar: React.FC<NavbarProps> = ({
   cartCount = 0,
@@ -56,6 +49,16 @@ export const Navbar: React.FC<NavbarProps> = ({
   const { products } = useProduct();
   const location = useLocation();
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const { settings, fetchSettings } = useSiteSettings();
+
+  const HOTLINE_NUMBER = settings?.contactPhone || "01700000000";
+
+  useEffect(() => {
+    if (fetchSettings) {
+      fetchSettings();
+    }
+  }, [fetchSettings]);
 
   const [searchQuery, setSearchQuery] = useState("");
   const [isSearching, setIsSearching] = useState(false);
@@ -65,73 +68,86 @@ export const Navbar: React.FC<NavbarProps> = ({
 
   const categoryRef = useRef<HTMLDivElement>(null);
   const searchRef = useRef<HTMLDivElement>(null);
+  const mobileSearchRef = useRef<HTMLDivElement>(null);
 
-  // Dynamic Categories calculated from products hook
+  // Route চেঞ্জ হলে সমস্ত UI ড্রপডাউন বন্ধ করার ব্যবস্থা
+  useEffect(() => {
+    setIsMobileMenuOpen(false);
+    setIsCategoryDropdownOpen(false);
+    setIsSearching(false);
+  }, [location.pathname]);
+
+  // Dynamic Categories
   const dynamicCategories = useMemo(() => {
     if (!products || products.length === 0) return STATIC_CATEGORIES;
 
     const uniqueCategoryNames = Array.from(
-      new Set(products.map((item: any) => item.category).filter(Boolean))
+      new Set(products.map((item: any) => item.category).filter(Boolean)),
     );
 
     return uniqueCategoryNames.map((catName) => {
       const existing = STATIC_CATEGORIES.find((c) => c.name === catName);
       return {
-        name: catName,
+        name: catName as string,
         desc: existing ? existing.desc : "উৎকৃষ্ট মানের কৃষিপণ্য",
         icon: existing ? existing.icon : "🌱",
       };
     });
   }, [products]);
 
+  // Search Results Filtering
   const searchResults = useMemo(() => {
     const query = searchQuery.trim().toLowerCase();
-    if (!query) return [];
-    return MOCK_PRODUCTS.filter(
-      (item) =>
-        item.name.toLowerCase().includes(query) ||
-        item.category.toLowerCase().includes(query)
+    if (!query || !products || products.length === 0) return [];
+    return products.filter(
+      (item: any) =>
+        item.name?.toLowerCase().includes(query) ||
+        item.category?.toLowerCase().includes(query) ||
+        item.shortDescription?.toLowerCase().includes(query),
     );
-  }, [searchQuery]);
+  }, [searchQuery, products]);
 
+  // Click Outside Detection Fix
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (
-        categoryRef.current &&
-        !categoryRef.current.contains(event.target as Node)
-      ) {
+      const target = event.target as Node;
+
+      if (categoryRef.current && !categoryRef.current.contains(target)) {
         setIsCategoryDropdownOpen(false);
       }
       if (
         searchRef.current &&
-        !searchRef.current.contains(event.target as Node)
+        !searchRef.current.contains(target) &&
+        mobileSearchRef.current &&
+        !mobileSearchRef.current.contains(target)
       ) {
         setIsSearching(false);
       }
     };
+
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (onSearch) onSearch(searchQuery);
-    setIsSearching(false);
     if (searchQuery.trim()) {
-      navigate(`/shop?search=${encodeURIComponent(searchQuery)}`);
+      if (onSearch) onSearch(searchQuery);
+      setIsSearching(false);
+      navigate(`/shop?search=${encodeURIComponent(searchQuery.trim())}`);
     }
   };
 
-  const handleSelectProduct = (productName: string) => {
-    setSearchQuery(productName);
+  const handleSelectProduct = (productId: string) => {
+    setSearchQuery("");
     setIsSearching(false);
-    if (onSearch) onSearch(productName);
-    navigate(`/shop?search=${encodeURIComponent(productName)}`);
+    setIsMobileMenuOpen(false);
+    navigate(`/product/${productId}`);
   };
 
   return (
     <header className="sticky top-0 z-50 bg-white border-b border-gray-100 shadow-xs">
-      {/* 1. TOP ANNOUNCEMENT BAR */}
+      {/* TOP ANNOUNCEMENT BAR */}
       <div className="bg-primary-950 text-primary-100 text-[11px] sm:text-xs py-2 px-4 border-b border-primary-900/50 hidden md:block">
         <div className="max-w-7xl mx-auto flex items-center justify-between gap-2">
           <div className="flex items-center gap-2 font-medium overflow-hidden whitespace-nowrap">
@@ -155,7 +171,7 @@ export const Navbar: React.FC<NavbarProps> = ({
         </div>
       </div>
 
-      {/* 2. MAIN HEADER */}
+      {/* MAIN HEADER */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-20 gap-3 lg:gap-8">
           <Link to="/" className="flex items-center gap-2.5 group shrink-0">
@@ -172,8 +188,11 @@ export const Navbar: React.FC<NavbarProps> = ({
             </div>
           </Link>
 
-          {/* Search Bar */}
-          <div className="hidden md:flex items-center flex-1 max-w-2xl relative" ref={searchRef}>
+          {/* Desktop Search Bar */}
+          <div
+            className="hidden md:flex items-center flex-1 max-w-2xl relative"
+            ref={searchRef}
+          >
             <form
               onSubmit={handleSearchSubmit}
               className="flex w-full items-center bg-gray-50/80 border border-primary-200 rounded-full focus-within:bg-white focus-within:border-primary-600 focus-within:ring-4 focus-within:ring-primary-500/10 transition-all overflow-hidden shadow-inner pl-4 pr-1.5 py-1.5"
@@ -186,7 +205,9 @@ export const Navbar: React.FC<NavbarProps> = ({
                   setSearchQuery(e.target.value);
                   setIsSearching(true);
                 }}
-                onFocus={() => searchQuery.trim() && setIsSearching(true)}
+                onFocus={() => {
+                  if (searchQuery.trim()) setIsSearching(true);
+                }}
                 className="w-full text-sm bg-transparent border-none focus:outline-none text-gray-800 placeholder-gray-400 font-normal"
               />
               <button
@@ -198,6 +219,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               </button>
             </form>
 
+            {/* Desktop Live Search Dropdown */}
             {isSearching && searchQuery.trim().length > 0 && (
               <div className="absolute left-0 right-0 top-full mt-2 bg-white border border-gray-100 rounded-2xl shadow-xl py-3 z-50 animate-fade-in overflow-hidden">
                 <div className="px-4 pb-2 mb-1 border-b border-gray-100 text-[11px] font-bold text-gray-400 uppercase tracking-wider flex justify-between items-center">
@@ -206,23 +228,37 @@ export const Navbar: React.FC<NavbarProps> = ({
                 </div>
 
                 {searchResults.length > 0 ? (
-                  <div className="max-h-72 overflow-y-auto">
-                    {searchResults.map((item) => (
+                  <div className="max-h-80 overflow-y-auto divide-y divide-gray-50">
+                    {searchResults.map((item: any) => (
                       <button
-                        key={item.id}
+                        key={item.id || item._id}
                         type="button"
-                        onClick={() => handleSelectProduct(item.name)}
-                        className="w-full flex items-center justify-between px-4 py-2.5 hover:bg-primary-50/60 cursor-pointer transition-colors text-left"
+                        onClick={() => handleSelectProduct(item.id || item._id)}
+                        className="w-full flex items-center justify-between p-2.5 hover:bg-primary-50/60 cursor-pointer text-left gap-2"
                       >
-                        <div className="flex items-center gap-3">
-                          <span className="text-2xl">{item.image}</span>
-                          <div>
-                            <div className="text-xs font-bold text-gray-800">{item.name}</div>
-                            <div className="text-[10px] text-primary-600">{item.category}</div>
+                        <div className="flex items-center gap-2.5 overflow-hidden">
+                          <div className="w-10 h-10 rounded-lg bg-gray-100 overflow-hidden shrink-0 border border-gray-200 flex items-center justify-center">
+                            {item.images && item.images.length > 0 ? (
+                              <img
+                                src={item.images[0]}
+                                alt={item.name}
+                                className="w-full h-full object-cover"
+                              />
+                            ) : (
+                              <Package className="w-4 h-4 text-gray-400" />
+                            )}
+                          </div>
+                          <div className="truncate">
+                            <div className="text-xs font-bold text-gray-800 truncate">
+                              {item.name}
+                            </div>
+                            <div className="text-[10px] text-primary-600">
+                              {item.category}
+                            </div>
                           </div>
                         </div>
-                        <div className="text-xs font-semibold text-gray-700 bg-gray-100 px-2.5 py-1 rounded-full">
-                          {item.price}
+                        <div className="text-[11px] font-semibold text-primary-700 bg-primary-50 px-2 py-0.5 rounded-full shrink-0">
+                          {item.price}৳
                         </div>
                       </button>
                     ))}
@@ -251,26 +287,40 @@ export const Navbar: React.FC<NavbarProps> = ({
               )}
             </button>
 
-            <button
-              onClick={() => navigate("/login")}
-              className="hidden sm:flex items-center gap-2 bg-primary-600 hover:bg-primary-700 active:scale-95 text-white text-sm font-semibold px-5 py-2.5 rounded-full shadow-xs shadow-primary-200 transition-all cursor-pointer"
-            >
-              <UserIcon className="w-4 h-4" />
-              <span>লগইন / সাইনআপ</span>
-            </button>
+            {user ? (
+              <button
+                onClick={() => navigate("/seller")}
+                className="hidden sm:flex items-center justify-center w-10 h-10 rounded-full bg-primary-600 hover:bg-primary-700 text-white font-bold text-sm uppercase shadow-sm transition-all cursor-pointer active:scale-95 border-2 border-primary-200"
+                title={user?.name}
+              >
+                {user?.name ? user.name.slice(0, 2) : "US"}
+              </button>
+            ) : (
+              <button
+                onClick={() => navigate("/login")}
+                className="hidden sm:flex items-center gap-2 bg-primary-600 hover:bg-primary-700 active:scale-95 text-white text-sm font-semibold px-5 py-2.5 rounded-full shadow-xs shadow-primary-200 transition-all cursor-pointer"
+              >
+                <UserIcon className="w-4 h-4" />
+                <span>লগইন / সাইনআপ</span>
+              </button>
+            )}
 
             <button
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
               className="md:hidden p-2 text-gray-700 hover:bg-gray-100 rounded-xl transition-colors cursor-pointer"
               aria-label="Toggle Menu"
             >
-              {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+              {isMobileMenuOpen ? (
+                <X className="w-6 h-6" />
+              ) : (
+                <Menu className="w-6 h-6" />
+              )}
             </button>
           </div>
         </div>
 
-        {/* Mobile Search */}
-        <div className="md:hidden pb-3 relative">
+        {/* Mobile Search Input */}
+        <div className="md:hidden pb-3 relative" ref={mobileSearchRef}>
           <form
             onSubmit={handleSearchSubmit}
             className="flex items-center bg-gray-50 border border-primary-200 rounded-xl p-1.5 shadow-inner"
@@ -283,23 +333,77 @@ export const Navbar: React.FC<NavbarProps> = ({
                 setSearchQuery(e.target.value);
                 setIsSearching(true);
               }}
+              onFocus={() => {
+                if (searchQuery.trim()) setIsSearching(true);
+              }}
               className="w-full text-xs bg-transparent px-3 focus:outline-none"
             />
-            <button type="submit" className="bg-primary-600 text-white p-2 rounded-lg shrink-0 cursor-pointer">
+            <button
+              type="submit"
+              className="bg-primary-600 text-white p-2 rounded-lg shrink-0 cursor-pointer"
+            >
               <Search className="w-3.5 h-3.5" />
             </button>
           </form>
+
+          {/* Mobile Search Results */}
+          {isSearching && searchQuery.trim().length > 0 && (
+            <div className="absolute left-0 right-0 top-full mt-1 bg-white border border-gray-100 rounded-xl shadow-xl py-2 z-50 animate-fade-in overflow-hidden">
+              {searchResults.length > 0 ? (
+                <div className="max-h-60 overflow-y-auto divide-y divide-gray-50">
+                  {searchResults.map((item: any) => (
+                    <button
+                      key={item.id || item._id}
+                      type="button"
+                      onClick={() => handleSelectProduct(item.id || item._id)}
+                      className="w-full flex items-center justify-between p-2.5 hover:bg-primary-50/60 cursor-pointer text-left gap-2"
+                    >
+                      <div className="flex items-center gap-2.5 overflow-hidden">
+                        <div className="w-10 h-10 rounded-lg bg-gray-100 overflow-hidden shrink-0 border border-gray-200 flex items-center justify-center">
+                          {item.images && item.images.length > 0 ? (
+                            <img
+                              src={item.images[0]}
+                              alt={item.name}
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <Package className="w-4 h-4 text-gray-400" />
+                          )}
+                        </div>
+                        <div className="truncate">
+                          <div className="text-xs font-bold text-gray-800 truncate">
+                            {item.name}
+                          </div>
+                          <div className="text-[10px] text-primary-600">
+                            {item.category}
+                          </div>
+                        </div>
+                      </div>
+                      <div className="text-[11px] font-semibold text-primary-700 bg-primary-50 px-2 py-0.5 rounded-full shrink-0">
+                        {item.price}৳
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              ) : (
+                <div className="px-3 py-4 text-center text-xs text-gray-500">
+                  কোনো পণ্য পাওয়া যায়নি।
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </div>
 
-      {/* 3. NAVIGATION BAR */}
+      {/* DESKTOP NAVIGATION BAR */}
       <nav className="hidden md:block bg-gray-50/80 border-t border-primary-100/60">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between text-sm font-semibold text-gray-700">
           <div className="flex items-center gap-8">
-            {/* Dynamic Category Dropdown */}
             <div className="relative py-2" ref={categoryRef}>
               <button
-                onClick={() => setIsCategoryDropdownOpen(!isCategoryDropdownOpen)}
+                onClick={() =>
+                  setIsCategoryDropdownOpen(!isCategoryDropdownOpen)
+                }
                 className="flex items-center gap-2.5 bg-primary-600 text-white px-5 py-2.5 rounded-xl hover:bg-primary-700 transition-all shadow-xs shadow-primary-200 cursor-pointer"
               >
                 <Menu className="w-4 h-4" />
@@ -323,15 +427,14 @@ export const Navbar: React.FC<NavbarProps> = ({
                       className="flex items-start gap-3 px-4 py-2.5 hover:bg-primary-50/60 transition-colors group"
                       onClick={() => setIsCategoryDropdownOpen(false)}
                     >
-                      {/* <span className="text-xl group-hover:scale-110 transition-transform">
-                        {cat.icon}
-                      </span> */}
                       <div>
                         <div className="text-xs font-bold text-gray-800 group-hover:text-primary-700">
                           {cat.name}
                         </div>
                         <div className="text-[10px] text-gray-400 font-normal">
-                          {cat.desc.length > 40 ? cat.desc.slice(0, 40) + "..." : cat.desc}
+                          {cat.desc.length > 40
+                            ? cat.desc.slice(0, 40) + "..."
+                            : cat.desc}
                         </div>
                       </div>
                     </Link>
@@ -345,7 +448,9 @@ export const Navbar: React.FC<NavbarProps> = ({
                 to="/"
                 className={({ isActive }) =>
                   `flex items-center gap-1.5 py-3 transition-colors ${
-                    isActive ? "text-primary-700 font-bold border-b-2 border-primary-600" : "hover:text-primary-600"
+                    isActive
+                      ? "text-primary-700 font-bold border-b-2 border-primary-600"
+                      : "hover:text-primary-600"
                   }`
                 }
               >
@@ -357,7 +462,9 @@ export const Navbar: React.FC<NavbarProps> = ({
                 to="/shop"
                 className={({ isActive }) =>
                   `flex items-center gap-1.5 py-3 transition-colors ${
-                    isActive ? "text-primary-700 font-bold border-b-2 border-primary-600" : "hover:text-primary-600"
+                    isActive
+                      ? "text-primary-700 font-bold border-b-2 border-primary-600"
+                      : "hover:text-primary-600"
                   }`
                 }
               >
@@ -369,7 +476,9 @@ export const Navbar: React.FC<NavbarProps> = ({
                 to="/offers"
                 className={({ isActive }) =>
                   `flex items-center gap-1.5 py-3 transition-colors ${
-                    isActive ? "text-primary-700 font-bold border-b-2 border-primary-600" : "hover:text-primary-600"
+                    isActive
+                      ? "text-primary-700 font-bold border-b-2 border-primary-600"
+                      : "hover:text-primary-600"
                   }`
                 }
               >
@@ -381,7 +490,9 @@ export const Navbar: React.FC<NavbarProps> = ({
                 to="/videos"
                 className={({ isActive }) =>
                   `flex items-center gap-1.5 py-3 transition-colors ${
-                    isActive ? "text-primary-700 font-bold border-b-2 border-primary-600" : "hover:text-primary-600"
+                    isActive
+                      ? "text-primary-700 font-bold border-b-2 border-primary-600"
+                      : "hover:text-primary-600"
                   }`
                 }
               >
@@ -393,7 +504,9 @@ export const Navbar: React.FC<NavbarProps> = ({
                 to="/blog"
                 className={({ isActive }) =>
                   `flex items-center gap-1.5 py-3 transition-colors ${
-                    isActive ? "text-primary-700 font-bold border-b-2 border-primary-600" : "hover:text-primary-600"
+                    isActive
+                      ? "text-primary-700 font-bold border-b-2 border-primary-600"
+                      : "hover:text-primary-600"
                   }`
                 }
               >
@@ -405,7 +518,9 @@ export const Navbar: React.FC<NavbarProps> = ({
                 to="/about"
                 className={({ isActive }) =>
                   `flex items-center gap-1.5 py-3 transition-colors ${
-                    isActive ? "text-primary-700 font-bold border-b-2 border-primary-600" : "hover:text-primary-600"
+                    isActive
+                      ? "text-primary-700 font-bold border-b-2 border-primary-600"
+                      : "hover:text-primary-600"
                   }`
                 }
               >
@@ -422,14 +537,13 @@ export const Navbar: React.FC<NavbarProps> = ({
         </div>
       </nav>
 
-      {/* 4. MOBILE DRAWER MENU */}
+      {/* MOBILE DRAWER MENU */}
       {isMobileMenuOpen && (
-        <div className="md:hidden border-t border-gray-100 bg-white px-4 pt-3 pb-6 space-y-4 animate-fade-in">
+        <div className="md:hidden border-t border-gray-100 bg-white px-4 pt-3 pb-6 space-y-4 animate-fade-in max-h-[calc(100vh-80px)] overflow-y-auto">
           <div className="flex flex-col text-sm text-gray-700 font-semibold space-y-1">
             <Link
               to="/"
               className="py-2.5 px-2 hover:bg-primary-50 rounded-lg flex items-center gap-2"
-              onClick={() => setIsMobileMenuOpen(false)}
             >
               <Home className="w-4 h-4 text-primary-600" /> হোম
             </Link>
@@ -443,18 +557,19 @@ export const Navbar: React.FC<NavbarProps> = ({
                   <Store className="w-4 h-4 text-primary-600" /> সকল ক্যাটাগরি
                 </span>
                 <ChevronDown
-                  className={`w-4 h-4 transition-transform ${isMobileCategoryOpen ? "rotate-180" : ""}`}
+                  className={`w-4 h-4 transition-transform ${
+                    isMobileCategoryOpen ? "rotate-180" : ""
+                  }`}
                 />
               </button>
 
               {isMobileCategoryOpen && (
-                <div className="pl-6 space-y-1 py-1 bg-gray-50 rounded-lg my-1">
+                <div className="pl-6 space-y-1 py-1 bg-gray-50 rounded-lg my-1 max-h-60 overflow-y-auto">
                   {dynamicCategories.map((cat) => (
                     <Link
                       key={cat.name}
                       to={`/shop?category=${encodeURIComponent(cat.name)}`}
                       className="block py-2 text-xs font-medium text-gray-600 hover:text-primary-700"
-                      onClick={() => setIsMobileMenuOpen(false)}
                     >
                       {cat.name}
                     </Link>
@@ -466,7 +581,6 @@ export const Navbar: React.FC<NavbarProps> = ({
             <Link
               to="/shop"
               className="py-2.5 px-2 hover:bg-primary-50 rounded-lg flex items-center gap-2"
-              onClick={() => setIsMobileMenuOpen(false)}
             >
               <Store className="w-4 h-4 text-primary-600" /> সকল পণ্য (Shop)
             </Link>
@@ -474,7 +588,6 @@ export const Navbar: React.FC<NavbarProps> = ({
             <Link
               to="/offers"
               className="py-2.5 px-2 hover:bg-primary-50 rounded-lg flex items-center gap-2"
-              onClick={() => setIsMobileMenuOpen(false)}
             >
               <Percent className="w-4 h-4 text-accent-500" /> অফার ও ডিসকাউন্ট
             </Link>
@@ -482,7 +595,6 @@ export const Navbar: React.FC<NavbarProps> = ({
             <Link
               to="/videos"
               className="py-2.5 px-2 hover:bg-primary-50 rounded-lg flex items-center gap-2"
-              onClick={() => setIsMobileMenuOpen(false)}
             >
               <Video className="w-4 h-4 text-primary-600" /> ভিডিও টিউটোরিয়াল
             </Link>
@@ -490,7 +602,6 @@ export const Navbar: React.FC<NavbarProps> = ({
             <Link
               to="/blog"
               className="py-2.5 px-2 hover:bg-primary-50 rounded-lg flex items-center gap-2"
-              onClick={() => setIsMobileMenuOpen(false)}
             >
               <BookOpen className="w-4 h-4 text-primary-600" /> ব্লগ
             </Link>
@@ -515,22 +626,42 @@ export const Navbar: React.FC<NavbarProps> = ({
             <Link
               to="/about"
               className="py-2.5 px-2 hover:bg-primary-50 rounded-lg flex items-center gap-2"
-              onClick={() => setIsMobileMenuOpen(false)}
             >
               <Info className="w-4 h-4 text-primary-600" /> আমাদের সম্পর্কে
             </Link>
           </div>
 
-          <button
-            onClick={() => {
-              setIsMobileMenuOpen(false);
-              navigate("/login");
-            }}
-            className="w-full flex items-center justify-center gap-2 bg-primary-600 hover:bg-primary-700 active:scale-95 text-white py-3 rounded-xl font-semibold text-sm shadow-xs transition-all cursor-pointer mt-2"
-          >
-            <UserIcon className="w-4 h-4" />
-            <span>লগইন / সাইনআপ</span>
-          </button>
+          {user ? (
+            <button
+              onClick={() => navigate("/seller")}
+              className="w-full flex items-center justify-between bg-primary-50 hover:bg-primary-100 border border-primary-200 text-primary-800 p-2.5 rounded-xl transition-all cursor-pointer mt-2"
+            >
+              <div className="flex items-center gap-3">
+                <span className="flex items-center justify-center w-9 h-9 rounded-full bg-primary-600 text-white font-bold text-xs uppercase shadow-xs">
+                  {user?.name ? user.name.slice(0, 2) : "US"}
+                </span>
+                <div className="text-left">
+                  <p className="text-sm font-semibold text-gray-800 leading-tight">
+                    {user?.name || "User"}
+                  </p>
+                  <p className="text-[11px] text-gray-500 leading-tight">
+                    {user?.email || ""}
+                  </p>
+                </div>
+              </div>
+              <span className="text-xs bg-primary-600 text-white px-2.5 py-1 rounded-md font-medium">
+                ড্যাশবোর্ড
+              </span>
+            </button>
+          ) : (
+            <button
+              onClick={() => navigate("/login")}
+              className="w-full flex items-center justify-center gap-2 bg-primary-600 hover:bg-primary-700 active:scale-95 text-white py-3 rounded-xl font-semibold text-sm shadow-xs transition-all cursor-pointer mt-2"
+            >
+              <UserIcon className="w-4 h-4" />
+              <span>লগইন / সাইনআপ</span>
+            </button>
+          )}
 
           <div className="pt-3 border-t border-gray-100 text-xs text-center text-gray-500">
             📞 হটলাইন:{" "}
@@ -541,7 +672,7 @@ export const Navbar: React.FC<NavbarProps> = ({
         </div>
       )}
 
-      {/* 5. FLOATING SIDE CART BUTTON */}
+      {/* FLOATING SIDE CART BUTTON */}
       {cartCount > 0 && location.pathname !== "/cart" && (
         <button
           onClick={onOpenCart}

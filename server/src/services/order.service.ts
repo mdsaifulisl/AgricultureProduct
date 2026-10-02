@@ -3,8 +3,11 @@ import prisma from '../config/prisma.js'; // সেন্ট্রাল ইন�
 import { CreateOrderInput } from '../validations/order.validation.js';
 import { updateProductStockService } from './product.service.js';
 
-// ১. Create Order Service
-export const createOrderService = async (payload: CreateOrderInput) => {
+// ১. Create Order Service (ipAddress সহ)
+export const createOrderService = async (
+  payload: CreateOrderInput,
+  ipAddress?: string
+) => {
   const { items, ...orderData } = payload;
 
   // 🔴 Step 0: Input Validation Guard Rules
@@ -30,10 +33,11 @@ export const createOrderService = async (payload: CreateOrderInput) => {
       await updateProductStockService(item.id, item.quantity, tx);
     }
 
-    // 🟢 Step B: অর্ডার ক্রিয়েট করা
+    // 🟢 Step B: অর্ডার ক্রিয়েট করা (ipAddress সহ)
     const createdOrder = await tx.order.create({
       data: {
         ...orderData,
+        ipAddress: ipAddress || orderData.ipAddress || null, // কন্ট্রোলার বা পেলোড থেকে প্রাপ্ত IP
         status: orderData.status ?? 'PENDING',
         seenName: orderData.seenName ?? 'unSeen',
         items: {
@@ -58,7 +62,7 @@ export const createOrderService = async (payload: CreateOrderInput) => {
   });
 
   return result;
-}; 
+};
 
 // ২. Get All Orders Service (Admin View)
 export const getAllOrdersService = async () => {
@@ -112,13 +116,3 @@ export const deleteOrderService = async (id: string) => {
     where: { id },
   });
 };
-
-
-
-
-
-
-
-
-
-

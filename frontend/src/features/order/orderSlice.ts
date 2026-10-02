@@ -25,6 +25,26 @@ const initialState: OrderState = {
   error: null,
 };
 
+// Backend Validation & General Error Handler Helper
+const extractErrorMessage = (error: any, fallbackMsg: string): string => {
+  const resData = error.response?.data;
+
+  // Handling Zod Issues/ErrorSources Array
+  if (resData?.errorSources && Array.isArray(resData.errorSources) && resData.errorSources.length > 0) {
+    return resData.errorSources.map((err: any) => `${err.path ? `${err.path}: ` : ''}${err.message}`).join(' | ');
+  }
+
+  if (resData?.errors && Array.isArray(resData.errors) && resData.errors.length > 0) {
+    return resData.errors.map((err: any) => err.message || err.msg).join(' | ');
+  }
+
+  if (resData?.message) {
+    return typeof resData.message === 'string' ? resData.message : JSON.stringify(resData.message);
+  }
+
+  return error.message || fallbackMsg;
+};
+
 // 1. Fetch All Orders
 export const fetchAllOrders = createAsyncThunk(
   'order/fetchAllOrders',
@@ -33,7 +53,7 @@ export const fetchAllOrders = createAsyncThunk(
       const response = await getAllOrdersApi();
       return response.data;
     } catch (error: any) {
-      return rejectWithValue(error.response?.data?.message || 'Failed to fetch orders');
+      return rejectWithValue(extractErrorMessage(error, 'Failed to fetch orders'));
     }
   }
 );
@@ -46,7 +66,7 @@ export const createOrder = createAsyncThunk(
       const response = await createOrderApi(payload);
       return response.data;
     } catch (error: any) {
-      return rejectWithValue(error.response?.data?.message || 'Failed to place order');
+      return rejectWithValue(extractErrorMessage(error, 'Failed to place order'));
     }
   }
 );
@@ -59,7 +79,7 @@ export const fetchOrderById = createAsyncThunk(
       const response = await getOrderByIdApi(id);
       return response.data;
     } catch (error: any) {
-      return rejectWithValue(error.response?.data?.message || 'Failed to fetch order');
+      return rejectWithValue(extractErrorMessage(error, 'Failed to fetch order'));
     }
   }
 );
@@ -72,7 +92,7 @@ export const updateOrderStatus = createAsyncThunk(
       const response = await updateOrderStatusApi(payload);
       return response.data;
     } catch (error: any) {
-      return rejectWithValue(error.response?.data?.message || 'Failed to update order status');
+      return rejectWithValue(extractErrorMessage(error, 'Failed to update order status'));
     }
   }
 );
@@ -81,11 +101,11 @@ export const updateOrderStatus = createAsyncThunk(
 export const markOrderAsSeen = createAsyncThunk(
   'order/markOrderAsSeen',
   async (payload: MarkOrderSeenPayload, { rejectWithValue }) => {
-    try { 
+    try {
       const response = await markOrderAsSeenApi(payload);
       return response.data;
     } catch (error: any) {
-      return rejectWithValue(error.response?.data?.message || 'Failed to mark order as seen');
+      return rejectWithValue(extractErrorMessage(error, 'Failed to mark order as seen'));
     }
   }
 );
@@ -98,7 +118,7 @@ export const deleteOrder = createAsyncThunk(
       await deleteOrderApi(id);
       return id;
     } catch (error: any) {
-      return rejectWithValue(error.response?.data?.message || 'Failed to delete order');
+      return rejectWithValue(extractErrorMessage(error, 'Failed to delete order'));
     }
   }
 );
@@ -160,6 +180,10 @@ const orderSlice = createSlice({
       })
 
       // Update Order Status
+      .addCase(updateOrderStatus.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
       .addCase(updateOrderStatus.fulfilled, (state, action: PayloadAction<Order>) => {
         state.loading = false;
         const index = state.orders.findIndex((o) => o.id === action.payload.id);
@@ -169,6 +193,10 @@ const orderSlice = createSlice({
         if (state.currentOrder?.id === action.payload.id) {
           state.currentOrder = action.payload;
         }
+      })
+      .addCase(updateOrderStatus.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
       })
 
       // Mark Order As Seen
@@ -181,14 +209,25 @@ const orderSlice = createSlice({
           state.currentOrder = action.payload;
         }
       })
+      .addCase(markOrderAsSeen.rejected, (state, action) => {
+        state.error = action.payload as string;
+      })
 
       // Delete Order
+      .addCase(deleteOrder.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
       .addCase(deleteOrder.fulfilled, (state, action: PayloadAction<string>) => {
         state.loading = false;
         state.orders = state.orders.filter((o) => o.id !== action.payload);
         if (state.currentOrder?.id === action.payload) {
           state.currentOrder = null;
         }
+      })
+      .addCase(deleteOrder.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
       });
   },
 });
