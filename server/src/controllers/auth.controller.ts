@@ -106,20 +106,24 @@ export const AuthController = {
     }
   },
 
-//   async changePassword(req: Request, res: Response) {
-//     try {
-//       const { oldPassword, newPassword } = req.body;
-//       const userId = (req as any).user?.id;
-//       await AuthService.changePassword(userId, oldPassword, newPassword);
+async changePassword(req: Request, res: Response) {
+    try {
+      const userId = (req as any).user?.id;
+      const { currentPassword, newPassword } = req.body;
 
-//       res.status(200).json({
-//         success: true,
-//         message: 'পাসওয়ার্ড সফলভাবে পরিবর্তন করা হয়েছে',
-//       });
-//     } catch (error: any) {
-//       res.status(400).json({ success: false, message: error.message });
-//     }
-//   }, 
+      await AuthService.changePassword(userId, currentPassword, newPassword);
+
+      res.status(200).json({
+        success: true,
+        message: 'পাসওয়ার্ড সফলভাবে পরিবর্তন করা হয়েছে',
+      });
+    } catch (error: any) {
+      res.status(400).json({
+        success: false,
+        message: error.message,
+      });
+    }
+  },
 };
 
 

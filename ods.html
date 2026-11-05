@@ -1,165 +1,888 @@
-{isMobileMenuOpen && (
-  <div className="md:hidden border-t border-gray-100 bg-white px-4 pt-3 pb-6 space-y-4 animate-fade-in">
-    <div className="flex flex-col text-sm text-gray-700 font-semibold space-y-1">
-      <Link
-        to="/"
-        className="py-2.5 px-2 hover:bg-primary-50 rounded-lg flex items-center gap-2"
-        onClick={() => setIsMobileMenuOpen(false)}
-      >
-        <Home className="w-4 h-4 text-primary-600" /> হোম
-      </Link>
+<!DOCTYPE html>
+<html lang="bn" class="dark h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jarvis AI - Multi-Agent Handoff Workflow</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#f0f9ff',
+                            500: '#0284c7',
+                            600: '#0284c7',
+                            900: '#0c4a6e',
+                        },
+                        cyber: {
+                            card: '#0f172a',
+                            border: '#38bdf8',
+                            accent: '#f59e0b',
+                            bg: '#030712'
+                        }
+                    },
+                    animation: {
+                        'pulse-glow': 'pulseGlow 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                        'dash-flow': 'dashFlow 1.5s linear infinite'
+                    },
+                    keyframes: {
+                        pulseGlow: {
+                            '0%, 100%': { opacity: 1, boxShadow: '0 0 15px rgba(56, 189, 248, 0.5)' },
+                            '50%': { opacity: 0.7, boxShadow: '0 0 5px rgba(56, 189, 248, 0.2)' }
+                        },
+                        dashFlow: {
+                            '0%': { strokeDashoffset: '24' },
+                            '100%': { strokeDashoffset: '0' }
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- FontAwesome & Google Fonts -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        body {
+            font-family: 'Plus Jakarta Sans', 'Hind Siliguri', sans-serif;
+            background-color: #030712;
+            color: #f3f4f6;
+            overflow-x: hidden;
+        }
+        
+        .code-font {
+            font-family: 'JetBrains Mono', monospace;
+        }
 
-      <div>
-        <button
-          onClick={() => setIsMobileCategoryOpen(!isMobileCategoryOpen)}
-          className="w-full py-2.5 px-2 hover:bg-primary-50 rounded-lg flex items-center justify-between text-left cursor-pointer"
-        >
-          <span className="flex items-center gap-2">
-            <Store className="w-4 h-4 text-primary-600" /> সকল ক্যাটাগরি
-          </span>
-          <ChevronDown
-            className={`w-4 h-4 transition-transform ${isMobileCategoryOpen ? "rotate-180" : ""}`}
-          />
-        </button>
+        /* Double Bordered Card Utility */
+        .double-border-card {
+            position: relative;
+            background: rgba(15, 23, 42, 0.85);
+            backdrop-filter: blur(12px);
+            border: 2px solid #0284c7;
+            box-shadow: 0 0 0 3px rgba(15, 23, 42, 0.9), 0 0 0 5px rgba(56, 189, 248, 0.4), 0 10px 25px -5px rgba(0, 0, 0, 0.5);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
 
-        {isMobileCategoryOpen && (
-          <div className="pl-6 space-y-1 py-1 bg-gray-50 rounded-lg my-1">
-            {dynamicCategories.map((cat) => (
-              <Link
-                key={cat.name}
-                to={`/shop?category=${encodeURIComponent(cat.name)}`}
-                className="block py-2 text-xs font-medium text-gray-600 hover:text-primary-700"
-                onClick={() => setIsMobileMenuOpen(false)}
-              >
-                {cat.name}
-              </Link>
-            ))}
-          </div>
-        )}
-      </div>
+        .double-border-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 0 0 3px rgba(15, 23, 42, 0.9), 0 0 0 5px rgba(56, 189, 248, 0.8), 0 15px 30px -5px rgba(56, 189, 248, 0.3);
+        }
 
-      <Link
-        to="/shop"
-        className="py-2.5 px-2 hover:bg-primary-50 rounded-lg flex items-center gap-2"
-        onClick={() => setIsMobileMenuOpen(false)}
-      >
-        <Store className="w-4 h-4 text-primary-600" /> সকল পণ্য (Shop)
-      </Link>
+        /* Knowledge Base Box Utility */
+        .knowledge-box {
+            background: linear-gradient(135deg, rgba(245, 158, 11, 0.12), rgba(217, 119, 6, 0.05));
+            border: 1.5px solid #f59e0b;
+            box-shadow: 0 4px 15px rgba(245, 158, 11, 0.15);
+            transition: all 0.3s ease;
+        }
 
-      <Link
-        to="/offers"
-        className="py-2.5 px-2 hover:bg-primary-50 rounded-lg flex items-center gap-2"
-        onClick={() => setIsMobileMenuOpen(false)}
-      >
-        <Percent className="w-4 h-4 text-accent-500" /> অফার ও ডিসকাউন্ট
-      </Link>
+        .knowledge-box:hover {
+            transform: scale(1.02);
+            box-shadow: 0 6px 20px rgba(245, 158, 11, 0.3);
+        }
 
-      <Link
-        to="/videos"
-        className="py-2.5 px-2 hover:bg-primary-50 rounded-lg flex items-center gap-2"
-        onClick={() => setIsMobileMenuOpen(false)}
-      >
-        <Video className="w-4 h-4 text-primary-600" /> ভিডিও টিউটোরিয়াল
-      </Link>
+        /* SVG Flow Lines Styling */
+        .connector-line {
+            stroke: #334155;
+            stroke-width: 2.5;
+            fill: none;
+            transition: stroke 0.4s ease, stroke-width 0.4s ease;
+        }
 
-      <Link
-        to="/blog"
-        className="py-2.5 px-2 hover:bg-primary-50 rounded-lg flex items-center gap-2"
-        onClick={() => setIsMobileMenuOpen(false)}
-      >
-        <BookOpen className="w-4 h-4 text-primary-600" /> ব্লগ
-      </Link>
+        .connector-animated {
+            stroke-dasharray: 8, 8;
+            animation: dashFlow 1.2s linear infinite;
+        }
 
-      <button
-        className="w-full py-2.5 px-2 hover:bg-primary-50 rounded-lg flex items-center justify-between cursor-pointer"
-        onClick={() => {
-          setIsMobileMenuOpen(false);
-          if (onOpenCart) onOpenCart();
-        }}
-      >
-        <span className="flex items-center gap-2 text-left">
-          <ShoppingBag className="w-4 h-4 text-primary-600" /> শপিং কার্ট
-        </span>
-        {cartCount > 0 && (
-          <span className="bg-accent-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">
-            {cartCount}
-          </span>
-        )}
-      </button>
+        .line-active {
+            stroke: #38bdf8 !important;
+            stroke-width: 3.5 !important;
+            filter: drop-shadow(0 0 6px rgba(56, 189, 248, 0.8));
+        }
 
-      <Link
-        to="/about"
-        className="py-2.5 px-2 hover:bg-primary-50 rounded-lg flex items-center gap-2"
-        onClick={() => setIsMobileMenuOpen(false)}
-      >
-        <Info className="w-4 h-4 text-primary-600" /> আমাদের সম্পর্কে
-      </Link>
-    </div>
+        .line-fallback {
+            stroke: #f43f5e !important;
+            stroke-width: 3.5 !important;
+            filter: drop-shadow(0 0 6px rgba(244, 63, 94, 0.8));
+        }
 
-    {/* 👇 কন্ডিশনাল বাটন পার্ট */}
-    {user ? (
-      <button
-        onClick={() => {
-          setIsMobileMenuOpen(false);
-          navigate("/seller");
-        }}
-        className="w-full flex items-center justify-between bg-primary-50 hover:bg-primary-100 border border-primary-200 text-primary-800 p-2.5 rounded-xl transition-all cursor-pointer mt-2"
-      >
-        <div className="flex items-center gap-3">
-          <span className="flex items-center justify-center w-9 h-9 rounded-full bg-primary-600 text-white font-bold text-xs uppercase shadow-xs">
-            {user?.name ? user.name.slice(0, 2) : "US"}
-          </span>
-          <div className="text-left">
-            <p className="text-sm font-semibold text-gray-800 leading-tight">
-              {user?.name || "User"}
-            </p>
-            <p className="text-[11px] text-gray-500 leading-tight">
-              {user?.email || ""}
-            </p>
-          </div>
+        /* Grid Background pattern */
+        .bg-grid-pattern {
+            background-size: 32px 32px;
+            background-image: 
+                linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+        }
+
+        /* Scrollbar styles */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #090d16;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #1e293b;
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #38bdf8;
+        }
+    </style>
+</head>
+<body class="h-full flex flex-col bg-grid-pattern selection:bg-sky-500 selection:text-white">
+
+    <!-- Navigation Header -->
+    <header class="sticky top-0 z-30 bg-slate-950/80 backdrop-blur-md border-b border-slate-800 px-4 lg:px-8 py-3.5 flex flex-wrap items-center justify-between gap-4">
+        <div class="flex items-center gap-3">
+            <div class="h-10 w-10 rounded-xl bg-gradient-to-tr from-sky-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-sky-500/20">
+                <i class="fa-solid fa-network-wired text-white text-lg"></i>
+            </div>
+            <div>
+                <h1 class="font-bold text-lg text-slate-100 flex items-center gap-2">
+                    Jarvis AI <span class="text-xs px-2 py-0.5 rounded-full bg-sky-500/10 text-sky-400 border border-sky-500/20">Multi-Agent Workflow</span>
+                </h1>
+                <p class="text-xs text-slate-400">Dynamic Handoff Protocol & Execution Routing Architecture</p>
+            </div>
         </div>
-        <span className="text-xs bg-primary-600 text-white px-2.5 py-1 rounded-md font-medium">
-          ড্যাশবোর্ড
-        </span>
-      </button>
-    ) : (
-      <button
-        onClick={() => {
-          setIsMobileMenuOpen(false);
-          navigate("/login");
-        }}
-        className="w-full flex items-center justify-center gap-2 bg-primary-600 hover:bg-primary-700 active:scale-95 text-white py-3 rounded-xl font-semibold text-sm shadow-xs transition-all cursor-pointer mt-2"
-      >
-        <UserIcon className="w-4 h-4" />
-        <span>লগইন / সাইনআপ</span>
-      </button>
-    )}
 
-    <div className="pt-3 border-t border-gray-100 text-xs text-center text-gray-500">
-      📞 হটলাইন:{" "}
-      <strong className="text-primary-700 font-bold">
-        {HOTLINE_NUMBER}
-      </strong>
-    </div>
-  </div>
-)}
+        <!-- Controls & Simulation Triggers -->
+        <div class="flex items-center gap-3 flex-wrap">
+            <div class="bg-slate-900 border border-slate-800 rounded-lg p-1 flex items-center gap-1 text-xs">
+                <span class="text-slate-400 px-2 font-medium">Path Simulation:</span>
+                <button onclick="simulatePath('all')" class="px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 transition">All Flow</button>
+                <button onclick="simulatePath('cs')" class="px-2.5 py-1 rounded bg-slate-800 hover:bg-sky-600/30 hover:text-sky-300 text-slate-300 transition">Customer Support</button>
+                <button onclick="simulatePath('advisor')" class="px-2.5 py-1 rounded bg-slate-800 hover:bg-amber-600/30 hover:text-amber-300 text-slate-300 transition">Business Advisor</button>
+                <button onclick="simulatePath('executive')" class="px-2.5 py-1 rounded bg-slate-800 hover:bg-emerald-600/30 hover:text-emerald-300 text-slate-300 transition">Executive</button>
+                <button onclick="simulatePath('fallback')" class="px-2.5 py-1 rounded bg-rose-950/50 hover:bg-rose-900/50 text-rose-300 border border-rose-800/50 transition">Human Fallback</button>
+            </div>
 
-এখন যখন 
+            <button onclick="resetFlowAnimation()" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-medium flex items-center gap-1.5 transition border border-slate-700">
+                <i class="fa-solid fa-rotate-right"></i> Reset
+            </button>
+        </div>
+    </header>
 
-{isMobileCategoryOpen && (
-          <div className="pl-6 space-y-1 py-1 bg-gray-50 rounded-lg my-1">
-            {dynamicCategories.map((cat) => (
-              <Link
-                key={cat.name}
-                to={`/shop?category=${encodeURIComponent(cat.name)}`}
-                className="block py-2 text-xs font-medium text-gray-600 hover:text-primary-700"
-                onClick={() => setIsMobileMenuOpen(false)}
-              >
-                {cat.name}
-              </Link>
-            ))}
-          </div>
-        )}
+    <!-- Main Interactive Canvas -->
+    <main class="flex-1 relative overflow-auto p-4 md:p-8 flex justify-center items-center min-h-[850px]">
+        <!-- Global Dynamic SVG Overlay for Lines -->
+        <svg id="svg-canvas" class="absolute inset-0 w-full h-full pointer-events-none z-10 min-w-[1100px] min-h-[850px]">
+            <defs>
+                <!-- Standard Arrowhead Marker -->
+                <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                    <path d="M 0 0 L 10 5 L 0 10 z" fill="#38bdf8" />
+                </marker>
+                <!-- Inactive Arrowhead -->
+                <marker id="arrow-default" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                    <path d="M 0 0 L 10 5 L 0 10 z" fill="#475569" />
+                </marker>
+                <!-- Fallback Marker -->
+                <marker id="arrow-fallback" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                    <path d="M 0 0 L 10 5 L 0 10 z" fill="#f43f5e" />
+                </marker>
+            </defs>
+            <g id="svg-lines-group"></g>
+        </svg>
 
+        <!-- Workflow Nodes Container -->
+        <div id="flowchart-container" class="relative z-20 w-full max-w-[1280px] flex flex-col items-center gap-10 py-6 pt-6 min-w-[1000px]">
 
-        এটা ওপেন হয় তখন বাকি জিনিস গুলা নিচে চলে যায় স্ক্রোহ হচ্ছে না 
+            <!-- LAYER 1: Top Input Node -->
+            <div class="flex justify-center w-full ">
+                <div id="node-input" class="group cursor-pointer relative bg-slate-900/90 border border-slate-700 hover:border-sky-400 rounded-2xl p-4 px-6 shadow-xl backdrop-blur-md transition-all duration-300 animate-pulse-glow flex items-center gap-4 min-w-[320px]" onclick="openNodeDrawer('input')">
+                    <div class="h-12 w-12 rounded-xl bg-sky-500/10 border border-sky-400/30 flex items-center justify-center text-sky-400 text-xl group-hover:scale-110 transition-transform">
+                        <i class="fa-solid fa-comments-dollar"></i>
+                    </div>
+                    <div class="flex-1">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs uppercase tracking-widest text-sky-400 font-semibold">Source Event</span>
+                            <span class="h-2 w-2 rounded-full bg-emerald-400 animate-ping"></span>
+                        </div>
+                        <h2 class="text-base font-bold text-white">[Input] Omnichannel</h2>
+                        <div class="flex items-center gap-2 mt-1 text-slate-400 text-xs">
+                            <span class="flex items-center gap-1"><i class="fa-brands fa-facebook text-blue-400"></i> Facebook</span>
+                            <span>•</span>
+                            <span class="flex items-center gap-1"><i class="fa-brands fa-whatsapp text-emerald-400"></i> WhatsApp</span>
+                            <span>•</span>
+                            <span class="flex items-center gap-1"><i class="fa-brands fa-telegram text-sky-400"></i> Telegram</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- LAYER 2: Root Agent - Jarvis Triage Core & Core KB -->
+            <div class="grid grid-cols-12 gap-4 w-full items-center">
+                <!-- Left: Knowledge Base -->
+                <div class="col-span-4 flex justify-end">
+                    <div id="node-triage-kb" class="knowledge-box rounded-xl p-3.5 px-4 cursor-pointer max-w-[280px] w-full" onclick="openNodeDrawer('triage-kb')">
+                        <div class="flex items-center gap-2.5 mb-1 text-amber-400 font-semibold text-xs uppercase tracking-wider">
+                            <i class="fa-solid fa-brain text-amber-400"></i>
+                            <span>Core Memory KB</span>
+                        </div>
+                        <h3 class="text-sm font-semibold text-amber-100">Model, Guidelines & Core Memory</h3>
+                        <p class="text-[11px] text-amber-200/70 mt-1">Prompt rules, user context & classification embeddings</p>
+                    </div>
+                </div>
+
+                <!-- Center: Root Triage Agent Card -->
+                <div class="col-span-4 flex justify-center">
+                    <div id="node-triage" class="double-border-card rounded-2xl p-5 cursor-pointer min-w-[310px] text-center group" onclick="openNodeDrawer('triage')">
+                        <div class="inline-flex items-center justify-center h-12 w-12 rounded-xl bg-sky-500/20 text-sky-400 mb-2 border border-sky-400/40 group-hover:scale-105 transition-transform">
+                            <i class="fa-solid fa-microchip text-2xl"></i>
+                        </div>
+                        <div class="text-xs uppercase font-bold text-sky-400 tracking-wider">Root Orchestrator</div>
+                        <h2 class="text-lg font-bold text-white mt-0.5">[Jarvis Triage Core]</h2>
+                        <p class="text-xs text-slate-300 mt-1">Intent Classification & Dynamic Routing Engine</p>
+                    </div>
+                </div>
+
+                <!-- Right: Immediate Direct Result Block -->
+                <div class="col-span-4 flex justify-start">
+                    <div id="node-triage-result" class="bg-slate-900/80 border border-slate-700/80 rounded-xl p-3.5 px-4 cursor-pointer max-w-[240px] w-full hover:border-slate-500 transition" onclick="openNodeDrawer('triage-result')">
+                        <div class="flex items-center justify-between text-xs text-slate-400 mb-1">
+                            <span class="font-semibold text-slate-300">Quick Response</span>
+                            <i class="fa-solid fa-bolt text-amber-400"></i>
+                        </div>
+                        <div class="text-sm font-bold text-white">[Result] Fast Ack</div>
+                        <p class="text-[11px] text-slate-400 mt-0.5">Automated FAQ / Quick Dispatch</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- LAYER 3: Branching Specialized Agents -->
+            <div class="grid grid-cols-3 gap-6 w-full pt-4">
+                
+                <!-- Left Branch: Meta Customer Support -->
+                <div class="flex flex-col items-center gap-4">
+                    <div id="node-cs-agent" class="double-border-card rounded-2xl p-4 cursor-pointer w-full max-w-[320px] text-center group" onclick="openNodeDrawer('cs-agent')">
+                        <div class="inline-flex items-center justify-center h-10 w-10 rounded-lg bg-blue-500/20 text-blue-400 mb-1.5 border border-blue-400/30">
+                            <i class="fa-solid fa-headset text-lg"></i>
+                        </div>
+                        <div class="text-[11px] font-bold text-sky-400 uppercase tracking-wider">Sub-Agent 01</div>
+                        <h3 class="text-base font-bold text-white">[Meta Customer Support Agent]</h3>
+                        <p class="text-xs text-slate-300 mt-1">Order status, refunds, catalog & support tickets</p>
+                    </div>
+
+                    <!-- Knowledge Base Box -->
+                    <div id="node-cs-kb" class="knowledge-box rounded-xl p-3 cursor-pointer w-full max-w-[300px]" onclick="openNodeDrawer('cs-kb')">
+                        <div class="flex items-center gap-2 mb-1 text-amber-400 font-semibold text-xs">
+                            <i class="fa-solid fa-database"></i>
+                            <span>Integration Tools</span>
+                        </div>
+                        <p class="text-xs font-semibold text-amber-100">Business Policy, Stock, & Messaging APIs</p>
+                    </div>
+
+                    <!-- Direct Result -->
+                    <div id="node-cs-result" class="bg-slate-900/90 border border-slate-700/80 rounded-xl p-3 cursor-pointer w-full max-w-[280px] hover:border-sky-500/50 transition" onclick="openNodeDrawer('cs-result')">
+                        <div class="text-[10px] uppercase font-bold text-emerald-400 tracking-wider">Resolved</div>
+                        <div class="text-sm font-bold text-white">[Result] Support Response</div>
+                    </div>
+                </div>
+
+                <!-- Middle Branch: Strategic Business Advisor -->
+                <div class="flex flex-col items-center gap-4">
+                    <div id="node-advisor-agent" class="double-border-card rounded-2xl p-4 cursor-pointer w-full max-w-[320px] text-center group" onclick="openNodeDrawer('advisor-agent')">
+                        <div class="inline-flex items-center justify-center h-10 w-10 rounded-lg bg-amber-500/20 text-amber-400 mb-1.5 border border-amber-400/30">
+                            <i class="fa-solid fa-chart-line text-lg"></i>
+                        </div>
+                        <div class="text-[11px] font-bold text-sky-400 uppercase tracking-wider">Sub-Agent 02</div>
+                        <h3 class="text-base font-bold text-white">[Strategic Business Advisor Agent]</h3>
+                        <p class="text-xs text-slate-300 mt-1">Growth strategies, marketing optimization & sales analysis</p>
+                    </div>
+
+                    <!-- Knowledge Base Box -->
+                    <div id="node-advisor-kb" class="knowledge-box rounded-xl p-3 cursor-pointer w-full max-w-[300px]" onclick="openNodeDrawer('advisor-kb')">
+                        <div class="flex items-center gap-2 mb-1 text-amber-400 font-semibold text-xs">
+                            <i class="fa-solid fa-chart-pie"></i>
+                            <span>Market Intelligence</span>
+                        </div>
+                        <p class="text-xs font-semibold text-amber-100">Global Marketing Trends & Optimization Logs</p>
+                    </div>
+
+                    <!-- Direct Result -->
+                    <div id="node-advisor-result" class="bg-slate-900/90 border border-slate-700/80 rounded-xl p-3 cursor-pointer w-full max-w-[280px] hover:border-amber-500/50 transition" onclick="openNodeDrawer('advisor-result')">
+                        <div class="text-[10px] uppercase font-bold text-amber-400 tracking-wider">Strategy Delivered</div>
+                        <div class="text-sm font-bold text-white">[Result] Business Advice Report</div>
+                    </div>
+                </div>
+
+                <!-- Right Branch: Owner Executive Client Agent -->
+                <div class="flex flex-col items-center gap-4">
+                    <div id="node-executive-agent" class="double-border-card rounded-2xl p-4 cursor-pointer w-full max-w-[320px] text-center group" onclick="openNodeDrawer('executive-agent')">
+                        <div class="inline-flex items-center justify-center h-10 w-10 rounded-lg bg-purple-500/20 text-purple-400 mb-1.5 border border-purple-400/30">
+                            <i class="fa-solid fa-user-shield text-lg"></i>
+                        </div>
+                        <div class="text-[11px] font-bold text-sky-400 uppercase tracking-wider">Sub-Agent 03</div>
+                        <h3 class="text-base font-bold text-white">[Owner Executive Client Agent]</h3>
+                        <p class="text-xs text-slate-300 mt-1">Executive summaries, financial reports & admin actions</p>
+                    </div>
+
+                    <!-- Knowledge Base Box -->
+                    <div id="node-executive-kb" class="knowledge-box rounded-xl p-3 cursor-pointer w-full max-w-[300px]" onclick="openNodeDrawer('executive-kb')">
+                        <div class="flex items-center gap-2 mb-1 text-amber-400 font-semibold text-xs">
+                            <i class="fa-solid fa-key"></i>
+                            <span>Secure Data Vault</span>
+                        </div>
+                        <p class="text-xs font-semibold text-amber-100">Owner Identity Check & DB Analytics Tools</p>
+                    </div>
+
+                    <!-- Direct Result -->
+                    <div id="node-executive-result" class="bg-slate-900/90 border border-slate-700/80 rounded-xl p-3 cursor-pointer w-full max-w-[280px] hover:border-purple-500/50 transition" onclick="openNodeDrawer('executive-result')">
+                        <div class="text-[10px] uppercase font-bold text-purple-400 tracking-wider">Executive Action</div>
+                        <div class="text-sm font-bold text-white">[Result] Executive KPI Dashboard</div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- LAYER 4: Human Fallback Convergent Layer -->
+            <div class="flex flex-col items-center gap-4 pt-6 w-full">
+                <div id="node-human-fallback" class="bg-rose-950/40 border-2 border-rose-500/70 hover:border-rose-400 rounded-2xl p-4 px-6 cursor-pointer max-w-[420px] w-full text-center backdrop-blur-md shadow-xl transition-all group" onclick="openNodeDrawer('human-fallback')">
+                    <div class="flex items-center justify-center gap-3">
+                        <div class="h-10 w-10 rounded-xl bg-rose-500/20 text-rose-400 flex items-center justify-center border border-rose-500/30 group-hover:scale-110 transition-transform">
+                            <i class="fa-solid fa-user-gear text-lg"></i>
+                        </div>
+                        <div class="text-left">
+                            <div class="text-[10px] uppercase font-bold text-rose-400 tracking-wider flex items-center gap-1.5">
+                                <span class="h-1.5 w-1.5 rounded-full bg-rose-500 animate-ping"></span> High Priority Escalation
+                            </div>
+                            <h3 class="text-base font-bold text-white">[Human Support Fallback (Employee)]</h3>
+                        </div>
+                    </div>
+                    <p class="text-xs text-rose-200/80 mt-2">Invoked on low confidence scores (&lt; 0.75), policy edge cases, or sentiment alert</p>
+                </div>
+
+                <!-- Final Terminal Result -->
+                <div id="node-fallback-result" class="bg-slate-900 border border-rose-800/60 rounded-xl p-3 px-6 cursor-pointer max-w-[280px] text-center" onclick="openNodeDrawer('fallback-result')">
+                    <div class="text-[10px] uppercase font-bold text-rose-400 tracking-wider">Manual Resolution</div>
+                    <div class="text-sm font-bold text-white">[Result] Handled by Staff</div>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- Slide-over Context Side Drawer Modal -->
+    <div id="drawer-backdrop" class="fixed inset-0 bg-slate-950/70 backdrop-blur-sm z-40 opacity-0 pointer-events-none transition-opacity duration-300" onclick="closeDrawer()"></div>
+    
+    <aside id="node-drawer" class="fixed top-0 right-0 h-full w-full max-w-lg bg-slate-900 border-l border-slate-800 z-50 transform translate-x-full transition-transform duration-300 ease-in-out flex flex-col shadow-2xl">
+        <!-- Drawer Header -->
+        <div class="p-6 border-b border-slate-800 flex items-center justify-between bg-slate-950/50">
+            <div class="flex items-center gap-3">
+                <div id="drawer-icon" class="h-10 w-10 rounded-xl bg-sky-500/20 text-sky-400 flex items-center justify-center border border-sky-500/30 text-lg">
+                    <i class="fa-solid fa-cube"></i>
+                </div>
+                <div>
+                    <span id="drawer-badge" class="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-sky-500/10 text-sky-400 border border-sky-500/20">Agent Node</span>
+                    <h2 id="drawer-title" class="text-lg font-bold text-white mt-0.5">Node Details</h2>
+                </div>
+            </div>
+            <button onclick="closeDrawer()" class="h-8 w-8 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white flex items-center justify-center transition">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+
+        <!-- Drawer Content Body -->
+        <div class="flex-1 overflow-y-auto p-6 space-y-6">
+            
+            <!-- Bengali Explanation Section -->
+            <div class="bg-slate-950/60 rounded-xl p-4 border border-slate-800">
+                <h3 class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                    <i class="fa-solid fa-language text-sky-400"></i> বাংলা বিস্তারিত বিবরণ (Overview)
+                </h3>
+                <p id="drawer-bengali-desc" class="text-sm text-slate-200 leading-relaxed font-normal">
+                    কার্ডের উপর ক্লিক করে বিস্তারিত জানতে বিবরণ লোড হচ্ছে...
+                </p>
+            </div>
+
+            <!-- Validation Rules & Architecture Scheme -->
+            <div class="space-y-2">
+                <div class="flex items-center justify-between">
+                    <h3 class="text-xs font-semibold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+                        <i class="fa-solid fa-shield-halved text-amber-400"></i> Validation Rules & JSON Schema
+                    </h3>
+                    <span class="text-[10px] font-mono text-slate-500">JSON Protocol v2</span>
+                </div>
+                <pre id="drawer-json-schema" class="code-font bg-slate-950 p-4 rounded-xl text-xs text-sky-300 border border-slate-800 overflow-x-auto leading-relaxed"></pre>
+            </div>
+
+            <!-- Live Test Simulation Box -->
+            <div class="bg-slate-950/80 rounded-xl p-4 border border-slate-800 space-y-3">
+                <div class="flex items-center justify-between">
+                    <h3 class="text-xs font-semibold text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
+                        <i class="fa-solid fa-terminal text-emerald-400"></i> Interactive Test Trigger
+                    </h3>
+                    <span id="sim-status-badge" class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">READY</span>
+                </div>
+                <p class="text-xs text-slate-400">এই নোডের কাজের সিমুলেশন রান করতে টেস্ট বাটনে চাপ দিন:</p>
+                
+                <button id="btn-run-simulation" onclick="runNodeSimulation()" class="w-full py-2.5 px-4 rounded-lg bg-sky-600 hover:bg-sky-500 text-white font-medium text-xs flex items-center justify-center gap-2 transition shadow-lg shadow-sky-600/20">
+                    <i class="fa-solid fa-play"></i> Run Handoff Simulation
+                </button>
+
+                <!-- Console Output Stream -->
+                <div id="sim-console" class="hidden code-font text-[11px] bg-black/90 rounded-lg p-3 border border-slate-800 text-emerald-400 space-y-1">
+                    <div class="text-slate-500">[System] Initializing test payload...</div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Drawer Footer -->
+        <div class="p-4 border-t border-slate-800 bg-slate-950/50 flex items-center justify-between text-xs text-slate-500">
+            <span>Jarvis AI Routing v4.2</span>
+            <span class="flex items-center gap-1"><i class="fa-solid fa-circle text-emerald-500 text-[8px]"></i> Operational</span>
+        </div>
+    </aside>
+
+    <script>
+        // Data Registry for Nodes and Bengali Context Descriptions
+        const NODE_DATA = {
+            'input': {
+                title: '[Input] Omnichannel Source',
+                badge: 'Entry Node',
+                icon: 'fa-comments-dollar',
+                color: 'sky',
+                bengali: 'এটি সমগ্র সিস্টেমের প্রাথমিক ইনপুট পয়েন্ট। ফেসবুক মেসেঞ্জার, হোয়াটসঅ্যাপ, বা টেলিগ্রামের মতো প্ল্যাটফর্ম থেকে গ্রাহকদের আগমনকৃত মেসেজগুলো এখানে সিকিউর ওয়েবহুকের মাধ্যমে গ্রহণ করা হয় এবং টোকেনাইজড মেসেজ ফ্রেম তৈরি করা হয়।',
+                schema: {\n  "source": "WhatsApp/Facebook/Telegram",\n  "event_type": "user_message",\n  "payload": {\n    "sender_id": "usr_99824",\n    "text": "আমার আগের অর্ডারের ডেলিভারি আপডেট দিন।",\n    "timestamp": 1711928000\n  }\n}`,
+                simLogs: [
+                    'Incoming message packet parsed from WhatsApp Webhook...',
+                    'Validating OAuth token & Payload structure...',
+                    'Forwarding payload to Jarvis Triage Core...'
+                ]
+            },
+            'triage': {
+                title: '[Jarvis Triage Core]',
+                badge: 'Root Agent',
+                icon: 'fa-microchip',
+                color: 'sky',
+                bengali: 'জার্ভিস ট্রিয়াজ কোর হল মূল রাউটিং এজেন্ট। এটি ব্যবহারকারীর বার্তার ইনটেন্ট (Intent) ও সেন্টিমেন্ট অ্যানালাইসিস করে নির্দিষ্ট সাব-এজেন্টের কাছে দায়িত্ব হ্যান্ডঅফ (Handoff) করে।',
+                schema: {\n  "agent": "Jarvis_Triage_Core",\n  "intent_classifier": "NLP_v4_Transformer",\n  "confidence_score": 0.94,\n  "routed_target": "Meta_Customer_Support_Agent",\n  "decision_reason": "Order status inquiry detected"\n}`,
+                simLogs: [
+                    'Analyzing message intent via Intent-Classifier-v4...',
+                    'Confidence Score: 0.94 (High Trust)',
+                    'Selected Branch: Meta Customer Support Agent',
+                    'Executing Handoff Vector Request...'
+                ]
+            },
+            'triage-kb': {
+                title: 'Model, Guidelines & Core Memory',
+                badge: 'Knowledge Base',
+                icon: 'fa-brain',
+                color: 'amber',
+                bengali: 'ট্রিয়াজ কোরের প্রয়োজনীয় সেন্ট্রাল মেমোরি। এতে জার্ভিসের গ্লোবাল সিস্টেম প্রম্পট, ব্র্যান্ড গাইডলাইন এবং আগের ইন্টারঅ্যাকশনের ভেক্টর মেমোরি সংরক্ষণ করা থাকে।',
+                schema: {\n  "memory_type": "Vector_DB_Chroma",\n  "embedding_model": "text-embedding-3-large",\n  "system_guidelines": ["Polite_tone", "Strict_auth_check"],\n  "user_context_active": true\n}`,
+                simLogs: [
+                    'Retrieving embeddings for user memory profile...',
+                    'Loaded 3 context guidelines from Memory DB.',
+                    'Injected context into Triage prompt pipeline.'
+                ]
+            },
+            'triage-result': {
+                title: '[Result] Fast Ack Response',
+                badge: 'Quick Output',
+                icon: 'fa-bolt',
+                color: 'slate',
+                bengali: 'যদি ব্যবহারকারীর বার্তাটি সাধারণ সালাম বা সাধারণ FAQ হয়, তবে ট্রিয়াজ কোর সাব-এজেন্ট ছাড়াই তাৎক্ষণিক অটো-মেসেজ রিটার্ন করে।',
+                schema: {\n  "status": "FAST_ACK_DISPATCHED",\n  "latency_ms": 45,\n  "response": "ধন্যবাদ! কিভাবে সাহায্য করতে পারি?"\n}`,
+                simLogs: [
+                    'FAQ pattern matched in Tier-1 cache.',
+                    'Dispatching low-latency Quick Ack response.',
+                    'Session updated without sub-agent invocation.'
+                ]
+            },
+            'cs-agent': {
+                title: '[Meta Customer Support Agent]',
+                badge: 'Sub-Agent 01',
+                icon: 'fa-headset',
+                color: 'sky',
+                bengali: 'এই সাব-এজেন্টটি শুধুমাত্র গ্রাহক সেবা, অর্ডারের ট্র্যাকিং, রিফান্ড প্রসেসিং এবং প্রোডাক্ট ক্যাটালগ সংক্রান্ত প্রশ্নের উত্তর দেওয়ার জন্য বিশেষভাবে টিউন করা।',
+                schema: {\n  "agent_id": "CS_AGENT_01",\n  "capabilities": ["Order_Query", "Stock_Check", "Refund_Initiate"],\n  "auth_scope": "READ_WRITE_CUSTOMER_ORDER",\n  "max_retry": 2\n}`,
+                simLogs: [
+                    'Meta CS Agent triggered with context payload.',
+                    'Connecting to E-commerce ERP Database API...',
+                    'Order status retrieved: "In Transit - Hub A"',
+                    'Drafted response for customer.'
+                ]
+            },
+            'cs-kb': {
+                title: 'Business Policy, Stock, & Messaging APIs',
+                badge: 'Integration Tools',
+                icon: 'fa-database',
+                color: 'amber',
+                bengali: 'কাস্টমার সাপোর্ট এজেন্টের জন্য প্রয়োজনীয় ই-কমার্স ব্যাকএন্ড, লাইভ স্টকে থাকা পণ্যের ডেটা এবং পলিসি নির্দেশিকার রিয়েল-টাইম কানেক্টর।',
+                schema: {\n  "api_endpoint": "https://api.store.internal/v2/orders",\n  "policy_doc": "Return_Policy_2026_v1.pdf",\n  "stock_sync": "REALTIME_REDIS"\n}`,
+                simLogs: [
+                    'Validating API Key for Inventory Service...',
+                    'HTTP GET 200 OK - Stock count: 42 units.',
+                    'Policy rule check: Within 7-day return window.'
+                ]
+            },
+            'cs-result': {
+                title: '[Result] Support Response',
+                badge: 'Customer Output',
+                icon: 'fa-check-circle',
+                color: 'emerald',
+                bengali: 'কাস্টমার সাপোর্ট এজেন্টের সফল প্রসেসিং শেষে প্রস্তুতকৃত চূড়ান্ত উত্তর যা গ্রাহকের মেসেজিং অ্যাপে পাঠোনো হয়।',
+                schema: {\n  "status": "DELIVERED",\n  "channel": "WhatsApp",\n  "message_body": "আপনার অর্ডার #48291 বর্তমানে ট্রানজিটে আছে। আগামীকালের মধ্যে পৌছে যাবে।"\n}`,
+                simLogs: [
+                    'Payload serialized for WhatsApp Message API.',
+                    'Delivered successfully to user device.',
+                    'KPI metrics logged: Resolution Time 1.2s.'
+                ]
+            },
+            'advisor-agent': {
+                title: '[Strategic Business Advisor Agent]',
+                badge: 'Sub-Agent 02',
+                icon: 'fa-chart-line',
+                color: 'amber',
+                bengali: 'ব্যবসার সেলস ডেটা, বিজ্ঞাপনের ট্রেন্ড এবং নতুন স্ট্র্যাটেজিক ক্যাশফ্লো বা মার্কেটিং অপ্টিমাইজেশনের পরামর্শ দেওয়ার জন্য এই এজেন্ট দায়িত্ব গ্রহণ করে।',
+                schema: {\n  "agent_id": "BI_ADVISOR_02",\n  "models": "Claude_3.5_Sonnet_Financial",\n  "data_access": ["Marketing_Logs", "ROAS_Analytics"]\n}`,
+                simLogs: [
+                    'Strategic Advisor Agent active.',
+                    'Analysing last 30 days Facebook Ads ROAS...',
+                    'Detected high conversion on Campaign #12.',
+                    'Formulating budget reallocation strategy.'
+                ]
+            },
+            'advisor-kb': {
+                title: 'Global Marketing Trends & Optimization Logs',
+                badge: 'Market Intelligence',
+                icon: 'fa-chart-pie',
+                color: 'amber',
+                bengali: 'বিজনেস এডভাইজরের জন্য ট্রেন্ড অ্যানালাইসিস ডেটাবেস, বিগত ক্যাম্পেইনের পারফরম্যান্স লগ এবং মার্কেট ইনসাইট টুলস।',
+                schema: {\n  "trend_db": "Market_Pulse_Index",\n  "log_file": "ad_performance_q3.parquet",\n  "update_frequency": "HOURLY"\n}`,
+                simLogs: [
+                    'Queried Vector Store for Market Benchmarks.',
+                    'ROAS threshold standard set at 3.5x.',
+                    'Cross-checked CTR logs against current industry trends.'
+                ]
+            },
+            'advisor-result': {
+                title: '[Result] Business Advice Report',
+                badge: 'Strategic Output',
+                icon: 'fa-file-invoice',
+                color: 'amber',
+                bengali: 'বিজনেস ক্লায়েন্টের কাছে পাঠানো স্ট্র্যাটেজিক অ্যাডভাইস রিপোর্ট বা গ্রাফিক্যাল ইনসাইট।',
+                schema: {\n  "report_type": "STRATEGIC_ADVISORY",\n  "recommendation": "Increase Ad budget by 15% on Retargeting",\n  "projected_roi": "+24% Growth"\n}`,
+                simLogs: [
+                    'Report generated in Markdown & PDF format.',
+                    'Sent summary to Manager Dashboard.',
+                    'Insight saved to Business Knowledge Graph.'
+                ]
+            },
+            'executive-agent': {
+                title: '[Owner Executive Client Agent]',
+                badge: 'Sub-Agent 03',
+                icon: 'fa-user-shield',
+                color: 'purple',
+                bengali: 'শুধুমাত্র প্রতিষ্ঠানের মালিক বা উচ্চপদস্থ এক্সিকিউটিভদের সিকিউর রিকোয়েস্ট (যেমন: ফাইনান্সিয়াল রিপোর্ট, সিস্টেম কনফিগারেশন পরিবর্তন) হ্যান্ডেল করতে এই এজেন্ট ব্যবহৃত হয়।',
+                schema: {\n  "agent_id": "EXEC_OWNER_03",\n  "auth_level": "LEVEL_5_SUPERADMIN",\n  "security_protocol": "BIOMETRIC_OR_OTP_VERIFIED"\n}`,
+                simLogs: [
+                    'Verifying Owner Credentials...',
+                    'Owner Authentication Granted via Secure Protocol.',
+                    'Accessing high-level financial summary logs.'
+                ]
+            },
+            'executive-kb': {
+                title: 'Owner Identity Check & DB Analytics Tools',
+                badge: 'Secure Data Vault',
+                icon: 'fa-key',
+                color: 'amber',
+                bengali: 'মালিকের পরিচয় যাচাইয়ের সিকিউরিটি প্রোটোকল এবং হাই-প্রিভিলেজ ডাটাবেস অ্যানালিটিক্স অ্যাক্সেস টুলস।',
+                schema: {\n  "auth_db": "Encrypted_Identity_Vault",\n  "tools": ["SQL_Executive_Runner", "Payroll_Read_API"],\n  "encryption": "AES_256_GCM"\n}`,
+                simLogs: [
+                    'Identity token validated against Vault.',
+                    'Executing read-only query on Profit/Loss table.',
+                    'Audit trail recorded for Admin Action.'
+                ]
+            },
+            'executive-result': {
+                title: '[Result] Executive KPI Dashboard',
+                badge: 'Executive Output',
+                icon: 'fa-chart-simple',
+                color: 'purple',
+                bengali: 'ব্যবসায়ের মালিকের জন্য প্রস্তুতকৃত কনফিডেনশিয়াল রিপোর্ট ও হাই-লেভেল পারফরম্যান্স ড্যাশবোর্ড।',
+                schema: {\n  "output": "EXECUTIVE_SUMMARY",\n  "net_revenue_today": "$14,250",\n  "operational_health": "99.8% Healthy"\n}`,
+                simLogs: [
+                    'Encrypted Executive Dashboard Payload created.',
+                    'Dispatched to Owner Telegram Private Channel.'
+                ]
+            },
+            'human-fallback': {
+                title: '[Human Support Fallback (Employee)]',
+                badge: 'Escalation Node',
+                icon: 'fa-user-gear',
+                color: 'rose',
+                bengali: 'যদি কোনো এআই এজেন্ট পর্যালোচনায় কনফিডেন্স স্কোর কম পায় (&lt; 0.75) অথবা গ্রাহক মারাত্মক অসন্তুষ্ট হন, তবে স্বয়ংক্রিয়ভাবে মানুষের কাছে হান্ডঅফ (Handoff) হয়ে যায়।',
+                schema: {\n  "escalation_trigger": "LOW_CONFIDENCE_SCORE",\n  "confidence_score": 0.58,\n  "ticket_priority": "URGENT",\n  "assigned_team": "Human_Customer_Ops_Tier2"\n}`,
+                simLogs: [
+                    'ALERT: Agent Confidence dropped to 0.58!',
+                    'Initiating Human Fallback Protocol...',
+                    'Creating Live Ticket on Zendesk/Helpdesk...',
+                    'Notifying online Employee representative on Shift.'
+                ]
+            },
+            'fallback-result': {
+                title: '[Result] Handled by Staff',
+                badge: 'Terminal Output',
+                icon: 'fa-user-check',
+                color: 'rose',
+                bengali: 'মানব কর্মী বা সাপোর্ট এজেন্ট ম্যানুয়ালি গ্রাহকের সমস্যাটির সমাধান নিশ্চিত করেছেন।',
+                schema: {\n  "status": "RESOLVED_BY_HUMAN",\n  "employee_id": "EMP_304",\n  "resolution_time_min": 4.5\n}`,
+                simLogs: [
+                    'Employee EMP_304 joined the session.',
+                    'Manual assistance completed.',
+                    'Session closed with positive customer feedback.'
+                ]
+            }
+        };
+
+        // Connections Matrix (Source ID to Target ID with path styling metadata)
+        const CONNECTIONS = [
+            // Input to Triage
+            { from: 'node-input', to: 'node-triage', type: 'vertical', key: 'all' },
+            
+            // Triage Knowledge Base Link
+            { from: 'node-triage-kb', to: 'node-triage', type: 'horizontal', key: 'all' },
+            
+            // Triage Quick Result
+            { from: 'node-triage', to: 'node-triage-result', type: 'horizontal', key: 'all' },
+            
+            // Triage to Branching Agents
+            { from: 'node-triage', to: 'node-cs-agent', type: 'branch', key: 'cs' },
+            { from: 'node-triage', to: 'node-advisor-agent', type: 'branch', key: 'advisor' },
+            { from: 'node-triage', to: 'node-executive-agent', type: 'branch', key: 'executive' },
+
+            // CS Branch Interactions
+            { from: 'node-cs-agent', to: 'node-cs-kb', type: 'vertical', key: 'cs' },
+            { from: 'node-cs-kb', to: 'node-cs-result', type: 'vertical', key: 'cs' },
+
+            // Advisor Branch Interactions
+            { from: 'node-advisor-agent', to: 'node-advisor-kb', type: 'vertical', key: 'advisor' },
+            { from: 'node-advisor-kb', to: 'node-advisor-result', type: 'vertical', key: 'advisor' },
+
+            // Executive Branch Interactions
+            { from: 'node-executive-agent', to: 'node-executive-kb', type: 'vertical', key: 'executive' },
+            { from: 'node-executive-kb', to: 'node-executive-result', type: 'vertical', key: 'executive' },
+
+            // Fallback Wires (Convergence from Support & Advisor to Human Fallback)
+            { from: 'node-cs-agent', to: 'node-human-fallback', type: 'fallback', key: 'fallback' },
+            { from: 'node-advisor-agent', to: 'node-human-fallback', type: 'fallback', key: 'fallback' },
+
+            // Human Fallback to Final Terminal Result
+            { from: 'node-human-fallback', to: 'node-fallback-result', type: 'vertical', key: 'fallback' }
+        ];
+
+        let activeSimKey = 'all';
+
+        // Render SVG lines connecting element coordinates
+        function renderFlowLines() {
+            const svgGroup = document.getElementById('svg-lines-group');
+            const svgCanvas = document.getElementById('svg-canvas');
+            if (!svgGroup || !svgCanvas) return;
+
+            const canvasRect = svgCanvas.getBoundingClientRect();
+            svgGroup.innerHTML = ''; // Clear previous lines
+
+            CONNECTIONS.forEach((conn, index) => {
+                const elemFrom = document.getElementById(conn.from);
+                const elemTo = document.getElementById(conn.to);
+
+                if (!elemFrom || !elemTo) return;
+
+                const rectA = elemFrom.getBoundingClientRect();
+                const rectB = elemTo.getBoundingClientRect();
+
+                // Compute positions relative to SVG overlay
+                let x1, y1, x2, y2;
+
+                if (conn.type === 'horizontal') {
+                    if (rectA.left < rectB.left) {
+                        x1 = rectA.right - canvasRect.left;
+                        y1 = rectA.top + rectA.height / 2 - canvasRect.top;
+                        x2 = rectB.left - canvasRect.left;
+                        y2 = rectB.top + rectB.height / 2 - canvasRect.top;
+                    } else {
+                        x1 = rectA.left - canvasRect.left;
+                        y1 = rectA.top + rectA.height / 2 - canvasRect.top;
+                        x2 = rectB.right - canvasRect.left;
+                        y2 = rectB.top + rectB.height / 2 - canvasRect.top;
+                    }
+                } else { // vertical or branch or fallback
+                    x1 = rectA.left + rectA.width / 2 - canvasRect.left;
+                    y1 = rectA.bottom - canvasRect.top;
+                    x2 = rectB.left + rectB.width / 2 - canvasRect.left;
+                    y2 = rectB.top - canvasRect.top;
+                }
+
+                // Generate curved or orthographic bezier path
+                let pathD = '';
+                if (conn.type === 'horizontal') {
+                    pathD = `M ${x1} ${y1} L ${x2} ${y2}`;
+                } else if (conn.type === 'branch' || conn.type === 'fallback') {
+                    const midY = y1 + (y2 - y1) * 0.5;
+                    pathD = `M ${x1} ${y1} C ${x1} ${midY}, ${x2} ${midY}, ${x2} ${y2}`;
+                } else {
+                    const midY = y1 + (y2 - y1) * 0.4;
+                    pathD = `M ${x1} ${y1} C ${x1} ${midY}, ${x2} ${midY}, ${x2} ${y2}`;
+                }
+
+                // Create SVG path element
+                const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                path.setAttribute('d', pathD);
+                path.setAttribute('id', `line-${index}`);
+                
+                // Determine styling based on active state
+                const isActive = (activeSimKey === 'all') || (conn.key === activeSimKey) || (conn.key === 'all');
+                
+                let lineClass = 'connector-line connector-animated ';
+                let markerId = 'url(#arrow-default)';
+
+                if (isActive) {
+                    if (conn.type === 'fallback') {
+                        lineClass += 'line-fallback';
+                        markerId = 'url(#arrow-fallback)';
+                    } else {
+                        lineClass += 'line-active';
+                        markerId = 'url(#arrow)';
+                    }
+                }
+
+                path.setAttribute('class', lineClass);
+                path.setAttribute('marker-end', markerId);
+
+                svgGroup.appendChild(path);
+            });
+        }
+
+        // Path Simulation Handler
+        function simulatePath(key) {
+            activeSimKey = key;
+            renderFlowLines();
+            
+            // Highlight active nodes visually
+            Object.keys(NODE_DATA).forEach(nodeId => {
+                const elem = document.getElementById(`node-${nodeId}`);
+                if (!elem) return;
+
+                if (key === 'all') {
+                    elem.style.opacity = '1';
+                    elem.style.filter = 'none';
+                } else {
+                    const isRelated = nodeId.includes(key) || nodeId === 'input' || nodeId === 'triage' || nodeId === 'triage-kb';
+                    if (isRelated) {
+                        elem.style.opacity = '1';
+                        elem.style.filter = 'drop-shadow(0 0 10px rgba(56, 189, 248, 0.4))';
+                    } else {
+                        elem.style.opacity = '0.35';
+                        elem.style.filter = 'grayscale(60%)';
+                    }
+                }
+            });
+        }
+
+        function resetFlowAnimation() {
+            activeSimKey = 'all';
+            Object.keys(NODE_DATA).forEach(nodeId => {
+                const elem = document.getElementById(`node-${nodeId}`);
+                if (elem) {
+                    elem.style.opacity = '1';
+                    elem.style.filter = 'none';
+                }
+            });
+            renderFlowLines();
+        }
+
+        // Side Drawer Interactions
+        let currentSelectedNode = null;
+
+        function openNodeDrawer(nodeKey) {
+            const data = NODE_DATA[nodeKey];
+            if (!data) return;
+
+            currentSelectedNode = nodeKey;
+
+            // Populate Drawer Data
+            document.getElementById('drawer-title').innerText = data.title;
+            document.getElementById('drawer-badge').innerText = data.badge;
+            document.getElementById('drawer-bengali-desc').innerHTML = data.bengali;
+            document.getElementById('drawer-json-schema').innerText = data.schema;
+
+            // Update Icon
+            const iconElem = document.getElementById('drawer-icon');
+            iconElem.innerHTML = `<i class="fa-solid ${data.icon}"></i>`;
+
+            // Reset Simulation Console state inside drawer
+            const simConsole = document.getElementById('sim-console');
+            simConsole.classList.add('hidden');
+            simConsole.innerHTML = '';
+            document.getElementById('sim-status-badge').innerText = 'READY';
+            document.getElementById('sim-status-badge').className = 'px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20';
+
+            // Show Drawer Modal
+            document.getElementById('drawer-backdrop').classList.remove('opacity-0', 'pointer-events-none');
+            document.getElementById('node-drawer').classList.remove('translate-x-full');
+        }
+
+        function closeDrawer() {
+            document.getElementById('drawer-backdrop').classList.add('opacity-0', 'pointer-events-none');
+            document.getElementById('node-drawer').classList.add('translate-x-full');
+        }
+
+        // Run In-Drawer Interactive Console Simulation
+        function runNodeSimulation() {
+            if (!currentSelectedNode || !NODE_DATA[currentSelectedNode]) return;
+
+            const data = NODE_DATA[currentSelectedNode];
+            const simConsole = document.getElementById('sim-console');
+            const statusBadge = document.getElementById('sim-status-badge');
+
+            simConsole.classList.remove('hidden');
+            simConsole.innerHTML = '<div class="text-sky-400">[Init] Execution trigger sent...</div>';
+            
+            statusBadge.innerText = 'EXECUTING...';
+            statusBadge.className = 'px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500/10 text-amber-400 border border-amber-500/20 animate-pulse';
+
+            let index = 0;
+            const interval = setInterval(() => {
+                if (index < data.simLogs.length) {
+                    const logLine = document.createElement('div');
+                    logLine.className = 'text-slate-300';
+                    logLine.innerText = `> ${data.simLogs[index]}`;
+                    simConsole.appendChild(logLine);
+                    simConsole.scrollTop = simConsole.scrollHeight;
+                    index++;
+                } else {
+                    clearInterval(interval);
+                    const doneLine = document.createElement('div');
+                    doneLine.className = 'text-emerald-400 font-bold pt-1';
+                    doneLine.innerText = '✔ Node execution cycle completed successfully.';
+                    simConsole.appendChild(doneLine);
+                    
+                    statusBadge.innerText = 'PASSED';
+                    statusBadge.className = 'px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20';
+                }
+            }, 600);
+        }
+
+        // Window Event Listeners for Responsive Canvas Redraw
+        window.addEventListener('load', () => {
+            renderFlowLines();
+        });
+
+        window.addEventListener('resize', () => {
+            renderFlowLines();
+        });
+    </script>
+</body>
+</html>

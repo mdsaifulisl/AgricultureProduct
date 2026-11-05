@@ -53,6 +53,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   const { settings, fetchSettings } = useSiteSettings();
 
   const HOTLINE_NUMBER = settings?.contactPhone || "01700000000";
+  const siteLogos = settings?.siteLogo || "/logo.jpg";
 
   useEffect(() => {
     if (fetchSettings) {
@@ -175,18 +176,28 @@ export const Navbar: React.FC<NavbarProps> = ({
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-20 gap-3 lg:gap-8">
           <Link to="/" className="flex items-center gap-2.5 group shrink-0">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary-500 to-primary-700 flex items-center justify-center text-white shadow-md shadow-primary-200 group-hover:scale-105 transition-transform">
-              <Sprout className="w-6 h-6" />
-            </div>
-            <div>
-              <span className="text-2xl font-black text-gray-900 tracking-tight block leading-none">
-                Reliable<span className="text-primary-600">Krishi</span>
-              </span>
-              <span className="text-[10px] font-bold text-primary-700 tracking-widest uppercase block mt-1">
-                কৃষি ই-কমার্স
-              </span>
-            </div>
-          </Link>
+                {siteLogos ? (
+                  <img
+                    src={siteLogos}
+                    alt="Reliable Krishi"
+                    className="h-10 w-auto object-contain group-hover:scale-105 transition-transform"
+                  />
+                ) : (
+                  <>
+                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary-500 to-primary-700 flex items-center justify-center text-white shadow-md shadow-primary-200 group-hover:scale-105 transition-transform">
+                      <Sprout className="w-6 h-6" />
+                    </div>
+                    <div>
+                      <span className="text-2xl font-black text-gray-900 tracking-tight block leading-none">
+                        Reliable<span className="text-primary-600">Krishi</span>
+                      </span>
+                      <span className="text-[10px] font-bold text-primary-700 tracking-widest uppercase block mt-1">
+                        কৃষি ই-কমার্স
+                      </span>
+                    </div>
+                  </>
+                )}
+              </Link>
 
           {/* Desktop Search Bar */}
           <div

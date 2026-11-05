@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React from "react";
+import { sanitizeHtml } from "../../../utils/sanitizeHtml";
 import { User, Calendar, Clock, Tag } from "lucide-react";
 
 interface BlogArticleProps {
@@ -7,7 +8,10 @@ interface BlogArticleProps {
   onCopyLink: () => void;
 }
 
-export const BlogArticle: React.FC<BlogArticleProps> = ({ blog, onCopyLink }) => {
+export const BlogArticle: React.FC<BlogArticleProps> = ({
+  blog,
+  onCopyLink,
+}) => {
   return (
     <article className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden">
       <div className="p-6 sm:p-10 pb-6">
@@ -36,7 +40,13 @@ export const BlogArticle: React.FC<BlogArticleProps> = ({ blog, onCopyLink }) =>
 
           <div className="flex items-center gap-4 text-xs">
             <span className="flex items-center gap-1.5">
-              <Calendar className="w-4 h-4 text-gray-400" /> {blog.date}
+              <Calendar className="w-4 h-4 text-gray-400" />
+              {new Date(blog.date).toLocaleDateString("bn-BD", {
+                day: "numeric",
+                month: "long",
+                year: "numeric",
+                timeZone: "Asia/Dhaka",
+              })}
             </span>
             <span className="flex items-center gap-1.5">
               <Clock className="w-4 h-4 text-gray-400" /> {blog.readTime}
@@ -59,14 +69,8 @@ export const BlogArticle: React.FC<BlogArticleProps> = ({ blog, onCopyLink }) =>
 
       <div className="p-6 sm:p-10">
         <div
-          className="prose prose-emerald max-w-none 
-            prose-headings:font-bold prose-headings:text-gray-900 
-            prose-h2:text-xl sm:prose-h2:text-2xl prose-h2:mt-8 prose-h2:mb-4
-            prose-p:text-gray-700 prose-p:leading-relaxed prose-p:mb-4
-            prose-li:text-gray-700 prose-ul:list-disc prose-ol:list-decimal prose-ul:pl-5 prose-ol:pl-5
-            prose-blockquote:border-l-4 prose-blockquote:border-primary-500 prose-blockquote:bg-primary-50/50 prose-blockquote:p-4 prose-blockquote:rounded-r-xl prose-blockquote:italic prose-blockquote:text-gray-700
-            prose-img:rounded-xl prose-strong:text-gray-900"
-          dangerouslySetInnerHTML={{ __html: blog.content }}
+          className="blog-content max-w-none"
+          dangerouslySetInnerHTML={{ __html: sanitizeHtml(blog.content || '') }}
         />
 
         {blog.tags && blog.tags.length > 0 && (

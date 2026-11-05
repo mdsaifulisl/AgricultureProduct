@@ -14,6 +14,14 @@ export const updateSiteSettingsSchema = z.object({
     tiktokUrl: z.string().url('Invalid URL').optional().or(z.literal('')),
     instagramUrl: z.string().url('Invalid URL').optional().or(z.literal('')),
     linkedinUrl: z.string().url('Invalid URL').optional().or(z.literal('')),
+    
+    // Telegram Settings
+    telegramBotToken: z.string().optional().or(z.literal('')),
+    telegramChatId: z.string().optional().or(z.literal('')),
+    
+    // Delivery Fee Settings (Coerced to number or validated)
+    insideDhakaDeliveryFee: z.number().nonnegative('Fee must be non-negative').optional(),
+    outsideDhakaDeliveryFee: z.number().nonnegative('Fee must be non-negative').optional(),
   }),
 });
 

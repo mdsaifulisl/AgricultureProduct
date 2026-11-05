@@ -1,13 +1,13 @@
+/* eslint-disable react-hooks/set-state-in-effect */
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { X, Upload, AlertCircle } from "lucide-react";
 import { RichTextEditor } from "../../../components/common/RichTextEditor";
 import { compressAndConvertToBase64 } from "../../../utils/imageUtils";
 import type { BlogPost } from "../../../types/index";
 import { showToast } from "../../../features/toast/toastSlice";
 import { useAppDispatch } from "../../../app/hooks";
-
-
+import { useAuth } from "../../../features/auth/useAuth";
 
 interface BlogModalProps {
   isOpen: boolean;
@@ -20,6 +20,7 @@ interface BlogModalProps {
 
 export interface BlogFormData {
   author?: string;
+  authorRole?: string;
   title: string;
   metaDescription?: string;
   category: string;
@@ -37,13 +38,20 @@ const BlogModalContent: React.FC<BlogModalProps> = ({
   categories,
   errorMessage,
 }) => {
+  const { user } = useAuth();
   const dispatch = useAppDispatch();
   const [imageUploading, setImageUploading] = useState(false);
+
+  // ইউজারের সঠিক Property নাম নিশ্চিত করা
+  const currentUserName =
+    user?.name || (user as any)?.fullName || (user as any)?.username || "Admin";
+  const currentUserRole = user?.role || (user as any)?.authorRole || "seller";
 
   const [formData, setFormData] = useState<BlogFormData>(() => {
     if (editingBlog) {
       return {
-        author: editingBlog.author || "Admin",
+        author: editingBlog.author || currentUserName,
+        authorRole: (editingBlog as any).authorRole || currentUserRole,
         title: editingBlog.title || "",
         metaDescription:
           editingBlog.metaDescription ||
@@ -61,7 +69,8 @@ const BlogModalContent: React.FC<BlogModalProps> = ({
     }
 
     return {
-      author: "Admin",
+      author: currentUserName,
+      authorRole: currentUserRole,
       title: "",
       metaDescription: "",
       category: "",
@@ -72,6 +81,17 @@ const BlogModalContent: React.FC<BlogModalProps> = ({
       status: "published",
     };
   });
+
+  // Async-ভাবে ইউজার লোড হলে বা পরিবর্তন হলে লেখক তথ্য হালনাগাদ করা
+  useEffect(() => {
+    if (currentUserName && (!editingBlog || !editingBlog.author)) {
+      setFormData((prev) => ({
+        ...prev,
+        author: currentUserName,
+        authorRole: currentUserRole,
+      }));
+    }
+  }, [currentUserName, currentUserRole, editingBlog]);
 
   const handleImageFileChange = async (
     e: React.ChangeEvent<HTMLInputElement>
@@ -91,15 +111,15 @@ const BlogModalContent: React.FC<BlogModalProps> = ({
   };
 
   const handleSubmitForm = (e: React.FormEvent) => {
-  e.preventDefault();
+    e.preventDefault();
 
-  if (errorMessage) {
-    dispatch(showToast(errorMessage, "error"));
-    return;
-  }
+    if (errorMessage) {
+      dispatch(showToast(errorMessage, "error"));
+      return;
+    }
 
-  onSubmit(formData);
-};
+    onSubmit(formData);
+  };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs overflow-y-auto">
@@ -142,7 +162,6 @@ const BlogModalContent: React.FC<BlogModalProps> = ({
               />
             </div>
 
-            {/* সরাসরি টাইপ করার জন্য ক্যাটাগরি ইনপুট (Datalist Autocomplete সহ) */}
             <div className="space-y-1">
               <label className="text-xs font-semibold text-gray-700">
                 ক্যাটাগরি *
@@ -328,5 +347,3 @@ export const BlogModal: React.FC<BlogModalProps> = (props) => {
 
   return <BlogModalContent key={modalKey} {...props} />;
 };
-
-

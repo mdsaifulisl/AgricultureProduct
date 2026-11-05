@@ -1,8 +1,17 @@
 import { z } from 'zod';
 
 export const createBlogCommentSchema = z.object({
-  userName: z.string().min(1, 'User name is required'),
-  commentText: z.string().min(1, 'Comment text is required'),
+  userName: z
+    .string()
+    .trim()
+    .min(2, 'User name must be at least 2 characters')
+    .max(30, 'User name must not exceed 30 characters'),
+
+  commentText: z
+    .string()
+    .trim()
+    .min(3, 'Comment must be at least 3 characters')
+    .max(1000, 'Comment must not exceed 1000 characters'),
 });
 
 export const createBlogPostSchema = z.object({
@@ -11,7 +20,7 @@ export const createBlogPostSchema = z.object({
     metaDescription: z.string().optional(),
     content: z.string().min(1, 'Content is required'),
     category: z.string().min(1, 'Category is required'),
-    author: z.string().min(1, 'Author is required'),
+    author: z.string().min(1, 'Author is required'), 
     authorRole: z.string().optional(),
     date: z.string().min(1, 'Date is required'),
     readTime: z.string().min(1, 'Read time is required'),

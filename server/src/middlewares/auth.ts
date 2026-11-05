@@ -1,8 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt, { JwtPayload } from 'jsonwebtoken';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'your_super_secret_key';
-
 export const auth = (...requiredRoles: string[]) => {
   return async (req: Request, res: Response, next: NextFunction) => {
     try {
@@ -18,7 +16,9 @@ export const auth = (...requiredRoles: string[]) => {
       }
 
       // ২. টোকেন ভেরিফাই করা
-      const decoded = jwt.verify(token, JWT_SECRET) as JwtPayload & {
+      const jwtSecret = process.env.JWT_SECRET;
+      if (!jwtSecret) throw new Error('JWT_SECRET কনফিগার করা নেই।');
+      const decoded = jwt.verify(token, jwtSecret) as JwtPayload & {
         id: string;
         email: string;
         role: string;

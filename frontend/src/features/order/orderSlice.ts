@@ -8,6 +8,8 @@ import type {
   UpdateOrderStatusPayload,
   MarkOrderSeenPayload,
   Order,
+  OrdersQuery,
+  OrdersPageInfo,
 } from './orderTypes';
 import {
   createOrderApi,
@@ -23,6 +25,7 @@ const initialState: OrderState = {
   currentOrder: null,
   loading: false,
   error: null,
+  pagination: { page: 1, limit: 50, total: 0, totalPages: 0, deviceOrderCounts: {} },
 };
 
 // Backend Validation & General Error Handler Helper
@@ -48,10 +51,10 @@ const extractErrorMessage = (error: any, fallbackMsg: string): string => {
 // 1. Fetch All Orders
 export const fetchAllOrders = createAsyncThunk(
   'order/fetchAllOrders',
-  async (_, { rejectWithValue }) => {
+  async (params: OrdersQuery = {}, { rejectWithValue }) => {
     try {
-      const response = await getAllOrdersApi();
-      return response.data;
+      const response = await getAllOrdersApi(params);
+      return { orders: response.data, pagination: response.pagination };
     } catch (error: any) {
       return rejectWithValue(extractErrorMessage(error, 'Failed to fetch orders'));
     }
@@ -141,9 +144,10 @@ const orderSlice = createSlice({
         state.loading = true;
         state.error = null;
       })
-      .addCase(fetchAllOrders.fulfilled, (state, action: PayloadAction<Order[]>) => {
+      .addCase(fetchAllOrders.fulfilled, (state, action: PayloadAction<{ orders: Order[]; pagination: OrdersPageInfo }>) => {
         state.loading = false;
-        state.orders = action.payload;
+        state.orders = action.payload.orders;
+        state.pagination = action.payload.pagination;
       })
       .addCase(fetchAllOrders.rejected, (state, action) => {
         state.loading = false;

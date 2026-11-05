@@ -1,12 +1,27 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState, useMemo, useEffect } from 'react';
 import { Leaf, Search, Loader2, AlertCircle } from 'lucide-react';
 import { BlogGrid } from '../../../components/public/blog/BlogGrid';
-import { useBlog } from '../../../features/blog/useBlog';
+import { useBlog } from '../../../features/blog/useBlog'; 
 
+// HTML ট্যাগ এবং স্পেশাল এনটিটি (যেমন &nbsp;) সেফলি ক্লিন করার হেলপার
 const stripHtml = (html?: string): string => {
   if (!html) return '';
-  return html.replace(/<[^>]*>/g, '');
+
+  return html
+    
+    .replace(/&nbsp;/gi, ' ')
+    .replace(/\u00a0/g, ' ')
+    
+    .replace(/<[^>]*>/g, ' ')
+    
+    .replace(/&amp;/gi, '&')
+    .replace(/&lt;/gi, '<')
+    .replace(/&gt;/gi, '>')
+    .replace(/&quot;/gi, '"')
+    .replace(/&#39;/gi, "'")
+    
+    .replace(/\s+/g, ' ')
+    .trim();
 };
 
 export const BlogPage: React.FC = () => {
@@ -21,38 +36,62 @@ export const BlogPage: React.FC = () => {
     getAllBlogs();
   }, [getAllBlogs]);
 
-  // Dynamic Categories Extraction
+  // ১. শুধু Published ব্লগগুলো আলাদা করা
+  const publishedBlogs = useMemo(() => {
+    if (!blogs || blogs.length === 0) return [];
+    return blogs.filter((blog) => {
+      if (typeof blog.isPublished === 'boolean') {
+        return blog.isPublished;
+      }
+      if (blog.status) {
+        return blog.status === 'published';
+      }
+      return true;
+    });
+  }, [blogs]);
+
+  // ২. Dynamic Categories এক্সট্র্যাক্ট করা
   const blogCategories = useMemo(() => {
-    if (!blogs || blogs.length === 0) return ['সকল পোস্ট'];
+    if (publishedBlogs.length === 0) return ['সকল পোস্ট'];
 
     const extractedCategories = Array.from(
       new Set(
-        blogs
-          .map((blog) => blog.category)
-          .filter((cat): cat is string => Boolean(cat && cat.trim()))
+        publishedBlogs
+          .map((blog) => blog.category?.trim())
+          .filter((cat): cat is string => Boolean(cat))
       )
     );
 
     return ['সকল পোস্ট', ...extractedCategories];
-  }, [blogs]);
+  }, [publishedBlogs]);
 
-  const filteredBlogs = useMemo(() => {
+  // ৩. Filtering, Searching ও Prop Sanitization
+  const processedBlogs = useMemo(() => {
     const query = searchQuery.trim().toLowerCase();
 
-    return (blogs || []).filter((blog) => {
-      const matchesCategory =
-        selectedCategory === 'সকল পোস্ট' || blog.category === selectedCategory;
+    return publishedBlogs
+      .filter((blog) => {
+        const matchesCategory =
+          selectedCategory === 'সকল পোস্ট' || blog.category?.trim() === selectedCategory;
 
-      if (!matchesCategory) return false;
-      if (!query) return true;
+        if (!matchesCategory) return false;
+        if (!query) return true;
 
-      const rawText = blog.metaDescription || blog.content || '';
-      const plainExcerpt = stripHtml(rawText).toLowerCase();
-      const titleMatches = blog.title?.toLowerCase().includes(query);
+        const rawText = blog.metaDescription || blog.content || '';
+        const plainExcerpt = stripHtml(rawText).toLowerCase();
+        const titleMatches = blog.title?.toLowerCase().includes(query) ?? false;
 
-      return titleMatches || plainExcerpt.includes(query);
-    });
-  }, [blogs, selectedCategory, searchQuery]);
+        return titleMatches || plainExcerpt.includes(query);
+      })
+      .map((blog) => ({
+        ...blog,
+        likes: blog.likes ?? 0,
+        comments: blog.comments?.map((comment) => ({
+          ...comment,
+          createdAt: comment.createdAt ?? blog.createdAt ?? blog.date,
+        })),
+      }));
+  }, [publishedBlogs, selectedCategory, searchQuery]);
 
   return (
     <div className="bg-gray-50/50 min-h-screen pb-16">
@@ -128,7 +167,9 @@ export const BlogPage: React.FC = () => {
         )}
 
         {/* Blog Grid Component */}
-        {!isLoading && !isError && <BlogGrid blogs={filteredBlogs as any} />}
+        {!isLoading && !isError && (
+          <BlogGrid blogs={processedBlogs} />
+        )}
       </div>
     </div>
   );

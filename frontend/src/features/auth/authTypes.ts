@@ -41,4 +41,9 @@ export interface AuthState {
   error: string | null;
 }
 
+export interface ChangePasswordPayload {
+  currentPassword: string;
+  newPassword: string;
+}
+
 export type { ApiResponse, User };

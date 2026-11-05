@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState, useEffect } from "react";
+import { Helmet } from "react-helmet-async";
 import { useParams, useNavigate } from "react-router-dom";
 import { ArrowLeft, MessageSquare, Loader2 } from "lucide-react";
 
@@ -72,6 +73,12 @@ export const BlogDetailsPage: React.FC = () => {
   const currentIsLiked = isLiked(singleBlog.id);
   const totalLikes = singleBlog.likes || 0;
 
+  // HTML ট্যাগ রিমুভ করে ক্লিন মেটা ডিসক্রিপশন তৈরি করার জন্য helper
+  const cleanDescription = singleBlog.metaDescription 
+    || singleBlog.excerpt 
+    || singleBlog.content?.replace(/<[^>]*>/g, "").slice(0, 160) 
+    || "পড়ুন নতুন এই ব্লগ পোস্টটি।";
+
   const handleCopyLink = () => {
     navigator.clipboard.writeText(window.location.href);
     setCopied(true);
@@ -91,44 +98,43 @@ export const BlogDetailsPage: React.FC = () => {
       await handleLikeBlog(singleBlog.id, willLike ? "like" : "unlike");
     } catch (error) {
       console.error("Failed to update like status:", error);
-      // এপিআই কল ফেল করলে UI আগের অবস্থায় ফিরিয়ে আনা
+      // এপিআই কল ফেল করলে UI আগের অবস্থায় ফিরিয়ে আনা
       toggleLike(singleBlog.id);
     }
   };
 
-const onSubmitComment = async (e: React.FormEvent) => {
-  e.preventDefault();
-  if (!userName.trim() || !commentText.trim()) return;
+  const onSubmitComment = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!userName.trim() || !commentText.trim()) return;
 
-  setIsSubmitting(true);
-  try {
-    const response = await handleAddComment({
-      blogId: singleBlog.id,
-      commentData: {
-        userName: userName.trim(),
-        commentText: commentText.trim(),
-      },
-    });
+    setIsSubmitting(true);
+    try {
+      const response = await handleAddComment({
+        blogId: singleBlog.id,
+        commentData: {
+          userName: userName.trim(),
+          commentText: commentText.trim(),
+        },
+      });
 
-    // response.message সরাসরি ব্যাকএন্ডের পাঠানো মেসেজ ধারণ করে
-    const successMessage = response?.message || "কমেন্ট সফলভাবে যুক্ত হয়েছে!";
-    
-    dispatch(showToast(successMessage));
+      const successMessage = response?.message || "কমেন্ট সফলভাবে যুক্ত হয়েছে!";
+      
+      dispatch(showToast(successMessage));
 
-    setCommentText("");
-    setUserName("");
-  } catch (error: any) {
-    console.error("Failed to add comment:", error);
-    
-    const errorMessage = typeof error === "string" 
-      ? error 
-      : error?.message || "কমেন্ট যোগ করতে ব্যর্থ হয়েছে";
+      setCommentText("");
+      setUserName("");
+    } catch (error: any) {
+      console.error("Failed to add comment:", error);
+      
+      const errorMessage = typeof error === "string" 
+        ? error 
+        : error?.message || "কমেন্ট যোগ করতে ব্যর্থ হয়েছে";
 
-    dispatch(showToast(errorMessage));
-  } finally {
-    setIsSubmitting(false);
-  }
-};
+      dispatch(showToast(errorMessage, "error"));
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   const onDeleteComment = async (commentId: string) => {
     try {
@@ -152,41 +158,61 @@ const onSubmitComment = async (e: React.FormEvent) => {
   };
 
   return (
-    <div className="bg-gray-50/50 min-h-screen pb-16">
-      <BlogHeaderNav
-        onBack={() => navigate(-1)}
-        onLikeToggle={handleToggleLike}
-        onCopyLink={handleCopyLink}
-        isLiked={currentIsLiked}
-        totalLikes={totalLikes}
-        copied={copied}
-      />
+    <>
+      <Helmet>
+        <title>{singleBlog.title ? `${singleBlog.title}` : "ব্লগ বিস্তারিত"}</title>
+        <meta name="description" content={cleanDescription} />
+        
+        {/* Open Graph / Facebook Meta Tags */}
+        <meta property="og:type" content="article" />
+        <meta property="og:title" content={singleBlog.title} />
+        <meta property="og:description" content={cleanDescription} />
+        {singleBlog.image && <meta property="og:image" content={singleBlog.image} />}
+        <meta property="og:url" content={window.location.href} />
 
-      <div className="max-w-4xl mx-auto px-4 pt-8">
-        <BlogArticle blog={singleBlog} onCopyLink={handleCopyLink} />
+        {/* Twitter Card Meta Tags */}
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content={singleBlog.title} />
+        <meta name="twitter:description" content={cleanDescription} />
+        {singleBlog.image && <meta name="twitter:image" content={singleBlog.image} />}
+      </Helmet>
 
-        <section className="mt-10 bg-white rounded-3xl border border-gray-100 p-6 sm:p-10 shadow-sm">
-          <h3 className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-2">
-            <MessageSquare className="w-5 h-5 text-primary-600" />
-            <span>মন্তব্যসমূহ ({singleBlog.comments?.length || 0})</span>
-          </h3>
+      <div className="bg-gray-50/50 min-h-screen pb-16">
+        <BlogHeaderNav
+          onBack={() => navigate(-1)}
+          onLikeToggle={handleToggleLike}
+          onCopyLink={handleCopyLink}
+          isLiked={currentIsLiked}
+          totalLikes={totalLikes}
+          copied={copied}
+        />
 
-          <CommentForm
-            userName={userName}
-            commentText={commentText}
-            isSubmitting={isSubmitting}
-            setUserName={setUserName}
-            setCommentText={setCommentText}
-            onSubmit={onSubmitComment}
-          />
+        <div className="max-w-4xl mx-auto px-4 pt-8">
+          <BlogArticle blog={singleBlog} onCopyLink={handleCopyLink} />
 
-          <CommentList
-            comments={singleBlog.comments}
-            onDeleteComment={onDeleteComment}
-          />
-        </section>
+          <section className="mt-10 bg-white rounded-3xl border border-gray-100 p-6 sm:p-10 shadow-sm">
+            <h3 className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-2">
+              <MessageSquare className="w-5 h-5 text-primary-600" />
+              <span>মন্তব্যসমূহ ({singleBlog.comments?.length || 0})</span>
+            </h3>
+
+            <CommentForm
+              userName={userName}
+              commentText={commentText}
+              isSubmitting={isSubmitting}
+              setUserName={setUserName}
+              setCommentText={setCommentText}
+              onSubmit={onSubmitComment}
+            />
+
+            <CommentList
+              comments={singleBlog.comments}
+              onDeleteComment={onDeleteComment}
+            />
+          </section>
+        </div>
       </div>
-    </div>
+    </>
   );
 };
 

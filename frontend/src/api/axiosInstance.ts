@@ -9,8 +9,11 @@ const getCookie = (name: string): string | null => {
 };
 
 const axiosInstance: AxiosInstance = axios.create({
-  baseURL: 'http://localhost:5000/api/v1',
-  timeout: 5000,
+  // baseURL: 'http://localhost:5000/api/v1',
+  baseURL: '/api/v1',
+
+  // শেয়ার্ড হোস্টিংয়ে সাময়িক ধীর API-কে অযথা ৫ সেকেন্ডে ব্যর্থ না করতে।
+  timeout: 15000,
   withCredentials: true,
   headers: {
     'Content-Type': 'application/json',
@@ -36,3 +39,6 @@ axiosInstance.interceptors.request.use(
 );
 
 export default axiosInstance;
+
+
+

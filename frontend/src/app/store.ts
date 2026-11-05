@@ -13,6 +13,8 @@ import partnerReducer from '../features/partner/PartnerSlice';
 import siteSettingsReducer from '../features/siteSettings/siteSettingsSlice';
 import userReducer from '../features/user/userSlice';
 import authReducer from '../features/auth/authSlice';
+import aboutReducer from '../features/about/aboutSlice';
+import ipLogReducer from '../features/ipLog/ipLogSlice';
 
 
 export const store = configureStore({
@@ -30,7 +32,9 @@ export const store = configureStore({
     partner: partnerReducer,
     siteSettings: siteSettingsReducer,
     user: userReducer,
-    auth: authReducer
+    auth: authReducer,
+    about: aboutReducer,
+    ipLog: ipLogReducer,
   },
 });
 

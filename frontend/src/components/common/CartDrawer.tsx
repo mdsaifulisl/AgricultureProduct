@@ -211,4 +211,3 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
   );
 };
 
-// তাহলে আমি যে এইভাবে করেছি 

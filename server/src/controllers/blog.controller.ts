@@ -38,6 +38,7 @@ export const createBlogHandler = async (
       payload.image = `/uploads/blogs/${(req.file as any).filename}`;
     }
 
+    
     const blog = await createBlogService(payload);
 
     return res.status(201).json({

@@ -6,6 +6,7 @@ import {
   Mail,  
 } from 'lucide-react';
 import { useSiteSettings } from '../../features/siteSettings/useSiteSettings';
+import FooterInstallPWA from '../pwa/FooterInstallPWA';
 
 export const Footer: React.FC = () => {
   const { settings, fetchSettings } = useSiteSettings();
@@ -30,7 +31,7 @@ export const Footer: React.FC = () => {
                 <ShoppingBag className="w-6 h-6" />
               </div>
               <span className="text-2xl font-bold tracking-tight text-white">
-                Expert<span className="text-primary-500">Shop</span>
+                RelibleKrishi<span className="text-primary-500">Shop</span>
               </span>
             </Link>
             <p className="text-sm text-gray-400 leading-relaxed max-w-sm">
@@ -40,13 +41,15 @@ export const Footer: React.FC = () => {
             <div className="space-y-2 pt-2 text-sm">
               <div className="flex items-center space-x-3 text-gray-400">
                 <Phone className="w-4 h-4 text-primary-500 shrink-0" />
-                <span>+88 {settings ? settings?.contactPhone : '1234567890'}</span>
+                <span>+88 {settings ? settings?.contactPhone : '01893308017'}</span>
               </div>
               <div className="flex items-center space-x-3 text-gray-400">
                 <Mail className="w-4 h-4 text-primary-500 shrink-0" />
-                <span>{settings ? settings.contactEmail : 'Hs9oq@example.com'}</span> 
+                <span>{settings ? settings.contactEmail : 'info@reliablekrishi.com'}</span> 
               </div>
             </div>
+
+            <div className="pt-2"><FooterInstallPWA /></div>
           </div>
 
           {/* কুইক লিঙ্কস */}

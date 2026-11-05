@@ -5,7 +5,8 @@ import {
   markOrderAsSeenService,
   updateOrderStatusService,
   deleteOrderService,
-  getAllOrdersService,
+  getOrdersPageService,
+  getOrderDashboardService,
 } from '../services/order.service.js';
 import { getClientIp } from '../utils/getIp.js';
 
@@ -13,18 +14,38 @@ import { getClientIp } from '../utils/getIp.js';
 // Get All Orders Controller
 export const getAllOrdersController = async (req: Request, res: Response) => {
   try {
-    const result = await getAllOrdersService();
+    const parsePositive = (value: unknown, fallback: number) => {
+      const parsed = Number(value);
+      return Number.isInteger(parsed) && parsed > 0 ? parsed : fallback;
+    };
+    const page = parsePositive(req.query.page, 1);
+    const limit = Math.min(parsePositive(req.query.limit, 50), 100);
+    const search = typeof req.query.search === 'string' ? req.query.search.trim().slice(0, 100) : '';
+    const rawStatus = typeof req.query.status === 'string' ? req.query.status : '';
+    const validStatuses = ['PENDING', 'PROCESSING', 'SHIPPED', 'DELIVERED', 'CANCELLED'];
+    const status = validStatuses.includes(rawStatus) ? rawStatus as import('@prisma/client').OrderStatus : undefined;
+    const result = await getOrdersPageService(page, limit, search, status);
 
     return res.status(200).json({
       success: true,
       message: 'All orders fetched successfully',
-      data: result,
+      data: result.orders,
+      pagination: result.pagination,
     });
   } catch (error: any) {
-    return res.status(500).json({
+      return res.status(500).json({
       success: false,
       message: error.message || 'Failed to fetch orders',
     });
+  }
+};
+
+export const getOrderDashboardController = async (_req: Request, res: Response) => {
+  try {
+    const data = await getOrderDashboardService();
+    return res.status(200).json({ success: true, data });
+  } catch (error: any) {
+    return res.status(500).json({ success: false, message: error.message || 'ড্যাশবোর্ডের অর্ডার তথ্য আনতে ব্যর্থ হয়েছে।' });
   }
 };
 
@@ -32,7 +53,7 @@ export const getAllOrdersController = async (req: Request, res: Response) => {
 export const createOrderController = async (req: Request, res: Response) => {
   try {
     const orderData = req.body;
-    const clientIp = getClientIp(req); // 👈 Request থেকে IP বের করা হচ্ছে
+    const clientIp = getClientIp(req); 
     
     // সার্ভিস ফাংশনে orderData এর সাথে clientIp পাস করা হলো
     const result = await createOrderService(orderData, clientIp);
@@ -43,7 +64,7 @@ export const createOrderController = async (req: Request, res: Response) => {
       data: result,
     });
   } catch (error: any) {
-    return res.status(500).json({
+      return res.status(error.statusCode || 500).json({
       success: false,
       message: error.message || 'Failed to place order',
     });
@@ -153,3 +174,4 @@ export const deleteOrderController = async (req: Request, res: Response) => {
     });
   }
 };
+

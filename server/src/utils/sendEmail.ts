@@ -1,22 +1,30 @@
-// krishi
-// app password: fpxi jgre uvqa lzwz
+
 
 
 import nodemailer from 'nodemailer';
 
 const transporter = nodemailer.createTransport({
-  service: 'gmail',
+  host: process.env.SMTP_HOST || 'mail.reliablekrishi.com',
+  port: Number(process.env.SMTP_PORT) || 465,
+  secure: true, 
   auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_APP_PASSWORD, // Gmail App Password
+    user: process.env.SMTP_USER,
+    pass: process.env.SMTP_PASS, 
   },
 });
 
 export const sendEmail = async (to: string, subject: string, html: string) => {
-  await transporter.sendMail({
-    from: `"Admin Portal" <${process.env.EMAIL_USER}>`,
-    to,
-    subject,
-    html,
-  }); 
+  try {
+    const info = await transporter.sendMail({
+      from: `"Reliable Krishi" <${process.env.SMTP_FROM || process.env.SMTP_USER}>`,
+      to,
+      subject,
+      html,
+    });
+    console.log('Email sent successfully: %s', info.messageId);
+    return true;
+  } catch (error) {
+    console.error('Error sending email:', error);
+    throw error;
+  }
 };

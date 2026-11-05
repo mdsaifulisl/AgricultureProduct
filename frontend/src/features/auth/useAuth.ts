@@ -1,15 +1,17 @@
 import { useCallback, useMemo } from 'react';
 import { useAppDispatch, useAppSelector } from '../../app/hooks';
 import {
+  changePassword,
   clearAuthError,
   fetchMe,
   loginUser,
+  logoutUser,
   resetPasswordWithOtp,
   sendForgotPasswordOtp,
   verifyOtpCode,
-  logoutUser,
 } from './authSlice';
 import type {
+  ChangePasswordPayload,
   ForgotPasswordPayload,
   LoginPayload,
   ResetPasswordPayload,
@@ -48,11 +50,17 @@ export const useAuth = () => {
     [dispatch]
   );
 
-  // const handleLogout = useCallback(() => dispatch(logout()), [dispatch]);
+  const handleChangePassword = useCallback(
+    (payload: ChangePasswordPayload) =>
+      dispatch(changePassword(payload)).unwrap(),
+    [dispatch]
+  );
+
   const handleLogout = useCallback(
-  () => dispatch(logoutUser()).unwrap(),
-  [dispatch]
-);
+    () => dispatch(logoutUser()).unwrap(),
+    [dispatch]
+  );
+
   const clearError = useCallback(() => dispatch(clearAuthError()), [dispatch]);
 
   return useMemo(
@@ -65,12 +73,13 @@ export const useAuth = () => {
       isError,
       error,
 
-      // Action Handlers 
+      // Action Handlers
       handleLogin,
       getProfile,
       handleForgotPassword,
       handleVerifyOtp,
       handleResetPassword,
+      handleChangePassword,
       handleLogout,
       clearError,
     }),
@@ -86,6 +95,7 @@ export const useAuth = () => {
       handleForgotPassword,
       handleVerifyOtp,
       handleResetPassword,
+      handleChangePassword,
       handleLogout,
       clearError,
     ]

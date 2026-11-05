@@ -28,11 +28,17 @@ const resetPasswordValidationSchema = z.object({
   }),
 });
 
-
+const changePasswordValidationSchema = z.object({
+  body: z.object({
+    currentPassword: z.string({ required_error: 'বর্তমান পাসওয়ার্ড আবশ্যক' }),
+    newPassword: z.string({ required_error: 'নতুন পাসওয়ার্ড আবশ্যক' }).min(6, 'নতুন পাসওয়ার্ড অন্তত ৬ অক্ষরের হতে হবে'),
+  }),
+});
 
 export const AuthValidation = {
   loginValidationSchema,
   sendOtpValidationSchema,
   verifyOtpValidationSchema,
   resetPasswordValidationSchema,
+  changePasswordValidationSchema,
 };

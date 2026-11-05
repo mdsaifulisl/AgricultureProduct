@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import {
   ArrowLeft,
@@ -24,6 +24,8 @@ import {
 } from "../../../utils/unitConverter";
 
 import { generateTrackingId } from "../../../utils/generateTrackingId";
+import { useSiteSettings } from "../../../features/siteSettings/useSiteSettings";
+import { getDeviceFingerprint } from "../../../utils/deviceFingerprint";
 
 type LocationZone = "dhaka" | "outside";
 
@@ -36,6 +38,16 @@ export const CheckoutPage: React.FC = () => {
   const dispatch = useAppDispatch();
   const { cartItems, clearCart, totalAmount } = useCart();
   const { createOrder: submitOrder, loading } = useOrder(); 
+  const { settings, fetchSettings  } = useSiteSettings();
+
+  useEffect(() => {
+    if (!settings) {
+      fetchSettings();
+    }
+  }, [settings, fetchSettings]);
+
+  console.log("Site Settings:", settings);
+
 
   const [shippingZone, setShippingZone] = useState<LocationZone>("dhaka");
   const [isSubmitted, setIsSubmitted] = useState(false);
@@ -53,7 +65,7 @@ export const CheckoutPage: React.FC = () => {
     paymentMethod: "COD",
   });
 
-  const deliveryFee = shippingZone === "dhaka" ? 60 : 120;
+  const deliveryFee = (shippingZone === "dhaka" ? settings?.insideDhakaDeliveryFee : settings?.outsideDhakaDeliveryFee) ?? 0;
   const grandTotal = Math.round(totalAmount) + deliveryFee;
 
   const handleInputChange = (
@@ -71,13 +83,23 @@ export const CheckoutPage: React.FC = () => {
       return;
     }
 
+    let deviceFingerprint: string;
+    try {
+      deviceFingerprint = await getDeviceFingerprint();
+    } catch {
+      dispatch(showToast("নিরাপদ ডিভাইস শনাক্তকরণ চালু করা যায়নি। আবার চেষ্টা করুন।", "error"));
+      return;
+    }
+
     const orderPayload = {
+      deviceFingerprint,
       trackingId,
       fullName: formData.fullName,
       phone: formData.phone,
       address: formData.address,
       note: formData.note,
       paymentMethod: formData.paymentMethod,
+      shippingZone,
       items: cartItems,
       deliveryFee,
       totalAmount: grandTotal,
@@ -237,6 +259,24 @@ export const CheckoutPage: React.FC = () => {
             </div>
 
             <div>
+              <label className="block text-xs font-bold text-gray-700 mb-1.5">
+                সম্পূর্ণ ঠিকানা <span className="text-red-500">*</span>
+              </label>
+              <div className="relative">
+                <input
+                  type="text"
+                  name="address"
+                  disabled={loading}
+                  value={formData.address}
+                  onChange={handleInputChange}
+                  placeholder="হাউজ নম্বর, রোড নম্বর, এলাকা, থানা, জেলা"
+                  className="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 focus:border-primary-500 focus:ring-2 focus:ring-primary-100 outline-none text-sm transition-all disabled:bg-gray-50"
+                />
+                <MapPin className="w-4 h-4 text-gray-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+              </div>
+            </div>
+
+            <div>
               <label className="block text-xs font-bold text-gray-700 mb-2">
                 ডেলিভারি এরিয়া সিলেক্ট করুন{" "}
                 <span className="text-red-500">*</span>
@@ -264,7 +304,7 @@ export const CheckoutPage: React.FC = () => {
                     </span>
                   </div>
                   <span className="text-xs font-bold text-primary-700">
-                    ৬০৳
+                    {settings?.insideDhakaDeliveryFee}৳
                   </span>
                 </label>
 
@@ -290,29 +330,13 @@ export const CheckoutPage: React.FC = () => {
                     </span>
                   </div>
                   <span className="text-xs font-bold text-primary-700">
-                    ১২০৳
+                    {settings?.outsideDhakaDeliveryFee}৳
                   </span>
                 </label>
               </div>
             </div>
 
-            <div>
-              <label className="block text-xs font-bold text-gray-700 mb-1.5">
-                সম্পূর্ণ ঠিকানা <span className="text-red-500">*</span>
-              </label>
-              <div className="relative">
-                <input
-                  type="text"
-                  name="address"
-                  disabled={loading}
-                  value={formData.address}
-                  onChange={handleInputChange}
-                  placeholder="হাউজ নম্বর, রোড নম্বর, এলাকা, থানা, জেলা"
-                  className="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 focus:border-primary-500 focus:ring-2 focus:ring-primary-100 outline-none text-sm transition-all disabled:bg-gray-50"
-                />
-                <MapPin className="w-4 h-4 text-gray-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
-              </div>
-            </div>
+            
 
             <div>
               <label className="block text-xs font-bold text-gray-700 mb-1.5">

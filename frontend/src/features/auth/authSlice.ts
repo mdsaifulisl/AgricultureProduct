@@ -7,7 +7,7 @@ import {
   resetPasswordApi,
   verifyOtpApi,
   logoutApi,
-  // changePasswordApi
+  changePasswordApi,
 } from './authApi';
 import type {
   AuthState,
@@ -15,13 +15,14 @@ import type {
   LoginPayload,
   ResetPasswordPayload,
   VerifyOtpPayload,
+  ChangePasswordPayload,
 } from './authTypes';
 
 const initialState: AuthState = {
   user: null,
   token: null,
   isAuthenticated: false,
-  isLoading: true, 
+  isLoading: true,
   isError: false,
   error: null,
 };
@@ -110,6 +111,20 @@ export const resetPasswordWithOtp = createAsyncThunk(
   }
 );
 
+export const changePassword = createAsyncThunk(
+  'auth/changePassword',
+  async (payload: ChangePasswordPayload, { rejectWithValue }) => {
+    try {
+      const response = await changePasswordApi(payload);
+      return response.message;
+    } catch (err: any) {
+      return rejectWithValue(
+        err.response?.data?.message || 'পাসওয়ার্ড পরিবর্তন করতে ব্যর্থ হয়েছে'
+      );
+    }
+  }
+);
+
 const authSlice = createSlice({
   name: 'auth',
   initialState,
@@ -166,7 +181,7 @@ const authSlice = createSlice({
         state.error = action.payload as string;
       })
 
-      // Forgot Password (isLoading বাদ দেওয়া হয়েছে যাতে UI Re-mount না হয়)
+      // Forgot Password (isLoading বাদ দেওয়া হয়েছে যাতে UI Re-mount না হয়)
       .addCase(sendForgotPasswordOtp.pending, (state) => {
         state.isError = false;
       })
@@ -198,6 +213,18 @@ const authSlice = createSlice({
         state.isError = false;
       })
       .addCase(resetPasswordWithOtp.rejected, (state, action) => {
+        state.isError = true;
+        state.error = action.payload as string;
+      })
+
+      // Change Password
+      .addCase(changePassword.pending, (state) => {
+        state.isError = false;
+      })
+      .addCase(changePassword.fulfilled, (state) => {
+        state.isError = false;
+      })
+      .addCase(changePassword.rejected, (state, action) => {
         state.isError = true;
         state.error = action.payload as string;
       })

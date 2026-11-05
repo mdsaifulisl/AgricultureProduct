@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { Suspense } from 'react';
 import { Routes, Route, useNavigate } from 'react-router-dom';
 
 // Layouts
@@ -13,6 +13,7 @@ export const AppRoutes: React.FC = () => {
   const navigate = useNavigate();
 
   return (
+    <Suspense fallback={null}>
     <Routes>
       {/* Public Pages */}
       <Route element={<MainLayout />}>
@@ -43,7 +44,9 @@ export const AppRoutes: React.FC = () => {
         }
       />
     </Routes>
+    </Suspense>
   );
 };
 
 export default AppRoutes;
+

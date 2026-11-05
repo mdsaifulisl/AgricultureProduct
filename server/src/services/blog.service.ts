@@ -34,7 +34,7 @@ export const createBlogService = async (data: CreateBlogPostInput) => {
   // images property টি আলাদা ডিস্ট্রাকচার করে ফেলে দেয়া হচ্ছে যাতে Prisma তে এরর না দেয়
   const { image, images, ...blogData } = data as any;
 
-  // যদি image প্রপার্টি তে ভ্যালু না থাকে তবে images[0] থেকে নেওয়া হবে
+  // যদি image প্রপার্টি তে ভ্যালু না থাকে তবে images[0] থেকে নেওয়া হবে
   const rawImage = image || (Array.isArray(images) && images.length > 0 ? images[0] : '');
   const finalImage = cleanImagePath(rawImage) || '';
 

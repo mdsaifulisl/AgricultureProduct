@@ -23,15 +23,6 @@ export const MainLayout: React.FC = () => {
     }
   }, [user, isLoading, location.pathname, navigate]);
 
-  // Auth Status চেক চলাকালীন ফুল-স্ক্রিন লোডার দেখানো
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="w-8 h-8 border-4 border-primary-600 border-t-transparent rounded-full animate-spin"></div>
-      </div>
-    );
-  }
-
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
       <Navbar
@@ -55,3 +46,5 @@ export const MainLayout: React.FC = () => {
     </div>
   );
 };
+
+

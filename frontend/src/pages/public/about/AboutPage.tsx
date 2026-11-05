@@ -1,16 +1,20 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { 
   Sprout, 
   ShieldCheck, 
-  Truck,  
+  Truck,   
   Award, 
   HeartHandshake, 
   CheckCircle2, 
   ArrowRight,
   Leaf,
-  PhoneCall
+  PhoneCall,
+  Loader2
 } from 'lucide-react';
+import { useAbout } from '../../../features/about/useAbout';
+import { useSiteSettings } from '../../../features/siteSettings/useSiteSettings';
 
 // Stat Interface
 interface StatItem {
@@ -28,18 +32,18 @@ interface FeatureItem {
 }
 
 // Team Member Interface
-interface TeamMember {
-  id: string;
-  name: string;
-  role: string;
-  image: string;
-}
+// interface TeamMember {
+//   id: string;
+//   name: string;
+//   role: string;
+//   image: string;
+// }
 
 const STATS: StatItem[] = [
   { id: '1', value: '১০,০০০+', label: 'সন্তুষ্ট গ্রাহক' },
   { id: '2', value: '৫০০+', label: 'নিবন্ধিত কৃষক' },
   { id: '3', value: '১০০%', label: 'রাসায়নিক মুক্ত পণ্য' },
-  { id: '4', value: '৬৪', label: 'জেলায় ডেলিভারি' }
+  { id: '4', value: '৬৪', label: 'জেলায় ডেলিভারি' }
 ];
 
 const FEATURES: FeatureItem[] = [
@@ -47,53 +51,85 @@ const FEATURES: FeatureItem[] = [
     id: '1',
     icon: <Leaf className="w-6 h-6 text-primary-600" />,
     title: '১০০% খাঁটি ও তাজা',
-    description: 'কোনো প্রকার ক্ষতিকর রাসায়নিক বা ফরমালিন ছাড়াই মাঠ থেকে সরাসরি সংগৃহীত তাজা কৃষিপণ্য।'
+    description: 'কোনো প্রকার ক্ষতিকর রাসায়নিক বা ফরমালিন ছাড়াই মাঠ থেকে সরাসরি সংগৃহীত তাজা কৃষিপণ্য।'
   },
   {
     id: '2',
     icon: <HeartHandshake className="w-6 h-6 text-primary-600" />,
     title: 'কৃষকদের ন্যায্য মূল্য',
-    description: 'মধ্যস্বত্বভোগীদের বাদ দিয়ে সরাসরি কৃষকদের কাছ থেকে পণ্য কিনে তাদের সঠিক মূল্য নিশ্চিত করি।'
+    description: 'মধ্যস্বত্বভোগীদের বাদ দিয়ে সরাসরি কৃষকদের কাছ থেকে পণ্য কিনে তাদের সঠিক মূল্য নিশ্চিত করি।'
   },
   {
     id: '3',
     icon: <Truck className="w-6 h-6 text-primary-600" />,
     title: 'দ্রুত ও নিরাপদ ডেলিভারি',
-    description: 'ঢাকার ভেতরে এবং বাইরে বিশেষ প্যাকেজিংয়ের মাধ্যমে পণ্যের সতেজতা বজায় রেখে দ্রুত ডেলিভারি।'
+    description: 'ঢাকার ভেতরে এবং বাইরে বিশেষ প্যাকেজিংয়ের মাধ্যমে পণ্যের সতেজতা বজায় রেখে দ্রুত ডেলিভারি।'
   },
   {
     id: '4',
     icon: <ShieldCheck className="w-6 h-6 text-primary-600" />,
-    title: 'মান নিয়ন্ত্রণ ও গ্যারান্টি',
-    description: 'প্রতিটি পণ্য বাজারজাত করার আগে আমাদের নিজস্ব মান নিয়ন্ত্রণ টিম দ্বারা পুঙ্খানুপুঙ্খ পরীক্ষা করা হয়।'
+    title: 'মান নিয়ন্ত্রণ ও গ্যারান্টি',
+    description: 'প্রতিটি পণ্য বাজারজাত করার আগে আমাদের নিজস্ব মান নিয়ন্ত্রণ টিম দ্বারা পুঙ্খানুপুঙ্খ পরীক্ষা করা হয়।'
   }
 ];
 
-const TEAM_MEMBERS: TeamMember[] = [
-  {
-    id: '1',
-    name: 'মাহেদুল মল্লিক',
-    role: 'প্রতিষ্ঠাতা ও সিইও',
-    image: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=400&auto=format&fit=crop'
-  },
-  {
-    id: '2',
-    name: 'ড. আমিনুল ইসলাম',
-    role: 'প্রধান কৃষি উপদেষ্টা',
-    image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=400&auto=format&fit=crop'
-  },
-  {
-    id: '3',
-    name: 'নাসরিন আক্তার',
-    role: 'কোয়ালিটি কন্ট্রোল হেড',
-    image: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?q=80&w=400&auto=format&fit=crop'
-  }
-];
+// const TEAM_MEMBERS: TeamMember[] = [
+//   {
+//     id: '1',
+//     name: 'মাহেদুল মল্লিক',
+//     role: 'প্রতিষ্ঠাতা ও সিইও',
+//     image: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=400&auto=format&fit=crop'
+//   },
+//   {
+//     id: '2',
+//     name: 'ড. আমিনুল ইসলাম',
+//     role: 'প্রধান কৃষি উপদেষ্টা',
+//     image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=400&auto=format&fit=crop'
+//   },
+//   {
+//     id: '3',
+//     name: 'নাসরিন আক্তার',
+//     role: 'কোয়ালিটি কন্ট্রোল হেড',
+//     image: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?q=80&w=400&auto=format&fit=crop'
+//   }
+// ];
 
 export const AboutPage: React.FC = () => {
+  const { aboutData, getAboutData, isLoading } = useAbout();
+  const { settings, fetchSettings } = useSiteSettings();
+  const PHONE_NUMBER = settings?.contactPhone || '';
+
   useEffect(() => {
+    getAboutData();
+    fetchSettings();
     window.scrollTo({ top: 0, behavior: 'smooth' });
-  }, []);
+  }, [getAboutData, fetchSettings]);
+
+  // Loading State Indicator
+  if (isLoading && !aboutData) {
+    return (
+      <div className="min-h-screen bg-gray-50/50 flex flex-col items-center justify-center p-4">
+        <Loader2 className="w-10 h-10 animate-spin text-primary-600 mb-2" />
+        <p className="text-sm font-semibold text-gray-500">তথ্য লোড হচ্ছে...</p>
+      </div>
+    );
+  }
+
+  // Dynamic values or fallback defaults
+  const imageUrl = aboutData?.imageUrl || 'https://images.unsplash.com/photo-1595974482597-4b8da8879bc5?q=80&w=800&auto=format&fit=crop';
+  const badgeTitle = aboutData?.badgeTitle || 'সেরা কৃষি ই-কমার্স';
+  const badgeSubtitle = aboutData?.badgeSubtitle || 'গ্রাহক সন্তুষ্টি ও নির্ভরযোগ্যতায়';
+  const tagline = aboutData?.tagline || 'আমাদের মূল লক্ষ্য';
+  const title = aboutData?.title || 'আমরা কীভাবে বাজারে একটি ইতিবাচক পরিবর্তন আনছি?';
+  const description = aboutData?.description || 'প্রচলিত বাজার ব্যবস্থায় কৃষকরা কঠোর পরিশ্রম করেও উপযুক্ত মূল্য পান না, অন্যদিকে ভোক্তারা অতিরিক্ত দামে রাসায়নিক যুক্ত অস্বাস্থ্যকর খাবার কিনে থাকেন। ReliableKrishi এই সমস্যার স্থায়ী সমাধান নিয়ে এসেছে।';
+  const featuresList = aboutData?.features?.length ? aboutData.features : [
+    'কৃষক থেকে সরাসরি সংগৃহীত তাজা ফল, সবজি ও বীজ',
+    'মধ্যস্বত্বভোগী মুক্ত স্বচ্ছ মূল্য নির্ধারণ ব্যবস্থা',
+    'পরিবেশবান্ধব ও সুনির্দিষ্ট মানের প্যাকিং ব্যবস্থা',
+    '২৪/৭ ডেডিকেটেড কাস্টমার সাপোর্ট সার্ভিস'
+  ];
+  const buttonText = aboutData?.buttonText || 'পণ্যসমূহ দেখুন';
+  const buttonLink = aboutData?.buttonLink || '/shop';
 
   return (
     <div className="bg-gray-50/50 min-h-screen pb-16">
@@ -115,7 +151,7 @@ export const AboutPage: React.FC = () => {
             <span className="text-accent-400">আস্থার নিরাপদ সেতু</span>
           </h1>
           <p className="text-primary-100 text-sm sm:text-base max-w-2xl mx-auto leading-relaxed">
-            ReliableKrishi-এর লক্ষ্য হলো বিষমুক্ত, তাজা ও খাঁটি কৃষিপণ্য সরাসরি কৃষকের মাঠ থেকে আপনার দরজায় পৌঁছে দেওয়া এবং কৃষককে তার কষ্টের ন্যায্য মূল্য এনে দেওয়া।
+            ReliableKrishi-এর লক্ষ্য হলো বিষমুক্ত, তাজা ও খাঁটি কৃষিপণ্য সরাসরি কৃষকের মাঠ থেকে আপনার দরজায় পৌঁছে দেওয়া এবং কৃষককে তার কষ্টের ন্যায্য মূল্য এনে দেওয়া।
           </p>
         </div>
       </section>
@@ -136,15 +172,15 @@ export const AboutPage: React.FC = () => {
         </div>
       </section>
 
-      {/* 3. Our Story / Vision Section */}
+      {/* 3. Our Story / Vision Section (Dynamic from Redux) */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-20">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
           
           <div className="relative">
-            <div className="relative h-80 sm:h-[420px] rounded-3xl overflow-hidden shadow-lg">
+            <div className="relative h-80 sm:h-[420px] rounded-3xl overflow-hidden shadow-lg bg-gray-100">
               <img 
-                src="https://images.unsplash.com/photo-1595974482597-4b8da8879bc5?q=80&w=800&auto=format&fit=crop" 
-                alt="কৃষকের হাসিমুখ" 
+                src={imageUrl} 
+                alt="About Section Preview" 
                 className="w-full h-full object-cover"
               />
             </div>
@@ -153,30 +189,25 @@ export const AboutPage: React.FC = () => {
                 <Award className="w-6 h-6" />
               </div>
               <div>
-                <div className="text-sm font-bold text-gray-900">সেরা কৃষি ই-কমার্স</div>
-                <div className="text-xs text-gray-500">গ্রাহক সন্তুষ্টি ও নির্ভরযোগ্যতায়</div>
+                <div className="text-sm font-bold text-gray-900">{badgeTitle}</div>
+                <div className="text-xs text-gray-500">{badgeSubtitle}</div>
               </div>
             </div>
           </div>
 
           <div className="space-y-6">
             <div className="inline-flex items-center gap-2 text-primary-700 font-bold text-xs uppercase tracking-wider">
-              <Sprout className="w-4 h-4" /> আমাদের মূল লক্ষ্য
+              <Sprout className="w-4 h-4" /> {tagline}
             </div>
             <h2 className="text-2xl sm:text-4xl font-black text-gray-900 leading-snug">
-              আমরা কীভাবে বাজারে একটি ইতিবাচক পরিবর্তন আনছি?
+              {title}
             </h2>
             <p className="text-gray-600 text-sm sm:text-base leading-relaxed">
-              প্রচলিত বাজার ব্যবস্থায় কৃষকরা কঠোর পরিশ্রম করেও উপযুক্ত মূল্য পান না, অন্যদিকে ভোক্তারা অতিরিক্ত দামে রাসায়নিক যুক্ত অস্বাস্থ্যকর খাবার কিনে থাকেন। ReliableKrishi এই সমস্যার স্থায়ী সমাধান নিয়ে এসেছে।
+              {description}
             </p>
 
             <ul className="space-y-3 pt-2">
-              {[
-                'কৃষক থেকে সরাসরি সংগৃহীত তাজা ফল, সবজি ও বীজ',
-                'মধ্যস্বত্বভোগী মুক্ত স্বচ্ছ মূল্য নির্ধারণ ব্যবস্থা',
-                'পরিবেশবান্ধব ও সুনির্দিষ্ট মানের প্যাকিং ব্যবস্থা',
-                '২৪/৭ ডেডিকেটেড কাস্টমার সাপোর্ট সার্ভিস'
-              ].map((item, index) => (
+              {featuresList.map((item: string | number | bigint | boolean | React.ReactElement<unknown, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | React.ReactPortal | Promise<string | number | bigint | boolean | React.ReactPortal | React.ReactElement<unknown, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | null | undefined> | null | undefined, index: React.Key | null | undefined) => (
                 <li key={index} className="flex items-center gap-3 text-sm font-semibold text-gray-800">
                   <CheckCircle2 className="w-5 h-5 text-primary-600 shrink-0" />
                   <span>{item}</span>
@@ -186,10 +217,10 @@ export const AboutPage: React.FC = () => {
 
             <div className="pt-4">
               <Link 
-                to="/shop" 
+                to={buttonLink} 
                 className="inline-flex items-center gap-2 bg-primary-600 hover:bg-primary-700 text-white font-semibold text-sm px-6 py-3 rounded-full transition-all shadow-md shadow-primary-200 cursor-pointer"
               >
-                <span>পণ্যসমূহ দেখুন</span>
+                <span>{buttonText}</span>
                 <ArrowRight className="w-4 h-4" />
               </Link>
             </div>
@@ -207,7 +238,7 @@ export const AboutPage: React.FC = () => {
               কেন আমাদের বেছে নেবেন?
             </h2>
             <p className="text-gray-500 text-sm">
-              আমরা আপনাকে দিচ্ছি সর্বোচ্চ গুণগত মান এবং সততার শতভাগ নিশ্চয়তা।
+              আমরা আপনাকে দিচ্ছি সর্বোচ্চ গুণগত মান এবং সততার শতভাগ নিশ্চয়তা।
             </p>
           </div>
 
@@ -230,13 +261,13 @@ export const AboutPage: React.FC = () => {
       </section>
 
       {/* 5. Team Section */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+      {/* <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
         <div className="text-center max-w-2xl mx-auto mb-12">
           <h2 className="text-2xl sm:text-3xl font-black text-gray-900 mb-3">
             আমাদের পেছনের মুখসমূহ
           </h2>
           <p className="text-gray-500 text-sm">
-            একঝাঁক তরুণ ও অভিজ্ঞ কৃষি বিশেষজ্ঞদের নিয়ে আমাদের টিম গঠিত।
+            একঝাঁক তরুণ ও অভিজ্ঞ কৃষি বিশেষজ্ঞদের নিয়ে আমাদের টিম গঠিত।
           </p>
         </div>
 
@@ -258,7 +289,7 @@ export const AboutPage: React.FC = () => {
             </div>
           ))}
         </div>
-      </section>
+      </section> */}
 
       {/* 6. Call to Action (CTA) */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6">
@@ -268,7 +299,7 @@ export const AboutPage: React.FC = () => {
               যে কোনো পরামর্শ বা অর্ডারের জন্য যোগাযোগ করুন
             </h3>
             <p className="text-primary-200 text-xs sm:text-sm">
-              আমাদের সাপোর্ট টিম সপ্তাহের ৭ দিনই আপনার সহায়তায় প্রস্তুত।
+              আমাদের সাপোর্ট টিম সপ্তাহের ৭ দিনই আপনার সহায়তায় প্রস্তুত।
             </p>
           </div>
 
@@ -278,7 +309,7 @@ export const AboutPage: React.FC = () => {
               className="inline-flex items-center gap-2 bg-white text-primary-900 hover:bg-primary-50 font-bold text-sm px-6 py-3 rounded-full transition-all cursor-pointer"
             >
               <PhoneCall className="w-4 h-4 text-primary-600" />
-              <span>কল করুন: ০১৭০০-০০০০০</span>
+              <span>কল করুন: { PHONE_NUMBER }</span>
             </a>
           </div>
         </div>

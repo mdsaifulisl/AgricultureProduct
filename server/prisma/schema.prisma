@@ -7,7 +7,6 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-
 //USERS 
 
 enum Role {
@@ -22,13 +21,13 @@ enum UserStatus {
 }
 
 model User {
-  id        String     @id @default(uuid())
-  name      String
-  email     String     @unique
-  phone     String?
-  password  String
-  role      Role       @default(moderator)
-  status    UserStatus @default(active)
+  id       String     @id @default(uuid())
+  name     String
+  email    String     @unique
+  phone    String?
+  password String
+  role     Role       @default(moderator)
+  status   UserStatus @default(active)
 
   // Forgot Password OTP handling
   resetOtp          String?
@@ -38,39 +37,34 @@ model User {
   updatedAt DateTime @updatedAt
 }
 
-
-
 // Product
 
 model Product {
-  id               String          @id @default(uuid())
-  name             String
-  category         String
-  categorySlug     String
-  price            Float
-  originalPrice    Float?
-  unit             String
-  rating           Float           @default(0)
-  reviewsCount     Int             @default(0)
-  images           String[]
-  description      String
-  shortDescription String
-  metaDescription  String?
-  badge            String?
-  inStock          Boolean         @default(true)
-  stockCount       Int             @default(0)
-  sku              String          @unique
-  isFeatured       Boolean         @default(false)
-  specifications   Specification[]
-  tags             String[]
-  createdAt        DateTime        @default(now())
-  updatedAt        DateTime        @updatedAt
+  id                 String          @id @default(uuid())
+  name               String
+  category           String
+  categorySlug       String
+  price              Float
+  originalPrice      Float?
+  unit               String
+  rating             Float           @default(0)
+  reviewsCount       Int             @default(0)
+  images             String[]
+  description        String
+  shortDescription   String
+  metaDescription    String?
+  badge              String?
+  inStock            Boolean         @default(true)
+  stockCount         Int             @default(0)
+  sku                String          @unique
+  isFeatured         Boolean         @default(false)
+  specifications     Specification[]
+  tags               String[]
+  createdAt          DateTime        @default(now())
+  updatedAt          DateTime        @updatedAt
 
   @@map("products")
 }
-
-
-
 
 model Specification {
   id        String  @id @default(uuid())
@@ -94,23 +88,26 @@ enum OrderStatus {
 }
 
 model Order {
-  id            String      @id @default(uuid())
-  trackingId    String      @unique
-  fullName      String
-  phone         String
-  address       String
-  note          String?
-  paymentMethod String      @default("COD")
-  deliveryFee   Float
-  totalAmount   Float
-  status        OrderStatus @default(PENDING)
-  seenName      String      @default("unSeen")
-  ipAddress     String?     // 👈 কাস্টমারের IP অ্যাড্রেস স্টোর করার জন্য যোগ করা হয়েছে
-  createdAt     DateTime    @default(now())
-  updatedAt     DateTime    @updatedAt
+  id                String      @id @default(uuid())
+  trackingId        String      @unique
+  fullName          String
+  phone             String
+  address           String
+  note              String?
+  paymentMethod     String      @default("COD")
+  deliveryFee       Float
+  totalAmount       Float
+  status            OrderStatus @default(PENDING)
+  seenName          String      @default("unSeen")
+  ipAddress         String? // গ্রাহকের IP লগ
+  deviceFingerprint String?
+  shippingZone      String?
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
 
   items OrderItem[]
 
+  @@index([deviceFingerprint])
   @@map("orders")
 }
 
@@ -131,7 +128,6 @@ model OrderItem {
   @@map("order_items")
 }
 
-
 // Catagory
 model Category {
   id          String   @id @default(uuid())
@@ -141,11 +137,9 @@ model Category {
   badge       String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
-  
+
   @@map("categorys")
 }
-
-
 
 // slider 
 
@@ -174,8 +168,6 @@ model HeroSlide {
   @@map("hero_slides")
 }
 
-
-
 // Video
 
 enum Status {
@@ -198,8 +190,6 @@ model Video {
 
   @@map("videos")
 }
-
-
 
 // Blogs
 
@@ -236,6 +226,7 @@ model BlogComment {
   blogPost    BlogPost @relation(fields: [blogId], references: [id], onDelete: Cascade)
   createdAt   DateTime @default(now())
 }
+
 //end blog 
 
 //partners
@@ -250,27 +241,69 @@ model Partner {
   @@map("partners")
 }
 
-
-
-
 // SiteSetting
 
 model SiteSetting {
-  id              String   @id @default(uuid())
-  siteLogo        String?  @db.Text
-  siteFavicon     String?  @db.Text
-  siteTitle       String   @default("কৃষি শপ - বিশ্বস্ত অর্গানিক কৃষি পণ্য ও সরঞ্জাম")
-  siteDescription String?  @db.Text
-  metaKeywords    String?  @db.Text
-  contactPhone    String?
-  contactEmail    String?
-  facebookUrl     String?
-  youtubeUrl      String?
-  tiktokUrl       String?
-  instagramUrl    String?
-  linkedinUrl     String?
-  updatedAt       DateTime @updatedAt
-  createdAt       DateTime @default(now())
+  id                      String   @id @default(uuid())
+  siteLogo                String?  @db.Text
+  siteFavicon             String?  @db.Text
+  siteTitle               String   @default("কৃষি শপ - বিশ্বস্ত অর্গানিক কৃষি পণ্য ও সরঞ্জাম")
+  siteDescription         String?  @db.Text
+  metaKeywords            String?  @db.Text
+  contactPhone            String?
+  contactEmail            String?
+  facebookUrl             String?
+  youtubeUrl              String?
+  tiktokUrl               String?
+  instagramUrl            String?
+  linkedinUrl             String?
+  telegramBotToken        String?
+  telegramChatId          String?
+  insideDhakaDeliveryFee  Float?   @default(60)
+  outsideDhakaDeliveryFee Float?   @default(120)
+  updatedAt               DateTime @updatedAt
+  createdAt               DateTime @default(now())
 
   @@map("site_settings")
+}
+
+//About setting 
+
+model AboutSetting {
+  id            String   @id @default(uuid())
+  imageUrl      String?
+  badgeTitle    String   @default("সেরা কৃষি ই-কমার্স")
+  badgeSubtitle String   @default("গ্রাহক সন্তুষ্টি ও নির্ভরযোগ্যতায়")
+  tagline       String   @default("আমাদের মূল লক্ষ্য")
+  title         String   @default("আমরা কীভাবে বাজারে একটি ইতিবাচক পরিবর্তন আনছি?")
+  description   String   @db.Text
+  features      String[] // Array of strings (PostgreSQL / MySQL JSON/Array support)
+  buttonText    String   @default("পণ্যসমূহ দেখুন")
+  buttonLink    String   @default("/shop")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ip block 
+
+model IpLog {
+  id        String   @id @default(uuid())
+  ip        String   @unique
+  fullName  String?
+  phone     String?
+  isBlocked Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model DeviceBlock {
+  id          String   @id @default(uuid())
+  fingerprint String   @unique
+  reason      String?  @db.VarChar(300)
+  isBlocked   Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("device_blocks")
 }

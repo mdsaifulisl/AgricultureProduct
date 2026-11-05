@@ -22,17 +22,28 @@ const cartItemSchema = z.object({
 export const createOrderSchema = z.object({
   body: z.object({
     trackingId: z.string().min(1, 'Tracking ID is required'),
-    fullName: z.string().min(1, 'Full name is required'),
-    phone: z.string().min(11, 'Phone number must be at least 11 digits'),
-    address: z.string().min(1, 'Address is required'),
-    note: z.string().optional(),
-    paymentMethod: z.string().default('COD'),
+    fullName: z
+      .string()
+      .min(1, 'Full name is required')
+      .max(100, 'Full name cannot exceed 100 characters'),
+    phone: z
+      .string()
+      .min(11, 'Phone number must be at least 11 digits')
+      .max(20, 'Phone number cannot exceed 20 characters'),
+    address: z
+      .string()
+      .min(1, 'Address is required')
+      .max(300, 'Address cannot exceed 300 characters'),
+    note: z
+      .string()
+      .max(500, 'Note cannot exceed 500 characters')
+      .optional(),
+    paymentMethod: z.literal('COD').default('COD'),
+    shippingZone: z.enum(['dhaka', 'outside']),
     deliveryFee: z.number().min(0, 'Delivery fee cannot be negative'),
     totalAmount: z.number().positive('Total amount must be positive'),
-    status: OrderStatusEnum.default('PENDING'),
-    seenName: z.string().default('unSeen'),
-    ipAddress: z.string().optional(), // 👈 IP Address ফিল্ড যুক্ত করা হয়েছে
-    items: z.array(cartItemSchema).min(1, 'Order must contain at least one item'),
+    deviceFingerprint: z.string().regex(/^[a-f0-9]{64}$/i, 'ভুল ডিভাইস শনাক্তকরণ কোড').optional(),
+    items: z.array(cartItemSchema.extend({ quantity: z.number().positive().max(100000) })).min(1, 'Order must contain at least one item').max(50),
   }),
 });
 

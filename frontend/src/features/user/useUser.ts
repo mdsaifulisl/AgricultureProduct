@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import { useAppDispatch, useAppSelector } from '../../app/hooks';
 import {
   addUser,
@@ -24,28 +24,50 @@ export const useUser = (
     (state) => state.user
   );
 
+  // Object reference stabilization using JSON stringify or Ref
+  const serializedParams = JSON.stringify(params);
+  const isFetchedRef = useRef(false);
+
   useEffect(() => {
-    if (autoFetch && users.length === 0 && !isLoading && !isError) {
+    if (autoFetch && !isFetchedRef.current && !isLoading && !isError) {
+      isFetchedRef.current = true;
       dispatch(getUsers(params));
     }
-  }, [autoFetch, dispatch, users.length, isLoading, isError, params]);
+  }, [autoFetch, dispatch, isLoading, isError, serializedParams]);
 
-  // Actions Wrapper Functions WITH .unwrap()
-  const fetchAllUsers = (queryParams?: GetUsersQueryParams) =>
-    dispatch(getUsers(queryParams)).unwrap();
+  // Actions Wrapper Functions WITH useCallback & .unwrap()
+  const fetchAllUsers = useCallback(
+    (queryParams?: GetUsersQueryParams) =>
+      dispatch(getUsers(queryParams)).unwrap(),
+    [dispatch]
+  );
 
-  const createNewUser = (userData: CreateUserPayload) =>
-    dispatch(addUser(userData)).unwrap();
+  const createNewUser = useCallback(
+    (userData: CreateUserPayload) =>
+      dispatch(addUser(userData)).unwrap(),
+    [dispatch]
+  );
 
-  const editUser = (id: string, data: UpdateUserPayload) =>
-    dispatch(updateUser({ id, data })).unwrap();
+  const editUser = useCallback(
+    (id: string, data: UpdateUserPayload) =>
+      dispatch(updateUser({ id, data })).unwrap(),
+    [dispatch]
+  );
 
-  const deleteUser = (id: string) => dispatch(removeUser(id)).unwrap();
+  const deleteUser = useCallback(
+    (id: string) => dispatch(removeUser(id)).unwrap(),
+    [dispatch]
+  );
 
-  const selectUser = (user: User | null) =>
-    dispatch(setSelectedUser(user));
+  const selectUser = useCallback(
+    (user: User | null) => dispatch(setSelectedUser(user)),
+    [dispatch]
+  );
 
-  const clearError = () => dispatch(clearUserError());
+  const clearError = useCallback(
+    () => dispatch(clearUserError()),
+    [dispatch]
+  );
 
   return {
     // State Values
@@ -64,5 +86,3 @@ export const useUser = (
     clearError,
   };
 };
-
-

@@ -13,14 +13,13 @@ export const useSiteSettings = (autoFetch: boolean = false) => {
     (state) => state.siteSettings
   );
 
-  // Auto fetch control - dependency array পরিষ্কার রাখা হয়েছে
+  // Auto fetch control - settings থাকলে আর কল হবে না
   useEffect(() => {
-    if (autoFetch && !settings) {
+    if (autoFetch && !settings && !isLoading) {
       dispatch(getSiteSettings());
     }
-  }, [autoFetch, dispatch, settings]);
+  }, [autoFetch, settings, isLoading, dispatch]);
 
-  // useCallback ব্যবহার করার ফলে Component-এ রেন্ডার লুপ হবে না
   const fetchSettings = useCallback(async () => {
     return await dispatch(getSiteSettings()).unwrap();
   }, [dispatch]);
@@ -41,7 +40,7 @@ export const useSiteSettings = (autoFetch: boolean = false) => {
     settings,
     isLoading,
     isError,
-    error, 
+    error,
 
     // Action Handlers
     fetchSettings,

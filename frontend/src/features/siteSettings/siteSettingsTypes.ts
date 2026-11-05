@@ -1,4 +1,8 @@
 export interface SiteSettings {
+  telegramBotToken: string;
+  telegramChatId: string;
+  insideDhakaDeliveryFee: number;
+  outsideDhakaDeliveryFee: number;
   id?: string;
   siteLogo?: string;
   siteFavicon?: string;

@@ -1,9 +1,13 @@
-import { PrismaClient } from '@prisma/client';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
+import { randomInt } from 'node:crypto';
 import { userEvents } from '../events/user.events.js';
+import prisma from '../config/prisma.js';
 
-const prisma = new PrismaClient();
+const jwtSecret = () => {
+  if (!process.env.JWT_SECRET) throw new Error('সার্ভারে JWT_SECRET কনফিগার করা নেই।');
+  return process.env.JWT_SECRET;
+};
 
 export const AuthService = {
   // ১. লগইন
@@ -31,7 +35,7 @@ export const AuthService = {
         email: user.email,
         role: user.role,
       },
-      process.env.JWT_SECRET || 'your_fallback_secret_key',
+      jwtSecret(),
       { expiresIn: '7d' }
     );
 
@@ -70,14 +74,15 @@ export const AuthService = {
     const user = await prisma.user.findUnique({ where: { email } });
     if (!user) throw new Error('ইমেইল ঠিকানাটি খুঁজে পাওয়া যায়নি');
 
-    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    const otp = randomInt(100000, 1000000).toString();
+    const otpHash = await bcrypt.hash(otp, 10);
     const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
 
     // ১. ডাটাবেজে OTP ও এক্সপায়ারি আপডেট (এটি দ্রুত হবে)
     await prisma.user.update({
       where: { email },
       data: {
-        resetOtp: otp,
+        resetOtp: otpHash,
         resetOtpExpiresAt: expiresAt,
       },
     });
@@ -94,7 +99,7 @@ export const AuthService = {
   // ৪. OTP ভেরিফিকেশন
   async verifyOtp(email: string, otp: string) {
     const user = await prisma.user.findUnique({ where: { email } });
-    if (!user || user.resetOtp !== otp) {
+    if (!user || !user.resetOtp || !(await bcrypt.compare(otp, user.resetOtp))) {
       throw new Error('অবৈধ OTP কোড');
     }
 
@@ -108,7 +113,7 @@ export const AuthService = {
   // ৫. OTP দিয়ে পাসওয়ার্ড রিসেট
   async resetPasswordWithOtp(email: string, otp: string, newPassword: string) {
     const user = await prisma.user.findUnique({ where: { email } });
-    if (!user || user.resetOtp !== otp) {
+    if (!user || !user.resetOtp || !(await bcrypt.compare(otp, user.resetOtp))) {
       throw new Error('অবৈধ OTP কোড');
     }
 
@@ -117,13 +122,43 @@ export const AuthService = {
     }
 
     const hashedPassword = await bcrypt.hash(newPassword, 10);
-
+ 
     await prisma.user.update({
       where: { email },
       data: {
         password: hashedPassword,
         resetOtp: null,
         resetOtpExpiresAt: null,
+      },
+    });
+
+    return true;
+  },
+
+  async changePassword(userId: string, currentPass: string, newPass: string) {
+    // ১. ইউজার খুঁজে বের করা
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+    });
+
+    if (!user) {
+      throw new Error('ইউজার খুঁজে পাওয়া যায়নি');
+    }
+
+    // ২. বর্তমান পাসওয়ার্ড সঠিকভাবে মিলেছে কিনা চেক করা
+    const isPasswordMatch = await bcrypt.compare(currentPass, user.password);
+    if (!isPasswordMatch) {
+      throw new Error('বর্তমান পাসওয়ার্ডটি সঠিক নয়');
+    }
+
+    // ৩. নতুন পাসওয়ার্ড হ্যাশ করা
+    const hashedPassword = await bcrypt.hash(newPass, 10);
+
+    // ৪. ডাটাবেজে পাসওয়ার্ড আপডেট করা
+    await prisma.user.update({
+      where: { id: userId },
+      data: {
+        password: hashedPassword,
       },
     });
 

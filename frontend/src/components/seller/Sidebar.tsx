@@ -6,7 +6,7 @@ import {
   PlusCircle, 
   ShoppingBag, 
   Folders, 
-  Image, 
+  Image,  
   X, 
   LogOut, 
   Store,
@@ -15,7 +15,9 @@ import {
   Award,
   Users, 
   Settings,
-  Lock // পাসওয়ার্ড চেঞ্জের জন্য আইকন
+  Lock,
+  Sprout,
+  ShieldAlert // IP ব্লকিংয়ের জন্য আইকন
 } from 'lucide-react';
 import { useAuth } from '../../features/auth/useAuth';
 
@@ -43,6 +45,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ sidebarOpen, setSidebarOpen })
     { name: 'হুম পেজ স্লাইডার', path: '/seller/sliders', icon: Image },
     { name: 'ভিডিওসমূহ', path: '/seller/videos', icon: Video },
     { name: 'ব্লগ পোস্টসমূহ', path: '/seller/blogs', icon: FileText },
+    { name: 'আমাদের লক্ষ্য (About)', path: '/seller/about-settings', icon: Sprout },
     { name: 'মিডিয়া লোগো', path: '/seller/media-logos', icon: Award },
     { name: 'ইউজার ও রোলস', path: '/seller/users', icon: Users },
     { name: 'সাইট সেটিংস & SEO', path: '/seller/settings', icon: Settings },
@@ -100,6 +103,19 @@ export const Sidebar: React.FC<SidebarProps> = ({ sidebarOpen, setSidebarOpen })
         {/* Bottom Menu Section */}
         <div className="p-4 border-t border-gray-100 space-y-1 bg-white shrink-0">
           <Link
+            to="/seller/ip-logs"
+            onClick={() => setSidebarOpen(false)}
+            className={`flex items-center gap-3 px-4 py-2.5 text-xs font-bold rounded-xl transition-colors ${
+              location.pathname === '/seller/ip-logs'
+                ? 'bg-primary-50 text-primary-600'
+                : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+            }`}
+          >
+            <ShieldAlert className="w-4 h-4 text-gray-400" />
+            <span>IP ব্লকিং ম্যানেজমেন্ট</span>
+          </Link>
+
+          <Link
             to="/seller/change-password"
             onClick={() => setSidebarOpen(false)}
             className={`flex items-center gap-3 px-4 py-2.5 text-xs font-bold rounded-xl transition-colors ${
@@ -134,5 +150,3 @@ export const Sidebar: React.FC<SidebarProps> = ({ sidebarOpen, setSidebarOpen })
 };
 
 export default Sidebar;
-
-// site logo favicon এগুলা কোথায় আপ্লোড করবো? 

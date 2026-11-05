@@ -1,17 +1,19 @@
-
+/* eslint-disable react-refresh/only-export-components */
+import { lazy } from 'react';
 import { Route } from 'react-router-dom';
 import Home from '../pages/public/home/Home';
-import Shop from '../pages/public/shop/ShopPage';
-import { CategoriesPage } from '../pages/public/categories/CategoriesPage';
-import { ProductDetails } from '../pages/public/shop/ProductDetails';
-import { OffersPage } from '../pages/public/offes/OffersPage';
-import { BlogPage } from '../pages/public/blog/BlogPage';
-import { BlogDetailsPage } from '../pages/public/blog/BlogDetailsPage';
-import { AboutPage } from '../pages/public/about/AboutPage';
-import { LoginPage } from '../pages/login/LoginPage';
-import { VideosPage } from '../pages/public/videos/VideosPage';
-import { CartPage } from '../pages/public/cart/CartPage';
-import CheckoutPage from '../pages/public/checkout/CheckoutPage';
+
+const Shop = lazy(() => import('../pages/public/shop/ShopPage'));
+const CategoriesPage = lazy(() => import('../pages/public/categories/CategoriesPage').then((module) => ({ default: module.CategoriesPage })));
+const ProductDetails = lazy(() => import('../pages/public/shop/ProductDetails').then((module) => ({ default: module.ProductDetails })));
+const OffersPage = lazy(() => import('../pages/public/offes/OffersPage'));
+const BlogPage = lazy(() => import('../pages/public/blog/BlogPage'));
+const BlogDetailsPage = lazy(() => import('../pages/public/blog/BlogDetailsPage'));
+const AboutPage = lazy(() => import('../pages/public/about/AboutPage'));
+const LoginPage = lazy(() => import('../pages/login/LoginPage'));
+const VideosPage = lazy(() => import('../pages/public/videos/VideosPage').then((module) => ({ default: module.VideosPage })));
+const CartPage = lazy(() => import('../pages/public/cart/CartPage'));
+const CheckoutPage = lazy(() => import('../pages/public/checkout/CheckoutPage'));
 
 export const publicRoutes = (
   <>

@@ -2,16 +2,7 @@
 import { Request } from "express";
 
 export const getClientIp = (req: Request): string => {
-  let ip = "";
-
-  const forwarded = req.headers["x-forwarded-for"];
-  if (typeof forwarded === "string") {
-    ip = forwarded.split(",")[0].trim();
-  } else if (Array.isArray(forwarded) && forwarded.length > 0) {
-    ip = forwarded[0].trim();
-  } else {
-    ip = req.socket.remoteAddress || req.ip || "";
-  }
+  let ip = req.ip || req.socket.remoteAddress || "";
 
   // ::ffff:127.0.0.1 থেকে ::ffff: অংশটি বাদ দেওয়া হচ্ছে
   if (ip.startsWith("::ffff:")) {

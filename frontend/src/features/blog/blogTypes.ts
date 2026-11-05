@@ -6,6 +6,8 @@ export interface BlogComment {
 }
 
 export interface BlogPost {
+  excerpt: string | undefined;
+  isPublished: boolean;
   id: string;
   _id?: string;
   title: string;

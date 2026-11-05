@@ -1,7 +1,15 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState } from 'react';
 import { KeyRound, Eye, EyeOff, CheckCircle2, ShieldCheck, Lock } from 'lucide-react';
 
+import { useAuth } from '../../../features/auth/useAuth';
+import { showToast } from '../../../features/toast/toastSlice';
+import { useAppDispatch } from '../../../app/hooks';
+
 export const ChangePassword: React.FC = () => {
+  const dispatch = useAppDispatch();
+  const { handleChangePassword, handleLogout } = useAuth();
+  
   const [formData, setFormData] = useState({
     currentPassword: '',
     newPassword: '',
@@ -16,7 +24,7 @@ export const ChangePassword: React.FC = () => {
   const [toast, setToast] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
 
@@ -36,16 +44,35 @@ export const ChangePassword: React.FC = () => {
       return;
     }
 
-    setLoading(true);
+    try {
+      setLoading(true);
+      
+      const responseMessage = await handleChangePassword({
+        currentPassword: formData.currentPassword,
+        newPassword: formData.newPassword,
+        confirmPassword: ''
+      });
 
-    // Simulated API call delay
-    setTimeout(() => {
-      setLoading(false);
-      setToast('পাসওয়ার্ড সফলভাবে পরিবর্তন করা হয়েছে!');
+      const successMsg = responseMessage || 'পাসওয়ার্ড সফলভাবে পরিবর্তন করা হয়েছে!';
+
+      // Component-level Toast Notification
+      setToast(successMsg);
+      
+      // Global Redux Toast Trigger (যদি ব্যবহৃত হয়)
+      dispatch(showToast(successMsg, 'success'));
+
+      // Logout (যদি ব্যবহৃত হয়)
+      handleLogout();
+
+      // Form reset
       setFormData({ currentPassword: '', newPassword: '', confirmPassword: '' });
 
       setTimeout(() => setToast(''), 3000);
-    }, 1000);
+    } catch (err: any) {
+      setError(err || 'পাসওয়ার্ড পরিবর্তন করতে সমস্যা হয়েছে');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -65,7 +92,7 @@ export const ChangePassword: React.FC = () => {
           পাসওয়ার্ড পরিবর্তন করুন
         </h1>
         <p className="text-xs text-gray-500 mt-1">
-          আপনার অ্যাকাউন্ট সুরক্ষিত রাখতে নিয়মিত শক্তিশালী পাসওয়ার্ড ব্যবহার করুন
+          আপনার অ্যাকাউন্ট সুরক্ষিত রাখতে নিয়মিত শক্তিশালী পাসওয়ার্ড ব্যবহার করুন
         </p>
       </div>
 
@@ -156,7 +183,7 @@ export const ChangePassword: React.FC = () => {
           <div className="bg-blue-50 border border-blue-100 p-3.5 rounded-xl flex items-start gap-3">
             <ShieldCheck className="w-5 h-5 text-blue-600 shrink-0 mt-0.5" />
             <div className="text-[11px] text-blue-800 leading-relaxed">
-              <strong>পাসওয়ার্ড সুরক্ষা টিপস:</strong> পাসওয়ার্ডে সংখ্যা, বড় ও ছোট হাতের অক্ষর এবং সিম্বল (@, #, $) সংমিশ্রণ ব্যবহার করার চেষ্টা করুন।
+              <strong>পাসওয়ার্ড সুরক্ষা টিপস:</strong> পাসওয়ার্ডে সংখ্যা, বড় ও ছোট হাতের অক্ষর এবং সিম্বল (@, #, $) সংমিশ্রণ ব্যবহার করার চেষ্টা করুন।
             </div>
           </div>
 

@@ -12,9 +12,15 @@ import { BlogModal } from "../../../components/seller/blog/BlogModal";
 import type { BlogFormData } from "../../../components/seller/blog/BlogModal";
 import { showToast } from "../../../features/toast/toastSlice";
 import { useBlog } from "../../../features/blog/useBlog";
+import { useAuth } from "../../../features/auth/useAuth";
 
 export const SellerBlogs: React.FC = () => {
   const dispatch = useAppDispatch();
+  const { user } = useAuth();
+  
+  // ইউজার থেকে নাম এবং রোল এক্সট্র্যাক্ট করা (Fallback সহ)
+  const authorName = user?.name || (user as any)?.fullName || "Admin"; 
+  const authorRole = user?.role || "seller";
 
   const {
     blogs: rawBlogs = [],
@@ -50,6 +56,7 @@ export const SellerBlogs: React.FC = () => {
       content: String(item.content || ""),
       category: String(item.category || "Uncategorized"),
       author: String(item.author || "Unknown"),
+      authorRole: String(item.authorRole || "seller"),
       date: String(item.date || item.createdAt || new Date().toISOString()),
       readTime: String(item.readTime || "5 min read"),
       image: String(item.image || item.coverImage || ""),
@@ -72,7 +79,7 @@ export const SellerBlogs: React.FC = () => {
     ];
   }, [blogs]);
 
-  // Modal Open Handlers (useCallback দিয়ে অপটিমাইজ করা হয়েছে)
+  // Modal Open Handlers
   const handleOpenModal = useCallback((blog?: BlogPost) => {
     if (blog && typeof blog === "object" && blog.id) {
       setEditingBlog(blog);
@@ -88,40 +95,39 @@ export const SellerBlogs: React.FC = () => {
   }, []);
 
   const handleSubmit = async (formData: BlogFormData) => {
-  try {
-    const tagArray = formData.tags
-      .split(",")
-      .map((tag) => tag.trim())
-      .filter((tag) => tag.length > 0);
+    try {
+      const tagArray = formData.tags
+        .split(",")
+        .map((tag) => tag.trim())
+        .filter((tag) => tag.length > 0);
 
-    const payload = {
-      title: formData.title,
-      metaDescription: formData.metaDescription,
-      category: formData.category,
-      content: formData.content,
-      image: formData.image,
-      readTime: formData.readTime || "5 min read",
-      status: formData.status || "published",
-      tags: tagArray,
-      author: editingBlog?.author || "Admin",
-      date: editingBlog?.date || new Date().toISOString(),
-    };
+      // Payload এ author এবং authorRole যুক্ত করা হলো
+      const payload = {
+        title: formData.title,
+        metaDescription: formData.metaDescription,
+        category: formData.category,
+        content: formData.content,
+        image: formData.image,
+        readTime: formData.readTime || "5 min read",
+        status: formData.status || "published",
+        tags: tagArray,
+        author: formData.author || editingBlog?.author || authorName,
+        authorRole: (editingBlog as any)?.authorRole || authorRole,
+        date: editingBlog?.date || new Date().toISOString(),
+      };
 
-    if (editingBlog) {
-      await handleUpdateBlog(editingBlog.id, payload);
-    } else {
-      await handleCreateBlog(payload);
+      if (editingBlog) {
+        await handleUpdateBlog(editingBlog.id, payload);
+      } else {
+        await handleCreateBlog(payload);
+      }
+
+      await handleCloseModal();
+      dispatch(showToast("ব্লগ সফলভাবে সেভ করা হয়েছে!", "success"));
+    } catch (error) {
+      console.error("ব্লগ সেভ করতে সমস্যা হয়েছে:", error);
     }
-
-    // ✅ API সফল হলে কেবল এই লাইনে পৌঁছাবে এবং মোডাল বন্ধ করবে
-    await handleCloseModal();
-    dispatch(showToast("ব্লগ সফলভাবে তৈরি করা হয়েছে!", "success"));
-  } catch (error) {
-    // ❌ ব্যাকএন্ড থেকে এরর আসলে .unwrap() Exception থ্রো করে এখানে চলে আসবে
-    // তাই handleCloseModal() কল হবে না এবং মোডাল খোলা থাকবে!
-    console.error("ব্লগ সেভ করতে সমস্যা হয়েছে:", error);
-  }
-};
+  };
 
   const handleDelete = async (id: string) => {
     const isConfirmed = await dispatch(

@@ -4,6 +4,9 @@ import type {
   CreateOrderPayload,
   UpdateOrderStatusPayload,
   MarkOrderSeenPayload,
+  OrdersQuery,
+  OrdersPageInfo,
+  OrdersDashboardData,
 } from './orderTypes';
 
 export interface ApiResponse<T> {
@@ -13,8 +16,13 @@ export interface ApiResponse<T> {
 }
 
 
-export const getAllOrdersApi = async (): Promise<ApiResponse<Order[]>> => {
-  const response = await axiosInstance.get<ApiResponse<Order[]>>('/orders');
+export const getAllOrdersApi = async (params: OrdersQuery = {}): Promise<ApiResponse<Order[]> & { pagination: OrdersPageInfo }> => {
+  const response = await axiosInstance.get<ApiResponse<Order[]> & { pagination: OrdersPageInfo }>('/orders', { params: { page: 1, limit: 50, ...params } });
+  return response.data;
+};
+
+export const getOrderDashboardApi = async (): Promise<ApiResponse<OrdersDashboardData>> => {
+  const response = await axiosInstance.get<ApiResponse<OrdersDashboardData>>('/orders/dashboard');
   return response.data;
 };
 

@@ -1,12 +1,13 @@
 /* eslint-disable react-hooks/set-state-in-effect */
 import React, { useState, useEffect } from 'react';
-import { Save, Globe, Share2, Phone, Upload, Image as ImageIcon } from 'lucide-react';
+import { Save, Globe, Share2, Phone, Upload, Image as ImageIcon, Send, Truck, ShieldAlert } from 'lucide-react';
 import { compressAndConvertToBase64 } from '../../../utils/imageUtils';
 import { showToast } from '../../../features/toast/toastSlice';
 import { useAppDispatch } from '../../../app/hooks';
 import { useSiteSettings } from '../../../features/siteSettings/useSiteSettings';
+import { useAuth } from '../../../features/auth/useAuth';
 
-// Custom Safe Social Icons SVG Components
+// Custom Social Icons SVG
 const FacebookIcon = () => (
   <svg className="w-4 h-4 text-blue-600 fill-current" viewBox="0 0 24 24">
     <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
@@ -50,43 +51,51 @@ const defaultFormState = {
   tiktokUrl: 'https://tiktok.com/@yourprofile',
   instagramUrl: 'https://instagram.com/yourprofile',
   linkedinUrl: 'https://linkedin.com/company/yourcompany',
+  // New Fields for Telegram & Delivery
+  telegramBotToken: '',
+  telegramChatId: '',
+  insideDhakaDeliveryFee: 60,
+  outsideDhakaDeliveryFee: 120,
 };
 
 export const SiteSettings: React.FC = () => {
   const dispatch = useAppDispatch();
+    const { user } = useAuth();
+    const isAdmin = user?.role === 'admin';
   const { settings: fetchedSettings, isLoading, editSettings, fetchSettings } = useSiteSettings();
 
   const [formState, setFormState] = useState(defaultFormState);
 
-  // Initial Fetch Call (if hook doesn't auto-fetch)
   useEffect(() => {
-    if (fetchSettings) {
+    if (isAdmin) {
       fetchSettings();
     }
-  }, [fetchSettings]);
+  }, [fetchSettings, isAdmin]);
 
-  // Sync fetched settings to form local state
   useEffect(() => {
     if (fetchedSettings && Object.keys(fetchedSettings).length > 0) {
-      setFormState({
-        siteLogo: fetchedSettings.siteLogo || '',
-        siteFavicon: fetchedSettings.siteFavicon || '',
+      setFormState((prev) => ({
+        ...prev,
+        ...fetchedSettings,
         siteTitle: fetchedSettings.siteTitle || defaultFormState.siteTitle,
         siteDescription: fetchedSettings.siteDescription || defaultFormState.siteDescription,
         metaKeywords: fetchedSettings.metaKeywords || defaultFormState.metaKeywords,
         contactPhone: fetchedSettings.contactPhone || defaultFormState.contactPhone,
         contactEmail: fetchedSettings.contactEmail || defaultFormState.contactEmail,
-        facebookUrl: fetchedSettings.facebookUrl || '',
-        youtubeUrl: fetchedSettings.youtubeUrl || '',
-        tiktokUrl: fetchedSettings.tiktokUrl || '',
-        instagramUrl: fetchedSettings.instagramUrl || '',
-        linkedinUrl: fetchedSettings.linkedinUrl || '',
-      });
+        telegramBotToken: fetchedSettings.telegramBotToken || '',
+        telegramChatId: fetchedSettings.telegramChatId || '',
+        insideDhakaDeliveryFee: fetchedSettings.insideDhakaDeliveryFee ?? defaultFormState.insideDhakaDeliveryFee,
+        outsideDhakaDeliveryFee: fetchedSettings.outsideDhakaDeliveryFee ?? defaultFormState.outsideDhakaDeliveryFee,
+      }));
     }
   }, [fetchedSettings]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    setFormState((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+    const { name, value, type } = e.target;
+    setFormState((prev) => ({
+      ...prev,
+      [name]: type === 'number' ? Number(value) : value,
+    }));
   };
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>, field: 'siteLogo' | 'siteFavicon') => {
@@ -115,15 +124,32 @@ export const SiteSettings: React.FC = () => {
     }
   };
 
+
+  if (!isAdmin) {
+    return (
+      <div className="p-8 bg-white rounded-2xl shadow-sm border border-red-100 max-w-xl mx-auto text-center my-10">
+        <div className="w-16 h-16 bg-red-50 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4">
+          <ShieldAlert className="w-8 h-8" />
+        </div>
+        <h3 className="text-lg font-bold text-gray-900 mb-2">
+          অনুমতি নেই (Access Denied)
+        </h3>
+        <p className="text-sm text-gray-500">
+          এই সেটিংসটি পরিবর্তন করার অনুমতি কেবল সিস্টেম অ্যাডমিনের রয়েছে।
+        </p>
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-4xl mx-auto space-y-6 pb-12">
       <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-xs">
         <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
           <Globe className="w-6 h-6 text-primary-600" />
-          সাইট সেটিংস, ব্র্যান্ডিং & SEO
+          সাইট সেটিংস, ব্র্যান্ডিং, ডেলিভারি &amp; নোটিফিকেশন
         </h1>
         <p className="text-xs text-gray-500 mt-1">
-          ওয়েবসাইটের লোগো, ফেভিকন, টাইটেল, মেটা ডেসক্রিপশন এবং সোশ্যাল মিডিয়া প্রোফাইল লিংকসমূহ পরিচালনা করুন
+          ওয়েবসাইটের লোগো, ফেভিকন, ডেলিভারি চার্জ, টেলিগ্রাম বট সেটিংস এবং সোশ্যাল মিডিয়া প্রোফাইল লিংকসমূহ পরিচালনা করুন
         </p>
       </div>
 
@@ -132,14 +158,13 @@ export const SiteSettings: React.FC = () => {
         <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-xs space-y-4">
           <h2 className="text-base font-bold text-gray-800 border-b border-gray-100 pb-3 flex items-center gap-2">
             <ImageIcon className="w-4 h-4 text-primary-600" />
-            ব্র্যান্ডিং ও ইমেজ (Logo & Favicon)
+            ব্র্যান্ডিং ও ইমেজ (Logo &amp; Favicon)
           </h2>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Main Site Logo */}
             <div className="p-4 border border-dashed border-gray-200 rounded-2xl space-y-3 bg-gray-50/50">
               <label className="block text-xs font-bold text-gray-800">
-                সাইট লোগো (Header & Footer Logo)
+                সাইট লোগো (Header &amp; Footer Logo)
               </label>
               <div className="flex items-center gap-4">
                 <div className="w-20 h-20 bg-white border border-gray-200 rounded-xl flex items-center justify-center overflow-hidden shrink-0">
@@ -160,10 +185,9 @@ export const SiteSettings: React.FC = () => {
                   />
                 </label>
               </div>
-              <p className="text-[10px] text-gray-400">অনুমোদিত ফরম্যাট: PNG, SVG, WEBP (সুপারিশকৃত সাইজ: 300x80px)</p>
+              <p className="text-[10px] text-gray-400">অনুমোদিত ফরম্যাট: PNG, SVG, WEBP (৩০০x৮০ পিক্সেল)</p>
             </div>
 
-            {/* Favicon Icon */}
             <div className="p-4 border border-dashed border-gray-200 rounded-2xl space-y-3 bg-gray-50/50">
               <label className="block text-xs font-bold text-gray-800">
                 ফেভিকন (Browser Tab Icon)
@@ -187,7 +211,82 @@ export const SiteSettings: React.FC = () => {
                   />
                 </label>
               </div>
-              <p className="text-[10px] text-gray-400">ব্রাউজার ট্যাবে প্রদর্শিত আইকন (সুপারিশকৃত সাইজ: 32x32px PNG/ICO)</p>
+              <p className="text-[10px] text-gray-400">ব্রাউজার ট্যাবের আইকন (৩২x৩২ পিক্সেল PNG/ICO)</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Delivery Charge Settings */}
+        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-xs space-y-4">
+          <h2 className="text-base font-bold text-gray-800 border-b border-gray-100 pb-3 flex items-center gap-2">
+            <Truck className="w-4 h-4 text-primary-600" />
+            ডেলিভারি চার্জ কনফিগারেশন
+          </h2>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-xs font-bold text-gray-700 mb-1.5">
+                ঢাকার ভেতরে ডেলিভারি চার্জ (৳)
+              </label>
+              <input
+                type="number"
+                name="insideDhakaDeliveryFee"
+                value={formState.insideDhakaDeliveryFee}
+                onChange={handleChange}
+                placeholder="60"
+                className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:border-primary-500 outline-none text-xs"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-bold text-gray-700 mb-1.5">
+                ঢাকার বাইরে ডেলিভারি চার্জ (৳)
+              </label>
+              <input
+                type="number"
+                name="outsideDhakaDeliveryFee"
+                value={formState.outsideDhakaDeliveryFee}
+                onChange={handleChange}
+                placeholder="120"
+                className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:border-primary-500 outline-none text-xs"
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Telegram Order Notification Settings */}
+        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-xs space-y-4">
+          <h2 className="text-base font-bold text-gray-800 border-b border-gray-100 pb-3 flex items-center gap-2">
+            <Send className="w-4 h-4 text-blue-500" />
+            টেলিগ্রাম অর্ডার নোটিফিকেশন বটের তথ্য
+          </h2>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-xs font-bold text-gray-700 mb-1.5">
+                Telegram Bot Token
+              </label>
+              <input
+                type="text"
+                name="telegramBotToken"
+                value={formState.telegramBotToken}
+                onChange={handleChange}
+                placeholder="123456789:AA..."
+                className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:border-primary-500 outline-none text-xs font-mono"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-gray-700 mb-1.5">
+                Telegram Chat ID / Group ID
+              </label>
+              <input
+                type="text"
+                name="telegramChatId"
+                value={formState.telegramChatId}
+                onChange={handleChange}
+                placeholder="-100123456789"
+                className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:border-primary-500 outline-none text-xs font-mono"
+              />
             </div>
           </div>
         </div>

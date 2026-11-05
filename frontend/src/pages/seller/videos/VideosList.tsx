@@ -438,13 +438,16 @@ export const VideosList: React.FC = () => {
               </button>
               <div className="aspect-video w-full">
                 <iframe
-                  src={`https://www.youtube.com/embed/${playingVideoId}?autoplay=1`}
+                  key={playingVideoId}
+                  src={`https://www.youtube-nocookie.com/embed/${playingVideoId}?autoplay=1&mute=1&controls=1&playsinline=1&enablejsapi=1&origin=${encodeURIComponent(window.location.origin)}`}
                   title="YouTube video player"
                   allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                   allowFullScreen
+                  referrerPolicy="strict-origin-when-cross-origin"
                   className="w-full h-full border-0"
                 ></iframe>
               </div>
+              {/* <p className="bg-black px-3 py-2 text-center text-[11px] text-white/75">ভিডিওটি মিউট অবস্থায় শুরু হয়। শব্দ চালু করতে player-এর স্পিকার আইকনে চাপ দিন।</p> */}
             </div>
           </div>
         )}

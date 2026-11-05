@@ -1,5 +1,15 @@
 import React, { useState, useMemo, useEffect } from "react";
-import { Play, Search, Clock, Eye, Video, Sparkles, X, Loader2, AlertCircle } from "lucide-react";
+import {
+  Play,
+  Search,
+  Clock,
+  Eye,
+  Video,
+  Sparkles,
+  X,
+  Loader2,
+  AlertCircle,
+} from "lucide-react";
 import { type VideoItem } from "../../../types/index";
 import { useVideos } from "../../../features/videos/useVideos";
 
@@ -77,19 +87,23 @@ export const VideosPage: React.FC = () => {
 
   // ডায়নামিক ক্যাটাগরি এক্সট্র্যাক্ট করা (videos থেকে)
   const categories = useMemo(() => {
-    const extractedCategories = videos.map((video) => video.category).filter(Boolean);
+    const extractedCategories = videos
+      .map((video) => video.category)
+      .filter(Boolean);
     const uniqueCategories = Array.from(new Set(extractedCategories));
     return ["সব ভিডিও", ...uniqueCategories];
   }, [videos]);
 
   // ভিডিও ফিল্টারিং logic
-const filteredVideos = useMemo(() => {
+  const filteredVideos = useMemo(() => {
     return videos.filter((video) => {
       const matchesCategory =
         selectedCategory === "সব ভিডিও" || video.category === selectedCategory;
       const matchesSearch =
         video.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (video.description ?? "").toLowerCase().includes(searchQuery.toLowerCase());
+        (video.description ?? "")
+          .toLowerCase()
+          .includes(searchQuery.toLowerCase());
       return matchesCategory && matchesSearch;
     });
   }, [videos, selectedCategory, searchQuery]);
@@ -128,13 +142,15 @@ const filteredVideos = useMemo(() => {
 
           <div className="relative z-10 max-w-2xl space-y-3">
             <span className="inline-flex items-center gap-1.5 bg-primary-700/60 text-primary-200 text-xs font-semibold px-3 py-1 rounded-full border border-primary-600/40 backdrop-blur-xs">
-              <Sparkles className="w-3.5 h-3.5 text-accent-400" /> কৃষি পরামর্শ ও টিউটোরিয়াল
+              <Sparkles className="w-3.5 h-3.5 text-accent-400" /> কৃষি পরামর্শ
+              ও টিউটোরিয়াল
             </span>
             <h1 className="text-2xl sm:text-4xl font-black tracking-tight text-white">
               কৃষি বিষয়ক সকল ভিডিও গাইড
             </h1>
             <p className="text-primary-100 text-xs sm:text-sm leading-relaxed">
-              আধুনিক চাষাবাদ, সার ও কীটনাশকের সঠিক ব্যবহার এবং কৃষি যন্ত্রপাতির রিভিউ দেখে আপনার কৃষি জ্ঞান বাড়ান।
+              আধুনিক চাষাবাদ, সার ও কীটনাশকের সঠিক ব্যবহার এবং কৃষি যন্ত্রপাতির
+              রিভিউ দেখে আপনার কৃষি জ্ঞান বাড়ান।
             </p>
           </div>
         </div>
@@ -143,7 +159,8 @@ const filteredVideos = useMemo(() => {
         {featuredVideo && !searchQuery && selectedCategory === "সব ভিডিও" && (
           <div className="bg-white rounded-3xl border border-gray-100 p-4 sm:p-6 shadow-xs hover:shadow-md transition-shadow">
             <div className="flex items-center gap-2 mb-4 text-xs font-bold text-primary-700 uppercase tracking-wider">
-              <Sparkles className="w-4 h-4 text-accent-500" /> বিশেষ ভিডিও (Featured)
+              <Sparkles className="w-4 h-4 text-accent-500" /> বিশেষ ভিডিও
+              (Featured)
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
@@ -226,7 +243,9 @@ const filteredVideos = useMemo(() => {
             {categories.map((cat) => (
               <button
                 key={cat}
-                onClick={() => setSelectedCategory(typeof cat === "string" ? cat : "")}
+                onClick={() =>
+                  setSelectedCategory(typeof cat === "string" ? cat : "")
+                }
                 className={`px-4 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
                   selectedCategory === cat
                     ? "bg-primary-600 text-white shadow-xs"
@@ -306,7 +325,8 @@ const filteredVideos = useMemo(() => {
               কোনো ভিডিও পাওয়া যায়নি
             </h3>
             <p className="text-xs text-gray-500 max-w-sm mx-auto">
-              আপনার খোঁজা ফিল্টার অনুযায়ী কোনো ফলাফল মেলেনি। অনুগ্রহ করে অন্য কোনো ক্যাটাগরি বা কিওয়ার্ড দিয়ে চেষ্টা করুন।
+              আপনার খোঁজা ফিল্টার অনুযায়ী কোনো ফলাফল মেলেনি। অনুগ্রহ করে অন্য
+              কোনো ক্যাটাগরি বা কিওয়ার্ড দিয়ে চেষ্টা করুন।
             </p>
           </div>
         )}
@@ -345,15 +365,18 @@ const filteredVideos = useMemo(() => {
             <div className="overflow-y-auto flex-1">
               <div className="aspect-video w-full bg-black">
                 <iframe
-                  src={`https://www.youtube.com/embed/${getYoutubeId(activeVideo.youtubeId)}?autoplay=1`}
+                  key={activeVideo.youtubeId}
+                  src={`https://www.youtube-nocookie.com/embed/${getYoutubeId(activeVideo.youtubeId)}?autoplay=1&mute=1&controls=1&playsinline=1&enablejsapi=1&origin=${encodeURIComponent(window.location.origin)}`}
                   title={activeVideo.title}
                   className="w-full h-full border-none"
                   allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                   allowFullScreen
+                  referrerPolicy="strict-origin-when-cross-origin"
                 ></iframe>
               </div>
 
               <div className="p-3 sm:p-4 bg-white space-y-2">
+                {/* <p className="text-[11px] text-gray-500">ভিডিওটি মিউট অবস্থায় শুরু হয়। শব্দ চালু করতে YouTube player-এর স্পিকার আইকনে চাপ দিন।</p> */}
                 <p className="text-xs sm:text-sm text-gray-600 leading-relaxed">
                   {activeVideo.description}
                 </p>

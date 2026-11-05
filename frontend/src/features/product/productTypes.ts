@@ -4,6 +4,7 @@ export interface Specification {
 }
 
 export interface Product {
+  status: string;
   id: string;
   name: string;
   category: string;

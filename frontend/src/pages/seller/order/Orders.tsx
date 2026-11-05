@@ -14,6 +14,7 @@ import {
   Loader2,
   Trash2,
   RefreshCw,
+  Copy,
 } from "lucide-react";
 import type { Order } from "../../../features/order/orderTypes";
 import { useOrder } from "../../../features/order/useOrder";
@@ -28,8 +29,9 @@ export const SellerOrders: React.FC = () => {
   const {
     orders = [],
     loading: isLoading,
-    updateStatus,
+    updateStatus, 
     getAllOrders,
+    pagination,
     markAsSeen,
     removeOrder,
   } = useOrder();
@@ -37,11 +39,29 @@ export const SellerOrders: React.FC = () => {
   const isAdmin = user?.role === "admin";
 
   const [searchTerm, setSearchTerm] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
   const [selectedStatus, setSelectedStatus] = useState<string>("ALL");
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [updatingOrderId, setUpdatingOrderId] = useState<string | null>(null);
   const [deletingOrderId, setDeletingOrderId] = useState<string | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
+
+  const copyFingerprint = async (fingerprint: string) => {
+    try {
+      await navigator.clipboard.writeText(fingerprint);
+      dispatch(showToast('ডিভাইস fingerprint কপি হয়েছে।', 'success'));
+    } catch {
+      dispatch(showToast('Fingerprint কপি করা যায়নি।', 'error'));
+    }
+  };
+
+  const deviceOrderCounts = useMemo(() => new Map(Object.entries(pagination.deviceOrderCounts)), [pagination.deviceOrderCounts]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => { setDebouncedSearch(searchTerm.trim()); setCurrentPage(1); }, 300);
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
 
   // ম্যানুয়াল ও অটো রিফ্রেশ ফাংশন
   const handleRefresh = useCallback(async () => {
@@ -49,7 +69,7 @@ export const SellerOrders: React.FC = () => {
 
     try {
       setIsRefreshing(true);
-      await getAllOrders();
+      await getAllOrders({ page: currentPage, limit: 50, search: debouncedSearch, status: selectedStatus === 'ALL' ? undefined : selectedStatus });
       dispatch(showToast("অর্ডার সফলভাবে রিফ্রেশ হয়েছে", "success"));
     } catch (error: any) {
       const message =
@@ -60,7 +80,7 @@ export const SellerOrders: React.FC = () => {
     } finally {
       setIsRefreshing(false);
     }
-  }, [getAllOrders, dispatch]);
+  }, [getAllOrders, dispatch, currentPage, debouncedSearch, selectedStatus]);
 
   // ইনিশিয়াল ডেটা লোড এবং ৩০ সেকেন্ড পরপর অটো রিফ্রেশ সেটআপ
   useEffect(() => {
@@ -69,7 +89,7 @@ export const SellerOrders: React.FC = () => {
     const fetchOrders = async () => {
       try {
         if (typeof getAllOrders === "function") {
-          await getAllOrders();
+          await getAllOrders({ page: currentPage, limit: 50, search: debouncedSearch, status: selectedStatus === 'ALL' ? undefined : selectedStatus });
         }
       } catch (error: any) {
         if (isMounted) {
@@ -93,7 +113,7 @@ export const SellerOrders: React.FC = () => {
       isMounted = false;
       clearInterval(interval);
     };
-  }, [getAllOrders, dispatch]);
+  }, [getAllOrders, dispatch, currentPage, debouncedSearch, selectedStatus]);
 
   const handleStatusChange = async (
     orderId: string,
@@ -200,28 +220,8 @@ export const SellerOrders: React.FC = () => {
 };
 
   const filteredOrders = useMemo(() => {
-    const cleanQuery = searchTerm.trim().toLowerCase().replace(/^#/, "");
-
-    return (orders || []).filter((order: Order) => {
-      const orderId = String(order.id || (order as any)._id || "");
-      const trackingId = String(order.trackingId || "");
-      const fullName = String(order.fullName || "");
-      const phone = String(order.phone || "");
-      const ipAddress = String(order.ipAddress || "");
-
-      const matchesSearch =
-        orderId.toLowerCase().includes(cleanQuery) ||
-        trackingId.toLowerCase().includes(cleanQuery) ||
-        fullName.toLowerCase().includes(cleanQuery) ||
-        phone.includes(cleanQuery) ||
-        ipAddress.includes(cleanQuery);
-
-      const matchesStatus =
-        selectedStatus === "ALL" || order.status === selectedStatus;
-
-      return matchesSearch && matchesStatus;
-    });
-  }, [orders, searchTerm, selectedStatus]);
+    return orders || [];
+  }, [orders]);
 
   const getStatusBadge = (status: Order["status"]) => {
     switch (status) {
@@ -300,7 +300,7 @@ export const SellerOrders: React.FC = () => {
           <Search className="w-4 h-4 text-gray-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
           <input
             type="text"
-            placeholder="আইডি, ট্র্যাকিং নম্বর, নাম বা ফোন নম্বর..."
+            placeholder="আইডি, নাম, ফোন, IP বা device fingerprint..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="w-full pl-10 pr-8 py-2 rounded-xl border border-gray-200 focus:border-primary-500 outline-none text-xs sm:text-sm"
@@ -327,7 +327,7 @@ export const SellerOrders: React.FC = () => {
           ].map((status) => (
             <button
               key={status}
-              onClick={() => setSelectedStatus(status)}
+            onClick={() => { setSelectedStatus(status); setCurrentPage(1); }}
               className={`px-3 py-1.5 rounded-xl text-xs font-medium whitespace-nowrap transition-colors cursor-pointer ${
                 selectedStatus === status
                   ? "bg-primary-600 text-white font-bold"
@@ -384,6 +384,7 @@ export const SellerOrders: React.FC = () => {
                         <div className="text-[11px] text-gray-400">
                           ip: {order.ipAddress || "—"}
                         </div>
+                        {order.deviceFingerprint && <div className="mt-1 flex items-center gap-1 text-[11px] text-gray-500"><span>ডিভাইস: {order.deviceFingerprint.slice(0, 12)}… · {deviceOrderCounts.get(order.deviceFingerprint) || 0}টি অর্ডার</span><button type="button" onClick={(event) => { event.stopPropagation(); void copyFingerprint(order.deviceFingerprint!); }} className="rounded p-1 text-primary-700 hover:bg-primary-50" title="সম্পূর্ণ fingerprint কপি করুন" aria-label="Fingerprint কপি করুন"><Copy className="h-3.5 w-3.5" /></button></div>}
                       </td>
                       <td className="px-5 py-4 font-semibold text-gray-700">
                         {order.seenName && order.seenName !== "unSeen" ? (
@@ -477,6 +478,10 @@ export const SellerOrders: React.FC = () => {
             </tbody>
           </table>
         </div>
+        <div className="flex items-center justify-between gap-3 border-t border-gray-100 px-4 py-3 text-xs text-gray-600">
+          <span>মোট {pagination.total.toLocaleString('bn-BD')} অর্ডার · পৃষ্ঠা {pagination.page} / {Math.max(1, pagination.totalPages)}</span>
+          <div className="flex gap-2"><button disabled={currentPage <= 1 || isLoading} onClick={() => setCurrentPage((page) => Math.max(1, page - 1))} className="rounded-lg border px-3 py-1.5 disabled:opacity-40">আগের পৃষ্ঠা</button><button disabled={currentPage >= pagination.totalPages || isLoading} onClick={() => setCurrentPage((page) => page + 1)} className="rounded-lg border px-3 py-1.5 disabled:opacity-40">পরের পৃষ্ঠা</button></div>
+        </div>
       </div>
 
       {/* Order Detail Modal */}
@@ -535,6 +540,7 @@ export const SellerOrders: React.FC = () => {
                   <option value="CANCELLED">CANCELLED</option>
                 </select>
               </div>
+              {selectedOrder.deviceFingerprint && <div className="rounded-xl border border-gray-200 bg-gray-50 p-4"><p className="text-xs font-bold text-gray-800">ডিভাইস fingerprint · {deviceOrderCounts.get(selectedOrder.deviceFingerprint) || 0}টি অর্ডার</p><div className="mt-2 flex items-start gap-2"><code className="min-w-0 flex-1 break-all text-[10px] text-gray-600">{selectedOrder.deviceFingerprint}</code><button type="button" onClick={() => void copyFingerprint(selectedOrder.deviceFingerprint!)} className="inline-flex shrink-0 items-center gap-1 rounded-lg border border-gray-200 bg-white px-2.5 py-1.5 text-xs font-bold text-primary-700 hover:bg-primary-50"><Copy className="h-3.5 w-3.5" /> কপি</button></div></div>}
 
               {/* Customer Info */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-gray-50 p-4 rounded-xl text-xs">

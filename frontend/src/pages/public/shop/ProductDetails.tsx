@@ -1,31 +1,32 @@
 /* eslint-disable react-hooks/set-state-in-effect */
-import React, { useState, useEffect } from 'react';
-import { useParams, Link, useNavigate } from 'react-router-dom';
-import { 
-  ShoppingBag, 
-  Heart, 
-  Check, 
-  XCircle, 
-  Star, 
-  Plus, 
-  Minus, 
-  ChevronRight, 
-  Truck, 
-  ShieldCheck, 
+import React, { useState, useEffect } from "react";
+import { useParams, Link, useNavigate } from "react-router-dom";
+import {
+  ShoppingBag,
+  Heart,
+  Check,
+  XCircle,
+  // Star,
+  Plus,
+  Minus,
+  ChevronRight,
+  Truck,
+  ShieldCheck,
   RotateCcw,
   Loader2,
-  AlertCircle
-} from 'lucide-react';
-import { Helmet } from 'react-helmet-async';
+  AlertCircle,
+} from "lucide-react";
+import { Helmet } from "react-helmet-async";
 import { useProduct } from "../../../features/product/useProduct";
-import { useCart } from '../../../features/cartSlice/useCart';
-import { parseProductUnit } from '../../../utils/unitParser'; 
+import { useCart } from "../../../features/cartSlice/useCart";
+import { parseProductUnit } from "../../../utils/unitParser";
 
-export const ProductDetails: React.FC = () => { 
+export const ProductDetails: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
 
-  const { products, isLoading, isError, error, fetchAllProducts } = useProduct();
+  const { products, isLoading, isError, error, fetchAllProducts } =
+    useProduct();
   const { addToCart } = useCart();
 
   // ১. পেজ রিলোড হলে যদি products খালি থাকে, তবে প্রোডাক্ট ফেচ করুন
@@ -38,16 +39,20 @@ export const ProductDetails: React.FC = () => {
   const product = products.find((item) => String(item.id) === String(id));
 
   const imagesList: string[] = product?.images
-    ? (Array.isArray(product.images) ? product.images : [product.images])
-    : [''];
+    ? Array.isArray(product.images)
+      ? product.images
+      : [product.images]
+    : [""];
 
-  const [selectedImage, setSelectedImage] = useState<string>('');
+  const [selectedImage, setSelectedImage] = useState<string>("");
 
   const currentImage = imagesList.includes(selectedImage)
     ? selectedImage
-    : imagesList[0] || '';
+    : imagesList[0] || "";
 
-  const { initialQuantity, baseAmount, unitLabel } = parseProductUnit(product?.unit);
+  const { initialQuantity, baseAmount, unitLabel } = parseProductUnit(
+    product?.unit,
+  );
 
   const STEP_SIZE = initialQuantity || 1;
   const MIN_QUANTITY = initialQuantity || 1;
@@ -67,31 +72,32 @@ export const ProductDetails: React.FC = () => {
     }
   }, [product, initialQuantity, id]);
 
-  const quantity = quantityState.productId === id
-    ? quantityState.value
-    : MIN_QUANTITY;
+  const quantity =
+    quantityState.productId === id ? quantityState.value : MIN_QUANTITY;
 
   const setQuantity = (value: number | ((previous: number) => number)) => {
     setQuantityState(() => ({
       productId: id,
-      value: typeof value === 'function' ? value(quantity) : value,
+      value: typeof value === "function" ? value(quantity) : value,
     }));
   };
 
-  const handleQuantityChange = (type: 'inc' | 'dec') => {
-    if (type === 'dec') {
+  const handleQuantityChange = (type: "inc" | "dec") => {
+    if (type === "dec") {
       setQuantity((prev) => {
         const nextVal = prev - STEP_SIZE;
-        return nextVal >= MIN_QUANTITY ? Number(nextVal.toFixed(2)) : MIN_QUANTITY;
+        return nextVal >= MIN_QUANTITY
+          ? Number(nextVal.toFixed(2))
+          : MIN_QUANTITY;
       });
-    } else if (type === 'inc') {
+    } else if (type === "inc") {
       setQuantity((prev) => Number((prev + STEP_SIZE).toFixed(2)));
     }
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = parseFloat(e.target.value);
-    
+
     if (isNaN(val) || val < MIN_QUANTITY) {
       setQuantity(MIN_QUANTITY);
       return;
@@ -100,7 +106,9 @@ export const ProductDetails: React.FC = () => {
     setQuantity(Number(val.toFixed(2)));
   };
 
-  const calculatedTotalPrice = Math.round((product?.price || 0) / (baseAmount || 1) * quantity);
+  const calculatedTotalPrice = Math.round(
+    ((product?.price || 0) / (baseAmount || 1)) * quantity,
+  );
 
   const handleAddToCart = () => {
     if (!product) return;
@@ -114,27 +122,39 @@ export const ProductDetails: React.FC = () => {
         unit: unitLabel || product.unit,
         baseAmount: baseAmount || 1,
       },
-      quantity
+      quantity,
     );
   };
 
-  // ২. সঠিক লোডিং স্টেট চেক: ডাটা ফেচিং চলায় অথবা products খালি থাকলে Loader দেখাবে
+  // ২. লোডিং স্টেট
   if (isLoading || (products.length === 0 && !isError)) {
     return (
       <div className="min-h-[60vh] flex flex-col items-center justify-center py-12 text-primary-600">
+        <Helmet>
+          <title>লোডিং... | ই-কমার্স</title>
+        </Helmet>
         <Loader2 className="w-10 h-10 animate-spin mb-3" />
-        <p className="text-sm font-medium text-gray-600">প্রোডাক্ট লোড হচ্ছে...</p>
+        <p className="text-sm font-medium text-gray-600">
+          প্রোডাক্ট লোড হচ্ছে...
+        </p>
       </div>
     );
   }
 
-  // ৩. এরর স্টেট হ্যান্ডলিং
+  // ৩. এরর স্টেট
   if (isError) {
     return (
       <div className="min-h-[60vh] flex flex-col items-center justify-center py-12 px-4 text-center">
+        <Helmet>
+          <title>সমস্যা দেখা দিয়েছে | ই-কমার্স</title>
+        </Helmet>
         <AlertCircle className="w-12 h-12 text-red-500 mb-3" />
-        <h2 className="text-xl font-bold text-gray-900 mb-1">সমস্যা দেখা দিয়েছে!</h2>
-        <p className="text-gray-600 text-sm mb-4">{error || 'ডাটা ফেচ করতে সমস্যা হচ্ছে।'}</p>
+        <h2 className="text-xl font-bold text-gray-900 mb-1">
+          সমস্যা দেখা দিয়েছে!
+        </h2>
+        <p className="text-gray-600 text-sm mb-4">
+          {error || "ডাটা ফেচ করতে সমস্যা হচ্ছে।"}
+        </p>
         <button
           onClick={() => fetchAllProducts()}
           className="bg-primary-600 text-white font-bold px-5 py-2 rounded-xl text-sm cursor-pointer"
@@ -145,52 +165,117 @@ export const ProductDetails: React.FC = () => {
     );
   }
 
-  // ৪. প্রোডাক্ট সত্যি না থাকলে (ডাটা ফেচিং শেষ হওয়ার পর)
+  // ৪. প্রোডাক্ট না পাওয়া গেলে
   if (!product) {
     return (
       <div className="min-h-[60vh] flex flex-col items-center justify-center py-12 px-4 text-center">
         <Helmet>
           <title>প্রোডাক্ট পাওয়া যায়নি</title>
+          <meta name="robots" content="noindex, nofollow" />
         </Helmet>
-        <h2 className="text-2xl font-bold text-gray-900 mb-2">প্রোডাক্টটি পাওয়া যায়নি!</h2>
-        <p className="text-gray-600 mb-6 text-sm">আপনি যে প্রোডাক্টটি খুঁজছেন তা মুছে ফেলা হয়েছে অথবা ইউআরএল ভুল।</p>
+        <h2 className="text-2xl font-bold text-gray-900 mb-2">
+          প্রোডাক্টটি পাওয়া যায়নি!
+        </h2>
+        <p className="text-gray-600 mb-6 text-sm">
+          আপনি যে প্রোডাক্টটি খুঁজছেন তা মুছে ফেলা হয়েছে অথবা ইউআরএল ভুল।
+        </p>
         <button
           onClick={() => navigate(-1)}
           className="bg-primary-600 hover:bg-primary-700 text-white font-bold px-6 py-2.5 rounded-xl transition-all text-sm cursor-pointer"
         >
           ফিরে যান
-        </button>
+        </button> 
       </div>
     );
   }
 
-  const metaDescription = product.metaDescription 
-    || product.shortDescription 
-    || `${product.name} সেরা দামে কিনুন। ${product.description?.slice(0, 150) || ''}...`;
+  // SEO Helpers Variables
+  const siteUrl = window.location.href;
+  const metaDescription =
+    product.metaDescription ||
+    product.shortDescription ||
+    `${product.name} সেরা দামে কিনুন। ${product.description?.slice(0, 150) || ""}...`;
+
+  const metaKeywords =
+    product.tags && product.tags.length > 0
+      ? product.tags.join(", ")
+      : `${product.name}, ${product.category}, সেরা দাম, অনলাইন শপিং`;
+
+  // Schema.org Structured Data for Google Rich Snippet
+  const productSchema = {
+    "@context": "https://schema.org/",
+    "@type": "Product",
+    name: product.name,
+    image: imagesList,
+    description: metaDescription,
+    sku: product.sku || product.id,
+    category: product.category,
+    offers: {
+      "@type": "Offer",
+      priceCurrency: "BDT",
+      price: product.price,
+      availability:
+        product.inStock !== false
+          ? "https://schema.org/InStock"
+          : "https://schema.org/OutOfStock",
+      url: siteUrl,
+    },
+    ...(product.rating && {
+      aggregateRating: {
+        "@type": "AggregateRating",
+        ratingValue: product.rating,
+        reviewCount: product.reviewsCount || 1,
+      },
+    }),
+  };
 
   return (
     <div className="bg-gray-50/50 py-8 lg:py-12">
+      {/* 🟢 React Helmet for Advanced SEO */}
       <Helmet>
-        <title>{product.name}</title>
+        {/* Basic Metadata */}
+        <title>{`${product.name} - সেরা দামে কিনুন`}</title>
         <meta name="description" content={metaDescription} />
+        <meta name="keywords" content={metaKeywords} />
+        <link rel="canonical" href={siteUrl} />
+
+        {/* Open Graph / Facebook / WhatsApp */}
+        <meta property="og:type" content="product" />
         <meta property="og:title" content={product.name} />
         <meta property="og:description" content={metaDescription} />
         <meta property="og:image" content={currentImage} />
-        <meta property="og:type" content="product" />
+        <meta property="og:url" content={siteUrl} />
+        <meta property="og:site_name" content="আপনার শপের নাম" />
+        <meta property="product:price:amount" content={String(product.price)} />
+        <meta property="product:price:currency" content="BDT" />
+
+        {/* Twitter Card */}
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content={product.name} />
+        <meta name="twitter:description" content={metaDescription} />
+        <meta name="twitter:image" content={currentImage} />
+
+        {/* Structured Data (JSON-LD) */}
+        <script type="application/ld+json">
+          {JSON.stringify(productSchema)}
+        </script>
       </Helmet>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Breadcrumb Navigation */}
         <nav className="flex items-center gap-2 text-xs sm:text-sm text-gray-500 mb-6 lg:mb-8 overflow-x-auto whitespace-nowrap">
-          <Link to="/" className="hover:text-primary-600 transition-colors">হোম</Link>
+          <Link to="/" className="hover:text-primary-600 transition-colors">
+            হোম
+          </Link>
           <ChevronRight className="w-3.5 h-3.5 flex-shrink-0" />
-          <span className="text-gray-900 font-medium truncate">{product.name}</span>
+          <span className="text-gray-900 font-medium truncate">
+            {product.name}
+          </span>
         </nav>
 
         {/* Main Product Details */}
         <div className="bg-white rounded-3xl border border-gray-100 p-4 sm:p-6 lg:p-8 shadow-xs mb-8">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
-            
             {/* Gallery Section */}
             <div className="flex flex-col gap-4">
               <div className="relative aspect-square rounded-2xl overflow-hidden bg-gray-100 border border-gray-100">
@@ -214,12 +299,16 @@ export const ProductDetails: React.FC = () => {
                       key={index}
                       onClick={() => setSelectedImage(img)}
                       className={`relative w-20 h-20 rounded-xl overflow-hidden border-2 transition-all flex-shrink-0 cursor-pointer ${
-                        currentImage === img 
-                          ? 'border-primary-600 ring-2 ring-primary-100' 
-                          : 'border-gray-200 hover:border-gray-300'
+                        currentImage === img
+                          ? "border-primary-600 ring-2 ring-primary-100"
+                          : "border-gray-200 hover:border-gray-300"
                       }`}
                     >
-                      <img src={img} alt="" className="w-full h-full object-cover" />
+                      <img
+                        src={img}
+                        alt=""
+                        className="w-full h-full object-cover"
+                      />
                     </button>
                   ))}
                 </div>
@@ -251,24 +340,26 @@ export const ProductDetails: React.FC = () => {
                   {product.name}
                 </h1>
 
-                {product.rating && (
+                {/* {product.rating && (
                   <div className="flex items-center gap-2 mb-4">
                     <div className="flex items-center text-amber-400">
                       <Star className="w-4 h-4 fill-amber-400" />
-                      <span className="ml-1 text-sm font-bold text-gray-900">{product.rating}</span>
+                      <span className="ml-1 text-sm font-bold text-gray-900">
+                        {product.rating}
+                      </span>
                     </div>
                     <span className="text-gray-300">•</span>
                     <span className="text-xs text-gray-500">
                       ({product.reviewsCount || 0} টি রিভিউ)
                     </span>
                   </div>
-                )}
+                )} */}
 
                 <div className="flex flex-wrap items-baseline gap-3 p-4 bg-gray-50/80 rounded-2xl mb-6">
                   <span className="text-2xl sm:text-3xl font-black text-gray-900">
                     {product.price}৳
                   </span>
-                  
+
                   {product.originalPrice && (
                     <span className="text-base text-gray-400 line-through font-normal">
                       {product.originalPrice}৳
@@ -292,10 +383,12 @@ export const ProductDetails: React.FC = () => {
 
                 <div className="space-y-4 pt-4 border-t border-gray-100">
                   <div className="flex items-center gap-4">
-                    <span className="text-xs font-bold text-gray-700">পরিমাণ:</span>
+                    <span className="text-xs font-bold text-gray-700">
+                      পরিমাণ:
+                    </span>
                     <div className="inline-flex items-center border border-gray-200 rounded-xl bg-gray-50">
                       <button
-                        onClick={() => handleQuantityChange('dec')}
+                        onClick={() => handleQuantityChange("dec")}
                         disabled={quantity <= MIN_QUANTITY}
                         className="p-2.5 text-gray-600 hover:text-gray-900 disabled:opacity-40 transition-colors cursor-pointer"
                         aria-label="পরিমাণ কমান"
@@ -318,7 +411,7 @@ export const ProductDetails: React.FC = () => {
                       </div>
 
                       <button
-                        onClick={() => handleQuantityChange('inc')}
+                        onClick={() => handleQuantityChange("inc")}
                         className="p-2.5 text-gray-600 hover:text-gray-900 transition-colors cursor-pointer"
                         aria-label="পরিমাণ বাড়ান"
                       >
@@ -350,48 +443,96 @@ export const ProductDetails: React.FC = () => {
               <div className="grid grid-cols-3 gap-2 mt-8 pt-6 border-t border-gray-100 text-center">
                 <div className="p-2 rounded-xl bg-gray-50 flex flex-col items-center">
                   <Truck className="w-5 h-5 text-primary-600 mb-1" />
-                  <span className="text-[11px] font-bold text-gray-800">দ্রুত ডেলিভারি</span>
+                  <span className="text-[11px] font-bold text-gray-800">
+                    দ্রুত ডেলিভারি
+                  </span>
                 </div>
                 <div className="p-2 rounded-xl bg-gray-50 flex flex-col items-center">
                   <ShieldCheck className="w-5 h-5 text-primary-600 mb-1" />
-                  <span className="text-[11px] font-bold text-gray-800">১০০% খাঁটি</span>
+                  <span className="text-[11px] font-bold text-gray-800">
+                    ১০০% খাঁটি
+                  </span>
                 </div>
                 <div className="p-2 rounded-xl bg-gray-50 flex flex-col items-center">
                   <RotateCcw className="w-5 h-5 text-primary-600 mb-1" />
-                  <span className="text-[11px] font-bold text-gray-800">সহজ রিটার্ন</span>
+                  <span className="text-[11px] font-bold text-gray-800">
+                    সহজ রিটার্ন
+                  </span>
                 </div>
               </div>
-
             </div>
           </div>
         </div>
 
+        {/* Product Tags Container */}
+        {product.tags && product.tags.length > 0 && (
+          <div className="mt-6">
+            <h4 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">
+              সংশ্লিষ্ট ট্যাগ (Keywords):
+            </h4>
+            <div className="flex flex-wrap gap-1.5">
+              {product.tags.map((tag, index) => (
+                <span
+                  key={index}
+                  className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-primary-50 text-primary-700 border border-primary-100 hover:bg-primary-100 transition-all cursor-pointer"
+                >
+                  #{tag}
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
         {/* Specifications Table */}
         <div className="bg-white rounded-3xl border border-gray-100 p-6 lg:p-8 shadow-xs">
-          <h3 className="text-lg font-bold text-gray-900 mb-4">বিস্তারিত তথ্য</h3>
-          
+          <h3 className="text-lg font-bold text-gray-900 mb-4">
+            বিস্তারিত তথ্য
+          </h3>
+
           <p className="text-sm text-gray-600 leading-relaxed mb-6">
             {product.description}
           </p>
 
-          {Array.isArray(product.specifications) && product.specifications.length > 0 && (
-            <div className="mt-6">
-              <h4 className="text-sm font-bold text-gray-900 mb-3">বৈশিষ্ট্যসমূহ:</h4>
-              <div className="max-w-md border border-gray-100 rounded-xl overflow-hidden text-xs sm:text-sm">
-                {product.specifications.map((spec, index) => (
-                  <div 
-                    key={index} 
-                    className={`flex justify-between p-3 ${index % 2 === 0 ? 'bg-gray-50/60' : 'bg-white'}`}
-                  >
-                    <span className="font-semibold text-gray-600">{spec.key}</span>
-                    <span className="font-medium text-gray-900">{spec.value}</span>
-                  </div>
-                ))}
-              </div>
+          {/* Product Tags Display */}
+          {/* {product.tags && product.tags.length > 0 && (
+            <div className="flex flex-wrap items-center gap-2 mt-4 pt-4 border-t border-gray-100">
+              <span className="text-xs font-bold text-gray-500 uppercase tracking-wider mr-1">
+                ট্যাগসমূহ:
+              </span>
+              {product.tags.map((tag, index) => (
+                <span
+                  key={index}
+                  className="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-medium bg-gray-100 text-gray-600 hover:bg-primary-50 hover:text-primary-600 transition-colors cursor-pointer"
+                >
+                  #{tag}
+                </span>
+              ))}
             </div>
-          )}
-        </div>
+          )} */}
 
+          {Array.isArray(product.specifications) &&
+            product.specifications.length > 0 && (
+              <div className="mt-6">
+                <h4 className="text-sm font-bold text-gray-900 mb-3">
+                  বৈশিষ্ট্যসমূহ:
+                </h4>
+                <div className="max-w-md border border-gray-100 rounded-xl overflow-hidden text-xs sm:text-sm">
+                  {product.specifications.map((spec, index) => (
+                    <div
+                      key={index}
+                      className={`flex justify-between p-3 ${index % 2 === 0 ? "bg-gray-50/60" : "bg-white"}`}
+                    >
+                      <span className="font-semibold text-gray-600">
+                        {spec.key}
+                      </span>
+                      <span className="font-medium text-gray-900">
+                        {spec.value}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+        </div>
       </div>
     </div>
   );

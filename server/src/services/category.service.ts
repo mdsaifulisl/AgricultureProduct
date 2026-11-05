@@ -60,7 +60,7 @@ export const updateCategoryService = async (
 
   if (cleanedImage && existingCategory.image && existingCategory.image !== cleanedImage) {
     deleteLocalFile(existingCategory.image);
-  }
+  } 
 
   return updatedCategory;
 };

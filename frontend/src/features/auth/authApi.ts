@@ -1,6 +1,7 @@
 import axiosInstance from '../../api/axiosInstance';
 import type {
   ApiResponse,
+  ChangePasswordPayload,
   ForgotPasswordPayload,
   LoginPayload,
   LoginResponseData,
@@ -53,7 +54,18 @@ export const logoutApi = async (): Promise<ApiResponse<void>> => {
   return response.data;
 };
 
-export const changePasswordApi = async (): Promise<ApiResponse<void>> => {
-  const response = await axiosInstance.post<ApiResponse<void>>('/auth/change-password');
+// export const changePasswordApi = async (): Promise<ApiResponse<void>> => {
+//   const response = await axiosInstance.post<ApiResponse<void>>('/auth/change-password');
+//   return response.data;
+// };
+
+
+export const changePasswordApi = async (
+  payload: ChangePasswordPayload
+): Promise<ApiResponse<void>> => {
+  const response = await axiosInstance.post<ApiResponse<void>>(
+    '/auth/change-password',
+    payload
+  ); 
   return response.data;
 };

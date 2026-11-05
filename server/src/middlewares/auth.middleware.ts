@@ -34,7 +34,8 @@ export const authGuard = (...requiredRoles: string[]) => {
       }
 
       // ২. টোকেন ভেরিফাই করা
-      const secret = process.env.JWT_SECRET || 'your_fallback_secret_key';
+      const secret = process.env.JWT_SECRET;
+      if (!secret) throw new Error('JWT_SECRET কনফিগার করা নেই।');
       const decoded = jwt.verify(token, secret) as JwtPayload;
 
       // ৩. কুকি এবং authorization হেডার থেকে টুকেন নেওয়া

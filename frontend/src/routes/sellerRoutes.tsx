@@ -1,17 +1,20 @@
-
+import { lazy } from 'react';
 import { Route } from 'react-router-dom';
-import { SellerDashboard } from '../pages/seller/dashboard/SellerDashboard';
-import ProductsList from '../pages/seller/products/ProductsList';
-import AddEditProduct from '../pages/seller/products/AddEditProduct';
-import { SellerOrders } from '../pages/seller/order/Orders';
-import { CategoriesList } from '../pages/seller/categories/CategoriesList';
-import { SlidersList } from '../pages/seller/sliders/SlidersList';
-import { VideosList } from '../pages/seller/videos/VideosList';
-import ManageProducts from '../pages/seller/partners_logo/ManagePartners';
-import { SellerBlogs } from '../pages/seller/blog/SellerBlogs';
-import SiteSettings from '../pages/seller/settings/SiteSettings';
-import UserManagement from '../pages/seller/settings/UserManagement';
-import ChangePassword from '../pages/seller/settings/ChangePassword';
+
+const SellerDashboard = lazy(() => import('../pages/seller/dashboard/SellerDashboard').then((module) => ({ default: module.SellerDashboard })));
+const ProductsList = lazy(() => import('../pages/seller/products/ProductsList'));
+const AddEditProduct = lazy(() => import('../pages/seller/products/AddEditProduct'));
+const SellerOrders = lazy(() => import('../pages/seller/order/Orders'));
+const CategoriesList = lazy(() => import('../pages/seller/categories/CategoriesList').then((module) => ({ default: module.CategoriesList })));
+const SlidersList = lazy(() => import('../pages/seller/sliders/SlidersList').then((module) => ({ default: module.SlidersList })));
+const VideosList = lazy(() => import('../pages/seller/videos/VideosList').then((module) => ({ default: module.VideosList })));
+const ManageProducts = lazy(() => import('../pages/seller/partners_logo/ManagePartners'));
+const SellerBlogs = lazy(() => import('../pages/seller/blog/SellerBlogs').then((module) => ({ default: module.SellerBlogs })));
+const SiteSettings = lazy(() => import('../pages/seller/settings/SiteSettings'));
+const UserManagement = lazy(() => import('../pages/seller/settings/UserManagement'));
+const ChangePassword = lazy(() => import('../pages/seller/settings/ChangePassword'));
+const ManageAboutSettings = lazy(() => import('../pages/seller/about/ManageAboutSettings').then((module) => ({ default: module.ManageAboutSettings })));
+const IpLogManagement = lazy(() => import('../pages/seller/settings/IpLogManagement').then((module) => ({ default: module.IpLogManagement })));
 
 export const sellerRoutes = (
   <>
@@ -28,5 +31,7 @@ export const sellerRoutes = (
     <Route path="settings" element={<SiteSettings />} />
     <Route path="users" element={<UserManagement />} />
     <Route path="change-password" element={<ChangePassword />} />
+    <Route path="about-settings" element={<ManageAboutSettings />} />
+    <Route path="ip-logs" element={<IpLogManagement />} />
   </>
 );

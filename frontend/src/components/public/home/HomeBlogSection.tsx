@@ -1,15 +1,23 @@
-import React from 'react';
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import React, { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, BookOpen } from 'lucide-react';
 import { BlogGrid } from '../blog/BlogGrid';
-import blogsData from '../../../data/blogs.json';
+import blogsData from '../../../data/blogs.json'; // লোকাল JSON ইম্পোর্ট
 import type { BlogPost } from '../../../types/index';
+import { useBlog } from '../../../features/blog/useBlog';
 
-const blogs = blogsData as unknown as BlogPost[];
+const localBlogs = blogsData as unknown as BlogPost[];
 
 export const HomeBlogSection: React.FC = () => {
-  // হোম পেজের জন্য শুধুমাত্র প্রথম ৩টি ব্লগ ফিল্টার করে নেওয়া হচ্ছে
-  const recentBlogs = blogs.slice(0, 3);
+  const { blogs, isLoading, getAllBlogs } = useBlog();
+
+   useEffect(() => {
+      getAllBlogs();
+    }, [getAllBlogs]);
+  // যদি এপিআই থেকে ব্লগ ডাটা পাওয়া যায় তবে সেটি দেখাবে, না হলে লোকাল JSON থেকে দেখাবে
+  const displayBlogs = (blogs && blogs.length > 0) ? blogs : localBlogs;
+  const recentBlogs = displayBlogs.slice(0, 3);
 
   return (
     <section className="py-16 bg-gray-50/50">
@@ -22,7 +30,7 @@ export const HomeBlogSection: React.FC = () => {
               <span>আমাদের ব্লগ</span>
             </div>
             <h2 className="text-2xl sm:text-4xl font-black text-gray-900 tracking-tight">
-              কৃষি বিষয়ক পরামর্শ ও তথ্য
+              কৃষি বিষয়ক পরামর্শ ও তথ্য
             </h2>
           </div>
 
@@ -35,8 +43,13 @@ export const HomeBlogSection: React.FC = () => {
           </Link>
         </div>
 
-        {/* Blog Grid (Showing 3 items) */}
-        <BlogGrid blogs={recentBlogs} />
+        {/* Loading State */}
+        {isLoading && displayBlogs.length === 0 ? (
+          <div className="text-center py-10 text-gray-500 font-medium">লোড হচ্ছে...</div>
+        ) : (
+          /* Blog Grid (Showing 3 items with type casting to prevent mismatch) */
+          <BlogGrid blogs={recentBlogs as any} />
+        )}
 
         {/* Mobile View All Button */}
         <div className="mt-8 text-center sm:hidden">

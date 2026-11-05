@@ -10,14 +10,14 @@ import {
   clearCurrentOrder,
   clearOrderError,
 } from './orderSlice';
-import type { CreateOrderPayload, OrderStatus } from './orderTypes';
+import type { CreateOrderPayload, OrderStatus, OrdersQuery } from './orderTypes';
 
 export const useOrder = () => {
   const dispatch = useAppDispatch();
-  const { orders, currentOrder, loading, error } = useAppSelector((state) => state.order);
+  const { orders, currentOrder, loading, error, pagination } = useAppSelector((state) => state.order);
 
-  const handleFetchAllOrders = useCallback(() => {
-    return dispatch(fetchAllOrders()).unwrap();
+  const handleFetchAllOrders = useCallback((params: OrdersQuery = {}) => {
+    return dispatch(fetchAllOrders(params)).unwrap();
   }, [dispatch]);
 
   const handleCreateOrder = useCallback(
@@ -79,6 +79,7 @@ export const useOrder = () => {
     loading,
     isLoading: loading,
     error,
+    pagination,
 
     // Actions
     getAllOrders: handleFetchAllOrders,
