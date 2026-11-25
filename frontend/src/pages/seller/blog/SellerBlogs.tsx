@@ -20,7 +20,7 @@ export const SellerBlogs: React.FC = () => {
   
   // ইউজার থেকে নাম এবং রোল এক্সট্র্যাক্ট করা (Fallback সহ)
   const authorName = user?.name || (user as any)?.fullName || "Admin"; 
-  const authorRole = user?.role || "seller";
+  const authorRole = user?.role || "writer";
 
   const {
     blogs: rawBlogs = [],

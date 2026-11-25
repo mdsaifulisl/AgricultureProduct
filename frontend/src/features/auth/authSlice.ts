@@ -18,11 +18,26 @@ import type {
   ChangePasswordPayload,
 } from './authTypes';
 
+const AUTH_SESSION_HINT_KEY = 'rk_has_session';
+
+const setSessionHint = () => {
+  if (typeof window !== 'undefined') {
+    localStorage.setItem(AUTH_SESSION_HINT_KEY, '1');
+  }
+};
+
+const clearSessionHint = () => {
+  if (typeof window !== 'undefined') {
+    localStorage.removeItem(AUTH_SESSION_HINT_KEY);
+  }
+};
+
 const initialState: AuthState = {
   user: null,
   token: null,
   isAuthenticated: false,
-  isLoading: true,
+  // isLoading: true,
+  isLoading: false,
   isError: false,
   error: null,
 };
@@ -136,6 +151,7 @@ const authSlice = createSlice({
       state.isLoading = false;
       state.isError = false;
       state.error = null;
+      clearSessionHint();
     },
     clearAuthError: (state) => {
       state.isError = false;
@@ -155,9 +171,15 @@ const authSlice = createSlice({
         state.isAuthenticated = true;
         state.user = action.payload?.user || null;
         state.token = action.payload?.accessToken || null;
+        state.isError = false;
+        state.error = null;
+        setSessionHint();
       })
       .addCase(loginUser.rejected, (state, action) => {
         state.isLoading = false;
+        state.isAuthenticated = false;
+        state.user = null;
+        state.token = null;
         state.isError = true;
         state.error = action.payload as string;
       })
@@ -172,13 +194,18 @@ const authSlice = createSlice({
         state.isLoading = false;
         state.isAuthenticated = true;
         state.user = action.payload || null;
+        state.isError = false;
+        state.error = null;
+        setSessionHint();
       })
       .addCase(fetchMe.rejected, (state, action) => {
         state.isLoading = false;
         state.isAuthenticated = false;
         state.user = null;
+        state.token = null;
         state.isError = true;
         state.error = action.payload as string;
+        clearSessionHint();
       })
 
       // Forgot Password (isLoading বাদ দেওয়া হয়েছে যাতে UI Re-mount না হয়)
@@ -237,12 +264,14 @@ const authSlice = createSlice({
         state.isLoading = false;
         state.isError = false;
         state.error = null;
+        clearSessionHint();
       })
       .addCase(logoutUser.rejected, (state) => {
         state.user = null;
         state.token = null;
         state.isAuthenticated = false;
         state.isLoading = false;
+        clearSessionHint();
       });
   },
 });

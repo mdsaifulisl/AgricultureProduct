@@ -20,6 +20,7 @@ import { useAppDispatch } from "../../../app/hooks";
 import { useSlider } from "../../../features/hero-slider/useSlider";
 import { showToast } from "../../../features/toast/toastSlice";
 import { useAuth } from "../../../features/auth/useAuth";
+import { AccessDenied } from "../../../components/common/AccessDenied";
 
 export const SlidersList: React.FC = () => {
   const dispatch = useAppDispatch();
@@ -180,6 +181,12 @@ export const SlidersList: React.FC = () => {
       (slide.badge &&
         slide.badge.toLowerCase().includes(searchTerm.toLowerCase())),
   );
+
+
+  if(!isAdminOrModerator){
+     return <AccessDenied />;
+  }
+
 
   return (
     <div className="p-4 sm:p-6 lg:p-8 bg-gray-50/50 min-h-screen">

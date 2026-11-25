@@ -4,7 +4,7 @@ import type {
   CreateHeroSlidePayload,
   UpdateHeroSlidePayload,
 } from './heroSlideTypes';
-
+ 
 export interface ApiResponse<T> {
   success: boolean;
   message?: string;
@@ -54,3 +54,14 @@ export const deleteHeroSlideApi = async (id: string): Promise<ApiResponse<null>>
   const response = await axiosInstance.delete<ApiResponse<null>>(`/hero-slides/${id}`);
   return response.data;
 };
+
+
+
+
+
+
+
+
+
+
+

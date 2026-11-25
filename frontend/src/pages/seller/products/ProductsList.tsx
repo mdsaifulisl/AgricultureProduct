@@ -23,6 +23,8 @@ import { useAppDispatch } from "../../../app/hooks";
 import { getCleanUnit } from "../../../utils/formatUnit";
 import { showToast } from "../../../features/toast/toastSlice";
 import { useAuth } from "../../../features/auth/useAuth";
+import { AccessDenied } from "../../../components/common/AccessDenied";
+
 
 export const ProductsList: React.FC = () => {
   const dispatch = useAppDispatch();
@@ -138,6 +140,11 @@ export const ProductsList: React.FC = () => {
         </button>
       </div>
     );
+  }
+
+
+    if (!isAdminOrModerator) {
+    return <AccessDenied />; 
   }
 
   return (

@@ -178,7 +178,7 @@ export const Footer: React.FC = () => {
 
         {/* কপিরাইট সেকশন */}
         <div className="pt-6 border-t border-gray-800 text-center text-xs text-gray-500 flex flex-col sm:flex-row justify-between items-center space-y-3 sm:space-y-0">
-          <p>© {new Date().getFullYear()} ExpertShop. সর্বস্বত্ব সংরক্ষিত।</p>
+          <p>© {new Date().getFullYear()} Reliable-Krishi. সর্বস্বত্ব সংরক্ষিত।</p>
           <p>Cash on Delivery Available Across Bangladesh</p>
         </div>
 

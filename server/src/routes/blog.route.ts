@@ -17,6 +17,7 @@ import {
   addCommentSchema,
 } from '../validations/blog.validation.js';
 import { upload, compressAndSaveImages } from '../middlewares/upload.middleware.js';
+import { auth } from '../middlewares/auth.js';
 
 const router = Router();
 
@@ -25,45 +26,62 @@ const setBlogFolder = (req: Request, res: Response, next: NextFunction) => {
   next();
 };
 
-// ১. এডিটরের ভেতর থেকে ইমেজ আপলোড
+// ----------------------------------------------------------------------
+// 🌐 PUBLIC ROUTES:
+// ----------------------------------------------------------------------
+router.get('/', getBlogsHandler);
+router.get('/:id', getBlogByIdHandler);
+router.post('/:id/comments', validate(addCommentSchema), addCommentHandler);
+router.patch('/:id/like', likeBlogHandler);
+
+// ----------------------------------------------------------------------
+// 🔐 PROTECTED ROUTES:
+// ----------------------------------------------------------------------
+
+// ১. এডিটরের ভেতর থেকে ইমেজ আপলোড (ADMIN, MODERATOR & WRITER)
 router.post(
   '/upload-editor-image',
+  auth('admin', 'moderator', 'writer'),
   setBlogFolder,
   upload.single('image'),
   compressAndSaveImages,
   uploadEditorImageHandler
 );
 
-// ২. ব্লগ ক্রিয়েট
-router
-  .route('/')
-  .post(
-    setBlogFolder,
-    upload.single('image'), 
-    validate(createBlogPostSchema), // <--- আগে Validation
-    compressAndSaveImages,          // <--- Validation পাস করলে সেভ হবে
-    createBlogHandler
-  )
-  .get(getBlogsHandler);
-
-router
-  .route('/:id')
-  .get(getBlogByIdHandler)
-  .patch(
-    setBlogFolder,
-    upload.single('image'),
-    validate(updateBlogPostSchema), // <--- আগে Validation
-    compressAndSaveImages,
-    updateBlogHandler
-  )
-  .delete(deleteBlogHandler);
-
+// ২. ব্লগ ক্রিয়েট (ADMIN, MODERATOR & WRITER)
 router.post(
-  '/:id/comments',
-  validate(addCommentSchema),
-  addCommentHandler
+  '/',
+  auth('admin', 'moderator', 'writer'),
+  setBlogFolder,
+  upload.single('image'),
+  validate(createBlogPostSchema), // <--- আগে Validation
+  compressAndSaveImages,          // <--- Validation পাস করলে সেভ হবে
+  createBlogHandler
 );
-router.delete('/comments/:commentId', deleteBlogComment);
-router.patch('/:id/like', likeBlogHandler);
+
+// ৩. ব্লগ আপডেট (ADMIN, MODERATOR & WRITER)
+router.patch(
+  '/:id',
+  auth('admin', 'moderator', 'writer'),
+  setBlogFolder,
+  upload.single('image'),
+  validate(updateBlogPostSchema), // <--- আগে Validation
+  compressAndSaveImages,
+  updateBlogHandler
+);
+
+// ৪. ব্লগ ডিলিট (ADMIN & MODERATOR)
+router.delete(
+  '/:id',
+  auth('admin', 'moderator'),
+  deleteBlogHandler
+);
+
+// ৫. কমেন্ট ডিলিট (ADMIN & MODERATOR)
+router.delete(
+  '/comments/:commentId',
+  auth('admin', 'moderator'),
+  deleteBlogComment
+);
 
 export default router;

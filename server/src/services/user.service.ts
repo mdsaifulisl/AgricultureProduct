@@ -36,7 +36,7 @@ export const UserService = {
   },
 
   // ২. অটো-জেনারেটেড পাসওয়ার্ড দিয়ে ইউজার তৈরি ও ব্যাকগ্রাউন্ড ইমেইল ট্র্রিগার
-  async createUser(data: { name: string; email: string; phone?: string; role: 'admin' | 'moderator' | 'seller' }) {
+  async createUser(data: { name: string; email: string; phone?: string; role: Role }) {
     const existingUser = await prisma.user.findUnique({ where: { email: data.email } });
     if (existingUser) throw new Error('এই ইমেইল দিয়ে ইতিপূর্বে অ্যাকাউন্ট তৈরি করা হয়েছে');
 
@@ -50,14 +50,14 @@ export const UserService = {
       },
     });
 
-    // ব্যাকগ্রাউন্ডে ইমেইল পাঠানোর জন্য ইভেন্ট ফায়ার (নন-ব্লকিং)
+    // ব্যাকগ্রাউন্ডে ইমেইল পাঠানোর জন্য ইভেন্ট ফায়ার (নন-ব্লকিং)
     userEvents.emit('userCreated', {
       email: user.email,
       name: user.name,
       rawPassword,
     });
 
-    // সিকিউরিটির স্বার্থে রেসপন্স থেকে হ্যাশ পাসওয়ার্ড বাদ দেওয়া হয়েছে
+    // সিকিউরিটির স্বার্থে রেসপন্স থেকে হ্যাশ পাসওয়ার্ড বাদ দেওয়া হয়েছে
     const { password, ...userWithoutPassword } = user;
     return userWithoutPassword;
   },

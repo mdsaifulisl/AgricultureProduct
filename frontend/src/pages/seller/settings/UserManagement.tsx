@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import {
   Users,
   UserPlus,
@@ -13,14 +13,19 @@ import {
   Phone,
   Edit2,
   Loader2,
-  RefreshCw
-} from 'lucide-react';
-import { useAppDispatch } from '../../../app/hooks';
-import { showToast } from '../../../features/toast/toastSlice';
-import { confirm } from '../../../features/confirm/confirmSlice';
-import { useUser } from '../../../features/user/useUser';
-import type { User, UserRole, UserStatus } from '../../../features/user/userTypes';
-import { useAuth } from '../../../features/auth/useAuth';
+  RefreshCw,
+} from "lucide-react";
+import { useAppDispatch } from "../../../app/hooks";
+import { showToast } from "../../../features/toast/toastSlice";
+import { confirm } from "../../../features/confirm/confirmSlice";
+import { useUser } from "../../../features/user/useUser";
+import type {
+  User,
+  UserRole,
+  UserStatus,
+} from "../../../features/user/userTypes";
+import { useAuth } from "../../../features/auth/useAuth";
+import { AccessDenied } from "../../../components/common/AccessDenied";
 
 export const UserManagement: React.FC = () => {
   const {
@@ -34,26 +39,27 @@ export const UserManagement: React.FC = () => {
     deleteUser,
   } = useUser(true);
 
-  const [searchTerm, setSearchTerm] = useState('');
-  const [roleFilter, setRoleFilter] = useState<UserRole | 'all'>('all');
+  const [searchTerm, setSearchTerm] = useState("");
+  const [roleFilter, setRoleFilter] = useState<UserRole | "all">("all");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const dispatch = useAppDispatch();
   const { user } = useAuth();
-  const isAdmin = user?.role === 'admin';
+  const isAdmin = user?.role === "admin";
+  const isAdminorMOderator = isAdmin || user?.role === "moderator";
 
   const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    phone: '',
-    role: 'moderator' as UserRole,
+    name: "",
+    email: "",
+    phone: "",
+    role: "writer" as UserRole,
   });
 
   const handleOpenAddModal = () => {
     setEditingUser(null);
-    setFormData({ name: '', email: '', phone: '', role: 'moderator' });
+    setFormData({ name: "", email: "", phone: "", role: "moderator" });
     setIsModalOpen(true);
   };
 
@@ -62,7 +68,7 @@ export const UserManagement: React.FC = () => {
     setFormData({
       name: targetUser.name,
       email: targetUser.email,
-      phone: targetUser.phone || '',
+      phone: targetUser.phone || "",
       role: targetUser.role,
     });
     setIsModalOpen(true);
@@ -80,7 +86,7 @@ export const UserManagement: React.FC = () => {
           phone: formData.phone,
           role: formData.role,
         });
-        dispatch(showToast('ইউজার তথ্য সফলভাবে আপডেট করা হয়েছে!', 'success'));
+        dispatch(showToast("ইউজার তথ্য সফলভাবে আপডেট করা হয়েছে!", "success"));
       } else {
         await createNewUser({
           name: formData.name,
@@ -88,14 +94,14 @@ export const UserManagement: React.FC = () => {
           phone: formData.phone,
           role: formData.role,
         });
-        dispatch(showToast('নতুন ইউজার সফলভাবে যোগ করা হয়েছে!', 'success'));
+        dispatch(showToast("নতুন ইউজার সফলভাবে যোগ করা হয়েছে!", "success"));
       }
 
       setIsModalOpen(false);
       setEditingUser(null);
-      setFormData({ name: '', email: '', phone: '', role: 'moderator' });
+      setFormData({ name: "", email: "", phone: "", role: "moderator" });
     } catch (err: any) {
-      dispatch(showToast(err || 'একটি সমস্যা ঘটেছে!', 'error'));
+      dispatch(showToast(err || "একটি সমস্যা ঘটেছে!", "error"));
     } finally {
       setIsSubmitting(false);
     }
@@ -103,13 +109,15 @@ export const UserManagement: React.FC = () => {
 
   const handleToggleStatus = async (id: string, currentStatus: UserStatus) => {
     if (!isAdmin) return;
-    const nextStatus = (currentStatus === 'active' ? 'inactive' : 'active') as UserStatus;
+    const nextStatus = (
+      currentStatus === "active" ? "inactive" : "active"
+    ) as UserStatus;
     try {
       await editUser(id, { status: nextStatus });
-      const statusText = nextStatus === 'active' ? 'সক্রিয়' : 'নিষ্ক্রিয়';
-      dispatch(showToast(`ইউজার স্ট্যাটাস ${statusText} করা হয়েছে`, 'info'));
+      const statusText = nextStatus === "active" ? "সক্রিয়" : "নিষ্ক্রিয়";
+      dispatch(showToast(`ইউজার স্ট্যাটাস ${statusText} করা হয়েছে`, "info"));
     } catch (err: any) {
-      dispatch(showToast(err || 'স্ট্যাটাস পরিবর্তন করা সম্ভব হয়নি', 'error'));
+      dispatch(showToast(err || "স্ট্যাটাস পরিবর্তন করা সম্ভব হয়নি", "error"));
     }
   };
 
@@ -117,20 +125,21 @@ export const UserManagement: React.FC = () => {
     if (!isAdmin) return;
     const isConfirmed = await dispatch(
       confirm({
-        title: 'ইউজার মুছে ফেলার নিশ্চিতকরণ',
-        message: 'আপনি কি নিশ্চিত যে এই ইউজারকে মুছে ফেলতে চান? এই অ্যাকশনটি ফিরিয়ে আনা যাবে না।',
-        confirmText: 'হ্যাঁ, ডিলিট করুন',
-        cancelText: 'বাতিল',
-        type: 'danger',
-      })
+        title: "ইউজার মুছে ফেলার নিশ্চিতকরণ",
+        message:
+          "আপনি কি নিশ্চিত যে এই ইউজারকে মুছে ফেলতে চান? এই অ্যাকশনটি ফিরিয়ে আনা যাবে না।",
+        confirmText: "হ্যাঁ, ডিলিট করুন",
+        cancelText: "বাতিল",
+        type: "danger",
+      }),
     );
 
     if (isConfirmed) {
       try {
         await deleteUser(id);
-        dispatch(showToast('ইউজার সফলভাবে মুছে ফেলা হয়েছে!', 'success'));
+        dispatch(showToast("ইউজার সফলভাবে মুছে ফেলা হয়েছে!", "success"));
       } catch (err: any) {
-        dispatch(showToast(err || 'ইউজার মুছে ফেলতে ব্যর্থ হয়েছে', 'error'));
+        dispatch(showToast(err || "ইউজার মুছে ফেলতে ব্যর্থ হয়েছে", "error"));
       }
     }
   };
@@ -139,28 +148,28 @@ export const UserManagement: React.FC = () => {
     const matchesSearch =
       u.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       u.email.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesRole = roleFilter === 'all' || u.role === roleFilter;
+    const matchesRole = roleFilter === "all" || u.role === roleFilter;
     return matchesSearch && matchesRole;
   });
 
   const getRoleBadge = (role: UserRole) => {
     switch (role) {
-      case 'admin':
+      case "admin":
         return (
           <span className="px-2.5 py-1 rounded-lg text-xs font-bold bg-purple-50 text-purple-700 flex items-center gap-1 w-fit">
             <ShieldCheck className="w-3.5 h-3.5" /> অ্যাডমিন
           </span>
         );
-      case 'moderator':
+      case "moderator":
         return (
           <span className="px-2.5 py-1 rounded-lg text-xs font-bold bg-blue-50 text-blue-700 flex items-center gap-1 w-fit">
             <ShieldAlert className="w-3.5 h-3.5" /> মডারেটর
           </span>
         );
-      case 'seller':
+      case "writer":
         return (
           <span className="px-2.5 py-1 rounded-lg text-xs font-bold bg-amber-50 text-amber-700 flex items-center gap-1 w-fit">
-            <Store className="w-3.5 h-3.5" /> সেলার
+            <Store className="w-3.5 h-3.5" /> লেখক
           </span>
         );
       default:
@@ -169,6 +178,10 @@ export const UserManagement: React.FC = () => {
   };
 
   const totalCols = isAdmin ? 5 : 3;
+
+  if (!isAdminorMOderator) {
+    return <AccessDenied />;
+  }
 
   return (
     <div className="max-w-6xl mx-auto space-y-6 pb-12">
@@ -189,7 +202,9 @@ export const UserManagement: React.FC = () => {
             className="p-2.5 text-gray-600 hover:bg-gray-100 border border-gray-200 rounded-xl transition-colors cursor-pointer"
             title="রিফ্রেশ করুন"
           >
-            <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
+            <RefreshCw
+              className={`w-4 h-4 ${isLoading ? "animate-spin" : ""}`}
+            />
           </button>
 
           {isAdmin && (
@@ -220,7 +235,7 @@ export const UserManagement: React.FC = () => {
           <span className="text-xs font-bold text-gray-600">রোল ফিল্টার:</span>
           <select
             value={roleFilter}
-            onChange={(e) => setRoleFilter(e.target.value as UserRole | 'all')}
+            onChange={(e) => setRoleFilter(e.target.value as UserRole | "all")}
             className="px-3 py-2 rounded-xl border border-gray-200 text-xs font-bold text-gray-700 focus:border-primary-500 outline-none"
           >
             <option value="all">সব ইউজার</option>
@@ -250,7 +265,10 @@ export const UserManagement: React.FC = () => {
             <tbody className="divide-y divide-gray-100 text-xs">
               {isLoading ? (
                 <tr>
-                  <td colSpan={totalCols} className="p-8 text-center text-gray-400 text-xs font-bold">
+                  <td
+                    colSpan={totalCols}
+                    className="p-8 text-center text-gray-400 text-xs font-bold"
+                  >
                     <div className="flex items-center justify-center gap-2">
                       <Loader2 className="w-5 h-5 animate-spin text-primary-600" />
                       <span>ইউজার ডেটা লোড হচ্ছে...</span>
@@ -259,13 +277,19 @@ export const UserManagement: React.FC = () => {
                 </tr>
               ) : isError ? (
                 <tr>
-                  <td colSpan={totalCols} className="p-8 text-center text-rose-500 text-xs font-bold">
-                    {error || 'ডেটা লোড করতে সমস্যা হয়েছে!'}
+                  <td
+                    colSpan={totalCols}
+                    className="p-8 text-center text-rose-500 text-xs font-bold"
+                  >
+                    {error || "ডেটা লোড করতে সমস্যা হয়েছে!"}
                   </td>
                 </tr>
               ) : filteredUsers.length > 0 ? (
                 filteredUsers.map((item) => (
-                  <tr key={item.id} className="hover:bg-gray-50/50 transition-colors">
+                  <tr
+                    key={item.id}
+                    className="hover:bg-gray-50/50 transition-colors"
+                  >
                     <td className="p-4">
                       <div className="font-bold text-gray-900">{item.name}</div>
                       <div className="text-[10px] text-gray-400">
@@ -279,24 +303,26 @@ export const UserManagement: React.FC = () => {
                       </div>
                       <div className="flex items-center gap-1.5 text-gray-600">
                         <Phone className="w-3.5 h-3.5 text-gray-400" />
-                        <span>{item.phone || 'N/A'}</span>
+                        <span>{item.phone || "N/A"}</span>
                       </div>
                     </td>
                     <td className="p-4">{getRoleBadge(item.role)}</td>
                     {isAdmin && (
                       <>
-                        <td className="p-4"> 
+                        <td className="p-4">
                           <button
                             type="button"
-                            onClick={() => handleToggleStatus(item.id, item.status)}
+                            onClick={() =>
+                              handleToggleStatus(item.id, item.status)
+                            }
                             className={`px-3 py-1 rounded-full text-xs font-bold transition-all cursor-pointer border select-none ${
-                              item.status === 'active'
-                                ? 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100'
-                                : 'bg-rose-50 text-rose-700 border-rose-200 hover:bg-rose-100'
+                              item.status === "active"
+                                ? "bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100"
+                                : "bg-rose-50 text-rose-700 border-rose-200 hover:bg-rose-100"
                             }`}
                             title="স্ট্যাটাস পরিবর্তন করতে ক্লিক করুন"
                           >
-                            {item.status === 'active' ? 'এক্টিভ' : 'ইন-এক্টিভ'}
+                            {item.status === "active" ? "এক্টিভ" : "ইন-এক্টিভ"}
                           </button>
                         </td>
                         <td className="p-4 text-right space-x-1">
@@ -321,7 +347,10 @@ export const UserManagement: React.FC = () => {
                 ))
               ) : (
                 <tr>
-                  <td colSpan={totalCols} className="p-8 text-center text-gray-400 text-xs font-bold">
+                  <td
+                    colSpan={totalCols}
+                    className="p-8 text-center text-gray-400 text-xs font-bold"
+                  >
                     কোন ইউজার পাওয়া যায়নি
                   </td>
                 </tr>
@@ -336,7 +365,9 @@ export const UserManagement: React.FC = () => {
           <div className="bg-white rounded-2xl max-w-md w-full p-6 space-y-4 shadow-xl">
             <div className="flex items-center justify-between border-b border-gray-100 pb-3">
               <h3 className="font-bold text-base text-gray-900">
-                {editingUser ? 'ইউজার তথ্য সম্পাদনা করুন' : 'নতুন ইউজার যোগ করুন'}
+                {editingUser
+                  ? "ইউজার তথ্য সম্পাদনা করুন"
+                  : "নতুন ইউজার যোগ করুন"}
               </h3>
               <button
                 onClick={() => setIsModalOpen(false)}
@@ -348,43 +379,57 @@ export const UserManagement: React.FC = () => {
 
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <label className="block text-xs font-bold text-gray-700 mb-1">পূর্ণ নাম</label>
+                <label className="block text-xs font-bold text-gray-700 mb-1">
+                  পূর্ণ নাম
+                </label>
                 <input
                   type="text"
                   required
                   value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, name: e.target.value })
+                  }
                   placeholder="যেমন: রহিম আহমেদ"
                   className="w-full px-3 py-2 rounded-xl border border-gray-200 text-xs outline-none focus:border-primary-500"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-gray-700 mb-1">ইমেইল ঠিকানা</label>
+                <label className="block text-xs font-bold text-gray-700 mb-1">
+                  ইমেইল ঠিকানা
+                </label>
                 <input
                   type="email"
                   required
                   disabled={!!editingUser}
                   value={formData.email}
-                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, email: e.target.value })
+                  }
                   placeholder="example@mail.com"
                   className="w-full px-3 py-2 rounded-xl border border-gray-200 text-xs outline-none focus:border-primary-500 disabled:bg-gray-100 disabled:text-gray-500"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-gray-700 mb-1">ফোন নম্বর</label>
+                <label className="block text-xs font-bold text-gray-700 mb-1">
+                  ফোন নম্বর
+                </label>
                 <input
                   type="text"
                   value={formData.phone}
-                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, phone: e.target.value })
+                  }
                   placeholder="01700000000"
                   className="w-full px-3 py-2 rounded-xl border border-gray-200 text-xs outline-none focus:border-primary-500"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-gray-700 mb-1">রোল সিলেক্ট করুন</label>
+                <label className="block text-xs font-bold text-gray-700 mb-1">
+                  রোল সিলেক্ট করুন
+                </label>
                 <select
                   value={formData.role}
                   onChange={(e) =>
@@ -396,7 +441,7 @@ export const UserManagement: React.FC = () => {
                   className="w-full px-3 py-2 rounded-xl border border-gray-200 text-xs font-bold text-gray-700 outline-none focus:border-primary-500"
                 >
                   <option value="moderator">মডারেটর (Moderator)</option>
-                  <option value="seller">সেলার (Seller)</option>
+                  <option value="writer">লেখক (writer)</option>
                   <option value="admin">অ্যাডমিন (Admin)</option>
                 </select>
               </div>
@@ -414,8 +459,10 @@ export const UserManagement: React.FC = () => {
                   disabled={isSubmitting}
                   className="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-xl text-xs font-bold cursor-pointer flex items-center gap-2 disabled:opacity-50"
                 >
-                  {isSubmitting && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
-                  <span>{editingUser ? 'আপডেট করুন' : 'সেভ করুন'}</span>
+                  {isSubmitting && (
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  )}
+                  <span>{editingUser ? "আপডেট করুন" : "সেভ করুন"}</span>
                 </button>
               </div>
             </form>

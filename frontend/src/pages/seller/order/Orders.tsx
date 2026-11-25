@@ -23,13 +23,14 @@ import { formatDisplayUnit } from "../../../utils/unitConverter";
 import { confirm } from "../../../features/confirm/confirmSlice";
 import { useAuth } from "../../../features/auth/useAuth";
 import { showToast } from "../../../features/toast/toastSlice";
+import { AccessDenied } from "../../../components/common/AccessDenied";
 
 export const SellerOrders: React.FC = () => {
   const dispatch = useAppDispatch();
   const {
     orders = [],
     loading: isLoading,
-    updateStatus, 
+    updateStatus,  
     getAllOrders,
     pagination,
     markAsSeen,
@@ -37,6 +38,7 @@ export const SellerOrders: React.FC = () => {
   } = useOrder();
   const { user } = useAuth();
   const isAdmin = user?.role === "admin";
+  const isModerator = user?.role === "moderator"
 
   const [searchTerm, setSearchTerm] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
@@ -267,6 +269,11 @@ export const SellerOrders: React.FC = () => {
       </div>
     );
   }
+
+
+  if (!isAdmin && !isModerator) {
+  return <AccessDenied />;
+}
 
   return (
     <div className="max-w-7xl mx-auto space-y-6 pb-12">

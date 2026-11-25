@@ -6,12 +6,11 @@ export interface Partner {
   name: string;
   logo: string;
   websiteUrl?: string;
-  createdAt?: string;
+  createdAt?: string; 
   updatedAt?: string;
 }
 
 export const PartnerLogosSection: React.FC = () => {
-  // ১. Custom Hook-কে কম্পোনেন্টের ভেতরে নিয়ে আসা হয়েছে
   const { partners, getAllPartners } = usePartner();
 
   const partnersData = (partners || []) as Partner[];
@@ -22,7 +21,6 @@ export const PartnerLogosSection: React.FC = () => {
     }
   }, [getAllPartners]);
 
-  // ২. যদি কোনো পার্টনার না থাকে বা লোড না হয়
   if (!partnersData || partnersData.length === 0) {
     return null;
   }
@@ -45,7 +43,8 @@ export const PartnerLogosSection: React.FC = () => {
           {partnersData.map((partner) => (
             <div
               key={partner.id || partner.name}
-              className="flex items-center justify-center p-4 sm:p-6 bg-gray-50/80 rounded-2xl border border-gray-100 hover:border-primary-200 hover:bg-white hover:shadow-md transition-all duration-300 group h-24 w-[calc(50%-0.5rem)] sm:w-44 md:w-48"
+              // প্যাডিং তুলে দিয়ে কন্টেইনারের সাইজ পারফেক্ট করা হয়েছে
+              className="flex items-center justify-center overflow-hidden bg-gray-50/80 rounded-2xl border border-gray-100 hover:border-primary-300 hover:bg-white hover:shadow-lg transition-all duration-300 group h-20 sm:h-22 w-[calc(50%-0.5rem)] sm:w-44 md:w-48 px-3"
             >
               {partner.websiteUrl ? (
                 <a
@@ -58,7 +57,8 @@ export const PartnerLogosSection: React.FC = () => {
                     src={partner.logo}
                     alt={partner.name}
                     title={partner.name}
-                    className="max-h-12 w-auto object-contain grayscale opacity-60 group-hover:grayscale-0 group-hover:opacity-100 transition-all duration-300"
+                    // অবজেক্ট কনটেইন বা কভার রেখে লোগো শতভাগ কভার করার ব্যবস্থা
+                    className="w-full h-full object-contain p-1 transition-transform duration-300 group-hover:scale-105"
                   />
                 </a>
               ) : (
@@ -66,7 +66,7 @@ export const PartnerLogosSection: React.FC = () => {
                   src={partner.logo}
                   alt={partner.name}
                   title={partner.name}
-                  className="max-h-12 w-auto object-contain grayscale opacity-60 group-hover:grayscale-0 group-hover:opacity-100 transition-all duration-300"
+                  className="w-full h-full object-contain p-1 transition-transform duration-300 group-hover:scale-105"
                 />
               )}
             </div>

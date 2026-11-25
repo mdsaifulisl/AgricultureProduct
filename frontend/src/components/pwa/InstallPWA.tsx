@@ -12,7 +12,7 @@ const InstallPWA = () => {
       // ইভেন্টটি স্টেট-এ সেভ করে রাখা
       setDeferredPrompt(e);
       // বাটন দেখানোর অনুমতি দেওয়া
-      setIsInstallable(true);
+      setIsInstallable(true); 
     };
 
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
@@ -57,3 +57,6 @@ const InstallPWA = () => {
 };
 
 export default InstallPWA;
+
+
+

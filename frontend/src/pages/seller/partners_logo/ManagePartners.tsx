@@ -14,8 +14,11 @@ import { confirm } from "../../../features/confirm/confirmSlice";
 import { useAppDispatch } from "../../../app/hooks";
 import { usePartner } from "../../../features/partner/usePartner";
 import type { Partner } from "../../../features/partner/PartnerTypes";
+import { useAuth } from "../../../features/auth/useAuth";
+import { AccessDenied } from "../../../components/common/AccessDenied";
 
 export const ManagePartners: React.FC = () => {
+  
   const dispatch = useAppDispatch();
   const {
     partners,
@@ -32,6 +35,11 @@ export const ManagePartners: React.FC = () => {
   const [editingPartner, setEditingPartner] = useState<Partner | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string>("");
+
+  const { user } = useAuth();
+
+  const isAdmin = user?.role === "admin";
+  const isModerator = user?.role === "moderator"
 
   // Form State
   const [formData, setFormData] = useState<{
@@ -169,6 +177,12 @@ export const ManagePartners: React.FC = () => {
       }
     }
   };
+
+
+
+    if (!isAdmin && !isModerator) {
+    return <AccessDenied />;
+  }
 
   return (
     <div className="max-w-6xl mx-auto space-y-6 pb-12">

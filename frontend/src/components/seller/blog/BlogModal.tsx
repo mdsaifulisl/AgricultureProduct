@@ -110,7 +110,7 @@ const BlogModalContent: React.FC<BlogModalProps> = ({
     }
   };
 
-  const handleSubmitForm = (e: React.FormEvent) => {
+const handleSubmitForm = (e: React.FormEvent) => {
     e.preventDefault();
 
     if (errorMessage) {
@@ -118,7 +118,16 @@ const BlogModalContent: React.FC<BlogModalProps> = ({
       return;
     }
 
-    onSubmit(formData);
+    // ট্যাগ না দেওয়া থাকলে ডিফল্ট "কৃষি" মান ঠিক করে একটি ফ্রেশ অবজেক্ট তৈরি করা
+    const finalTags = formData.tags && formData.tags.trim() !== "" ? formData.tags : "কৃষি";
+
+    const finalFormData = {
+      ...formData,
+      tags: finalTags,
+    };
+
+    // আপডেট করা ডাটা সহ সাবমিট কল করা
+    onSubmit(finalFormData);
   };
 
   return (
@@ -347,3 +356,4 @@ export const BlogModal: React.FC<BlogModalProps> = (props) => {
 
   return <BlogModalContent key={modalKey} {...props} />;
 };
+

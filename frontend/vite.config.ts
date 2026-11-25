@@ -10,24 +10,26 @@ export default defineConfig({
     tailwindcss(),
     VitePWA({
       registerType: "autoUpdate",
-      // main.tsx-এ virtual module দিয়ে register করা হয়; HTML-এ দ্বিতীয়বার inject নয়।
       injectRegister: false,
       devOptions: {
-        // Development server-এর cache যেন পুরোনো build দেখানো না শুরু করে।
         enabled: false,
         type: "module",
       },
       workbox: {
-        // sitemap/robots/API request-এ SPA index.html fallback প্রয়োগ হবে না।
+        // আপডেট হওয়ার সাথে সাথে নতুন সার্ভিস ওয়ার্কার অ্যাক্টিভ করার জন্য জরুরি
+        skipWaiting: true,
+        clientsClaim: true,
+        cleanupOutdatedCaches: true,
         navigateFallbackDenylist: [
-          /^\/(?:sitemap\.xml|robots\.txt)(?:\?.*)?$/,
+          /^\/(?:sitemap\.xml|robots\.txt|manifest\.webmanifest)(?:\?.*)?$/,
           /^\/api(?:\/|$)/,
         ],
       },
-      includeAssets: ["favicon.ico", "apple-touch-icon.png", "masked-icon.svg"],
+      includeAssets: ["favicon.ico", "apple-touch-icon.png", "masked-icon.svg", "pwa-192x192.png", "pwa-512x512.png"],
       manifest: {
+        id: "/", // ব্রাউজারকে অ্যাপের ইউনিক আইডেন্টিটি চেনানোর জন্য
         name: "Reliable Krishi Web Platform",
-        short_name: "ReliableKrishiApp",
+        short_name: "ReliableKrishi",
         description: "Reliable Krishi and Gardening Online Platform",
         theme_color: "#ffffff",
         background_color: "#ffffff",
@@ -40,17 +42,19 @@ export default defineConfig({
             src: "/pwa-192x192.png",
             sizes: "192x192",
             type: "image/png",
+            purpose: "any",
           },
           {
-            src: "/pwa-512x512.png",
-            sizes: "512x512",
+            src: "/pwa-500x500.png", // <--- আপনার ছবিটি যদি ৫০০ সাইজের হয়, তবে এখানে 500x500 দিন
+            sizes: "500x500",
             type: "image/png",
+            purpose: "any",
           },
           {
-            src: "/pwa-512x512.png",
-            sizes: "512x512",
+            src: "/pwa-500x500.png", // <--- এখানেও 500x500 দিন
+            sizes: "500x500",
             type: "image/png",
-            purpose: "any maskable",
+            purpose: "maskable",
           },
         ],
       },
@@ -68,3 +72,4 @@ export default defineConfig({
     devSourcemap: false,
   },
 });
+

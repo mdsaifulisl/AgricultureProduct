@@ -12,7 +12,7 @@ datasource db {
 enum Role {
   admin
   moderator
-  seller
+  writer
 }
 
 enum UserStatus {
@@ -26,7 +26,7 @@ model User {
   email    String     @unique
   phone    String?
   password String
-  role     Role       @default(moderator)
+  role     Role       @default(writer)
   status   UserStatus @default(active)
 
   // Forgot Password OTP handling

@@ -15,7 +15,7 @@ interface CategoryCardProps {
 }
 
 export const CategoryCard: React.FC<CategoryCardProps> = ({ category, onClick }) => {
-  return (
+  return ( 
     <div
       onClick={() => onClick(category.name)}
       className="group relative rounded-2xl border border-gray-100 bg-white p-2.5 sm:p-4 lg:p-5 shadow-xs hover:shadow-xl hover:border-emerald-200 transition-all duration-300 cursor-pointer overflow-hidden flex flex-col justify-between"

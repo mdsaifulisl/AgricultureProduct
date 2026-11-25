@@ -7,8 +7,8 @@ import { z } from 'zod';
 
 const router = Router();
 
-router.get('/devices', auth('admin'), getDeviceBlocksController);
-router.patch('/devices/toggle-block', auth('admin'), (req, res, next) => {
+router.get('/devices', auth('admin', 'moderator'), getDeviceBlocksController);
+router.patch('/devices/toggle-block', auth('admin', 'moderator'), (req, res, next) => {
   const parsed = z.object({ fingerprint: z.string().regex(/^[a-f0-9]{64}$/i), isBlocked: z.boolean(), reason: z.string().max(300).optional() }).safeParse(req.body);
   if (!parsed.success) return res.status(400).json({ success: false, message: 'ডিভাইস ব্লক তথ্য সঠিক নয়।' });
   next();

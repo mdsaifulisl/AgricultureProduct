@@ -12,7 +12,7 @@ export const createUserSchema = z.object({
     name: z.string().min(1, 'নাম আবশ্যক'),
     email: z.string().email('সঠিক ইমেইল ঠিকানা দিন'),
     phone: z.string().optional(),
-    role: z.enum(['admin', 'moderator', 'seller']).default('moderator'),
+    role: z.enum(['admin', 'moderator', 'writer']).default('moderator'),
   }),
 });
 
@@ -21,7 +21,7 @@ export const updateUserSchema = z.object({
     name: z.string().optional(),
     email: z.string().email('সঠিক ইমেইল ঠিকানা দিন').optional(),
     phone: z.string().optional(),
-    role: z.enum(['admin', 'moderator', 'seller']).optional(),
+    role: z.enum(['admin', 'moderator', 'writer']).optional(),
     status: z.enum(['active', 'inactive']).optional(),
   }),
 });

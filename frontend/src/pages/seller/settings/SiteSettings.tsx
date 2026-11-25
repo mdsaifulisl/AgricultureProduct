@@ -124,7 +124,7 @@ export const SiteSettings: React.FC = () => {
     }
   };
 
-
+ 
   if (!isAdmin) {
     return (
       <div className="p-8 bg-white rounded-2xl shadow-sm border border-red-100 max-w-xl mx-auto text-center my-10">

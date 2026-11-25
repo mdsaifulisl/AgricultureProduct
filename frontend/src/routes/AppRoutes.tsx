@@ -1,6 +1,5 @@
 import React, { Suspense } from 'react';
 import { Routes, Route, useNavigate } from 'react-router-dom';
-
 // Layouts
 import { MainLayout } from '../layouts/MainLayout';
 import { SellerLayout } from '../layouts/SellerLayout';

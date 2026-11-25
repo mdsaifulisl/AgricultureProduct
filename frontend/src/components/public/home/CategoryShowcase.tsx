@@ -15,10 +15,10 @@ export const CategoryShowcase: React.FC = () => {
   useEffect(() => {
     if (getCategories) {
       getCategories();
-    }
+    } 
   }, []);
   const handleCategoryClick = (slug: string) => {
-    navigate(`/shop?category=${slug}`);
+    navigate(`/shop?category=${encodeURIComponent(slug)}`);
   };
 
   // হোমপেজ শো-কেসের জন্য প্রথম ৪টি ক্যাটাগরি নেওয়া হলো
@@ -61,7 +61,7 @@ export const CategoryShowcase: React.FC = () => {
             to="/categories"
             className="inline-flex items-center gap-2 text-xs sm:text-sm font-bold text-primary-700 hover:text-primary-800 bg-primary-50 hover:bg-primary-100 px-3.5 py-2 sm:px-4 sm:py-2.5 rounded-xl transition-all self-start md:self-auto cursor-pointer"
           >
-            <span>সব ক্যাটাগরি দেখুন</span>
+            <span>সব ক্যাটাগরি দেখুন</span> 
             <ArrowRight className="w-4 h-4" />
           </Link>
         </div>

@@ -15,12 +15,18 @@ import { compressAndConvertToBase64 } from "../../../utils/imageUtils";
 import { useProduct } from "../../../features/product/useProduct";
 import { useAppDispatch } from "../../../app/hooks";
 import { showToast } from "../../../features/toast/toastSlice";
+import { useAuth } from "../../../features/auth/useAuth";
+import { AccessDenied } from "../../../components/common/AccessDenied";
 
 export const AddEditProduct: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
   const isEditMode = Boolean(id);
+
+   const { user } = useAuth();
+    const isAdmin = user?.role === "admin";
+    const isAdminOrModerator = isAdmin || user?.role === "moderator";
 
   // useProduct থেকে প্রয়োজনীয় ডাটা ও অ্যাকশন হ্যান্ডলার আনা হলো
   const { products, createNewProduct, editProduct, isLoading } =
@@ -60,7 +66,7 @@ export const AddEditProduct: React.FC = () => {
   // Load existing product data if in Edit Mode
   useEffect(() => {
     if (isEditMode && id && products && products.length > 0) {
-      const existingProduct = products.find((p) => p.id === id);
+      const existingProduct = products.find((p: { id: string; }) => p.id === id);
       if (existingProduct) {
         // queueMicrotask ব্যবহার করলে synchronous render loop ব্রেক হয়
         queueMicrotask(() => {
@@ -246,6 +252,11 @@ export const AddEditProduct: React.FC = () => {
       setIsSubmitting(false);
     }
   };
+
+
+    if (!isAdminOrModerator) {
+  return <AccessDenied />;
+}
 
   return (
     <div className="max-w-5xl mx-auto space-y-6 pb-12">

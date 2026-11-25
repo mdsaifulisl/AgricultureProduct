@@ -23,6 +23,7 @@ import { useAppDispatch } from "../../../app/hooks";
 import { useVideos } from "../../../features/videos/useVideos";
 import { showToast } from "../../../features/toast/toastSlice";
 import { useAuth } from "../../../features/auth/useAuth";
+import { AccessDenied } from "../../../components/common/AccessDenied";
 
 const getYoutubeVideoId = (urlOrId: string): string => {
   if (!urlOrId) return "";
@@ -45,6 +46,9 @@ export const VideosList: React.FC = () => {
   const dispatch = useAppDispatch();
   const { user } = useAuth();
   const isAdmin = user?.role === "admin";
+
+  const isAdminorMOderator = isAdmin || user?.role === "moderator"
+
   const {
     videos = [],
     getVideos,
@@ -174,6 +178,11 @@ export const VideosList: React.FC = () => {
       video.category?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       video.description?.toLowerCase().includes(searchTerm.toLowerCase()),
   );
+
+
+  if(!isAdminorMOderator){
+    return <AccessDenied />;
+  }
 
   return (
     <div className="p-4 sm:p-6 lg:p-8 bg-gray-50/50 min-h-screen">

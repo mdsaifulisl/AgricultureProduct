@@ -92,25 +92,29 @@ export const Hero: React.FC = () => {
   const [currentSlide, setCurrentSlide] = useState(0);
 
   // useSlider হুক থেকে স্লাইড ও লোডিং স্টেট আনছি
-  const { slides, loading, getSlides } = useSlider();
+  const { slides, getSlides } = useSlider();
 
-
-  // যদি লোডিং চলে, slides না থাকে বা খালি অ্যারে আসে, তবে static HERO_SLIDES দেখাবে
-  const activeSlides = (!loading && slides && slides.length > 0) ? slides : HERO_SLIDES;
-
-  // স্লাইডার কাউন্ট পরিবর্তন হলে নিরাপদ index হ্যান্ডলিং
+  // প্রথম রেন্ডারে বা ব্যাকএন্ড থেকে ডেটা আসার পর সেটি সেট করা
+  // যদি ব্যাকএন্ডে স্লাইড না থাকে বা লোডিং শেষ হওয়ার পর ফাঁকা হয়, তবে ফলব্যাক হিসেবে static স্লাইড দেখাবে
+  const activeSlides = (slides && slides.length > 0) ? slides : HERO_SLIDES;
+  
   const totalSlides = activeSlides.length;
 
+  // ১. কম্পোনেন্ট মাউন্ট হওয়ার সময় শুধু একবার ডেটা ফেচ করবে
   useEffect(() => {
     getSlides();
-    if (totalSlides === 0) return;
+  }, [getSlides]);
+
+  // ২. স্লাইড পরিবর্তন বা অটো-প্লে টাইমার হ্যান্ডেল করার জন্য আলাদা useEffect
+  useEffect(() => {
+    if (totalSlides <= 1) return;
 
     const timer = setInterval(() => {
       setCurrentSlide((prev) => (prev + 1) % totalSlides);
     }, 6000);
 
     return () => clearInterval(timer);
-  }, [totalSlides, getSlides]);
+  }, [totalSlides]);
 
   const nextSlide = () => {
     setCurrentSlide((prev) => (prev + 1) % totalSlides);
@@ -121,6 +125,8 @@ export const Hero: React.FC = () => {
   };
 
   const current = activeSlides[currentSlide] || activeSlides[0];
+
+  
 
   return (
     <section className="relative bg-gradient-to-b from-primary-50/50 via-white to-gray-50/50 overflow-hidden pt-4 pb-12 lg:pb-16">
